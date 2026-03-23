@@ -1,4 +1,5 @@
-import { BookOpen, Box, Crown, LogIn, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BookOpen, Box, Crown, LogIn, User, Moon, Sun, Globe } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -8,13 +9,28 @@ interface Props {
 }
 
 export const Header: React.FC<Props> = ({ isLoggedIn, onLoginClick, onProfileClick, onHomeClick }) => {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
   return (
     <header className="glass-panel" style={{ padding: '1rem 2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={onHomeClick}>
         <Box className="text-accent" size={32} />
         <h1 className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Aim Brickslab y Libros</h1>
       </div>
-      <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+      <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
         <a href="#" onClick={(e) => { e.preventDefault(); onHomeClick(); }} style={{ color: 'var(--text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
           <Box size={20} /> Aim Brickslabs
         </a>
@@ -26,6 +42,17 @@ export const Header: React.FC<Props> = ({ isLoggedIn, onLoginClick, onProfileCli
           <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
         </div>
         
+        {/* Language and Theme Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
+          <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.75rem', borderRadius: '9999px', cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--surface-border)', color: 'var(--text)' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>ES</span>
+            <Globe size={16} />
+          </button>
+          <button onClick={toggleTheme} className="btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--surface-border)', color: 'var(--text)' }} aria-label="Toggle theme">
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+
         {isLoggedIn ? (
           <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
             <User size={18} /> Mi Perfil
