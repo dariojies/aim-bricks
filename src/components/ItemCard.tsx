@@ -1,0 +1,48 @@
+import type { CatalogItem } from '../data/mockData';
+import { Box, BookOpen, CheckCircle, Lock } from 'lucide-react';
+
+interface Props {
+  item: CatalogItem;
+  onSelect: (item: CatalogItem) => void;
+}
+
+export const ItemCard: React.FC<Props> = ({ item, onSelect }) => {
+  const isAvailable = item.status === 'Disponible';
+
+  return (
+    <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isAvailable ? 1 : 0.8, transition: 'all 0.3s ease' }}>
+      <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+      <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--accent)', fontSize: '0.875rem', fontWeight: 600 }}>
+              {item.type === 'Aim Brickslab' ? <Box size={16} /> : <BookOpen size={16} />}
+              {item.type}
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{item.title}</h3>
+          </div>
+          <span style={{ 
+            display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600,
+            background: isAvailable ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+            color: isAvailable ? 'var(--secondary)' : 'var(--accent)',
+            border: `1px solid ${isAvailable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`
+          }}>
+            {isAvailable ? <CheckCircle size={14} /> : <Lock size={14} />}
+            {item.status}
+          </span>
+        </div>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1.5rem', flex: 1 }}>
+          {item.description}
+        </p>
+        <button 
+          className={isAvailable ? "btn btn-primary" : "btn btn-outline"} 
+          style={{ width: '100%' }}
+          onClick={() => isAvailable && onSelect(item)}
+          disabled={!isAvailable}
+        >
+          {isAvailable ? 'Reservar para leer/montar en el local' : 'Actualmente Reservado'}
+        </button>
+      </div>
+    </div>
+  );
+};
