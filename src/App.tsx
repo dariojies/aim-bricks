@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
+import { AdminDashboard } from './components/AdminDashboard';
 import { type CatalogItem } from './data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -10,7 +11,7 @@ const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
 function App() {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [user, setUser] = useState<any>(null); // Usamos any para simplificar el mapeo que añadimos nuevo (id, email)
-  const [currentView, setCurrentView] = useState<'catalog' | 'profile'>('catalog');
+  const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin'>('catalog');
   
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   
@@ -82,8 +83,10 @@ function App() {
     <div className="container">
       <Header 
         isLoggedIn={!!user} 
+        userRole={user?.role}
         onLoginClick={() => setShowLoginModal(true)} 
         onProfileClick={() => setCurrentView('profile')} 
+        onAdminClick={() => setCurrentView('admin')}
         onHomeClick={() => setCurrentView('catalog')}
       />
       
@@ -98,9 +101,11 @@ function App() {
             </div>
             <Catalog items={items} onReserveClick={handleReserveClick} />
           </>
-        ) : (
-          user && <Profile user={user} />
-        )}
+        ) : currentView === 'profile' && user ? (
+          <Profile user={user} />
+        ) : currentView === 'admin' && (user?.role === 'admin' || user?.role === 'superadmin') ? (
+          <AdminDashboard />
+        ) : null}
       </main>
 
       {/* Modal de Reserva */}

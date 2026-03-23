@@ -47,8 +47,10 @@ export const mockItems: CatalogItem[] = [
 ];
 
 export interface UserProfile {
+  id?: string;
   name: string;
   email: string;
+  role?: string;
   readBooks: CatalogItem[];
   builtBrickslabs: CatalogItem[];
   currentReservations: string[];

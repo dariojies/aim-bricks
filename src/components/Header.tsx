@@ -3,12 +3,14 @@ import { BookOpen, Box, Crown, LogIn, User, Moon, Sun } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
+  userRole?: string;
   onLoginClick: () => void;
   onProfileClick: () => void;
+  onAdminClick: () => void;
   onHomeClick: () => void;
 }
 
-export const Header: React.FC<Props> = ({ isLoggedIn, onLoginClick, onProfileClick, onHomeClick }) => {
+export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, onProfileClick, onAdminClick, onHomeClick }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
@@ -50,9 +52,16 @@ export const Header: React.FC<Props> = ({ isLoggedIn, onLoginClick, onProfileCli
         </div>
 
         {isLoggedIn ? (
-          <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
-            <User size={18} /> Mi Perfil
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {(userRole === 'admin' || userRole === 'superadmin') && (
+              <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#8B5CF6', color: '#8B5CF6' }} onClick={onAdminClick}>
+                Panel Admin
+              </button>
+            )}
+            <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
+              <User size={18} /> Mi Perfil
+            </button>
+          </div>
         ) : (
           <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={onLoginClick}>
             <LogIn size={18} /> Iniciar Sesión

@@ -147,82 +147,77 @@ model user_belts {
 }
 
 model users {
-  user_id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String       @db.VarChar(255)
-  surname         String?      @db.VarChar(255)
-  email           String       @unique @db.VarChar(255)
-  password        String       @db.VarChar(255)
-  belt            String?      @db.VarChar(255)
-  phone           String?      @db.VarChar(50)
-  birthday        DateTime?    @db.Date
-  profile_picture String?      @db.VarChar(1024)
-  media_consent   Boolean?     @default(false)
-  ad_removal      Boolean?     @default(false)
-  role            String?      @default("student") @db.VarChar(50)
-  club_id         String?      @db.Uuid
-  created_at      DateTime?    @default(now()) @db.Timestamp(6)
-  plan            String?      @default("free") @db.VarChar(50)
-  username        String?      @unique @db.VarChar(255)
-  legacy_id       String?      @db.VarChar(255)
+  user_id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String        @db.VarChar(255)
+  surname         String?       @db.VarChar(255)
+  email           String        @unique @db.VarChar(255)
+  password        String        @db.VarChar(255)
+  belt            String?       @db.VarChar(255)
+  phone           String?       @db.VarChar(50)
+  birthday        DateTime?     @db.Date
+  profile_picture String?       @db.VarChar(1024)
+  media_consent   Boolean?      @default(false)
+  ad_removal      Boolean?      @default(false)
+  role            String?       @default("student") @db.VarChar(50)
+  club_id         String?       @db.Uuid
+  created_at      DateTime?     @default(now()) @db.Timestamp(6)
+  plan            String?       @default("free") @db.VarChar(50)
+  username        String?       @unique @db.VarChar(255)
+  legacy_id       String?       @db.VarChar(255)
   belt_level      Int?
-  user_belts      user_belts[]
-  clubs           clubs?       @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
-
-  // Aim-Bricks internal relations
+  dev_role        String?       @db.VarChar(50)
   reservations    Reservation[]
   history         UserHistory[]
+  user_belts      user_belts[]
+  clubs           clubs?        @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
 }
 
 model Brickslab {
-  id              String         @id @default(uuid())
-  title           String
-  description     String
-  imageUrl        String
-  difficulty      String
-  tags            String[]
-  isAvailable     Boolean        @default(true)
-  
-  reservations    Reservation[]
-  history         UserHistory[]
+  id           String        @id @default(uuid())
+  title        String
+  description  String
+  imageUrl     String
+  difficulty   String
+  tags         String[]
+  isAvailable  Boolean       @default(true)
+  reservations Reservation[]
+  history      UserHistory[]
 }
 
 model LibraryBook {
-  id              String         @id @default(uuid())
-  title           String
-  author          String
-  description     String
-  imageUrl        String
-  minimumRank     String
-  tags            String[]
-  isAvailable     Boolean        @default(true)
-  
-  reservations    Reservation[]
-  history         UserHistory[]
+  id           String        @id @default(uuid())
+  title        String
+  author       String
+  description  String
+  imageUrl     String
+  minimumRank  String
+  tags         String[]
+  isAvailable  Boolean       @default(true)
+  reservations Reservation[]
+  history      UserHistory[]
 }
 
 model Reservation {
-  id              String         @id @default(uuid())
-  userId          String         @db.Uuid
+  id              String       @id @default(uuid())
+  userId          String       @db.Uuid
   brickslabId     String?
   libraryBookId   String?
-  reservationDate DateTime       @default(now())
+  reservationDate DateTime     @default(now())
   returnDate      DateTime?
-  status          String         // Active, Returned, Overdue
-
-  user            users          @relation(fields: [userId], references: [user_id])
-  brickslab       Brickslab?     @relation(fields: [brickslabId], references: [id])
-  libraryBook     LibraryBook?   @relation(fields: [libraryBookId], references: [id])
+  status          String
+  brickslab       Brickslab?   @relation(fields: [brickslabId], references: [id])
+  libraryBook     LibraryBook? @relation(fields: [libraryBookId], references: [id])
+  user            users        @relation(fields: [userId], references: [user_id])
 }
 
 model UserHistory {
-  id              String         @id @default(uuid())
-  userId          String         @db.Uuid
-  brickslabId     String?
-  libraryBookId   String?
-  completedAt     DateTime       @default(now())
-  notes           String?
-
-  user            users          @relation(fields: [userId], references: [user_id])
-  brickslab       Brickslab?     @relation(fields: [brickslabId], references: [id])
-  libraryBook     LibraryBook?   @relation(fields: [libraryBookId], references: [id])
+  id            String       @id @default(uuid())
+  userId        String       @db.Uuid
+  brickslabId   String?
+  libraryBookId String?
+  completedAt   DateTime     @default(now())
+  notes         String?
+  brickslab     Brickslab?   @relation(fields: [brickslabId], references: [id])
+  libraryBook   LibraryBook? @relation(fields: [libraryBookId], references: [id])
+  user          users        @relation(fields: [userId], references: [user_id])
 }

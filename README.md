@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# Aim-Bricks & Biblioteca Virtual
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una moderna aplicación web diseñada para la reserva y gestión del catálogo local de **Aim Brickslabs** y **Libros**. Está integrada con un sistema de autenticación centralizado y un Panel de Administración para el control seguro del inventario.
 
-Currently, two official plugins are available:
+## Arquitectura y Tecnologías
+*   **Frontend:** React 19, TypeScript, Vite. Diseño de interfaz (UI) ultra estético basado en Glassmorphism.
+*   **Backend:** Node.js, Express (API REST en `server.js`).
+*   **Base de Datos:** PostgreSQL en la nube (Compartida de forma hermética con otros 5 submódulos).
+*   **ORM:** Prisma Client (v6) - Configurado para inspeccionar la DB e inyectar tablas exclusivas (`Brickslab`, `LibraryBook`, `Reservation`, `UserHistory`) sin manipular los datos genéricos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Funcionalidades Core
+1.  **Catálogo en Vivo:** Exploración de Brickslabs y Libros disponibles con etiquetas de dificultad, estado de disponibilidad y sinopsis.
+2.  **Sistema de Reservas Compartido:** Los alumnos inician sesión de forma segura y pueden reservar material al instante.
+3.  **Perfil Inteligente:** Historial persistente en la DB con todo el material montado o leído.
+4.  **Panel de Administración (Gestión):** Protegido por una columna dedicada `dev_role` en la base de datos de usuarios. Permite al instructor:
+    - Control de las reservas activas (con botón para confirmar devolución).
+    - CRUD Automático (Dar de alta manuales y legos, o eliminarlos depurando el historial para no romper relaciones).
 
-## React Compiler
+## Instrucciones para Ejecución Local
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
 
-## Expanding the ESLint configuration
+2. **Variables de Entorno (`.env`):**
+   No olvides añadir el archivo `.env` en tu raíz con la URI productiva de Heroku.
+   ```env
+   DATABASE_URL="postgres://usuario:password@host:5432/dbname"
+   ```
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+3. **Sincronizar Prisma Client:**
+   Al ser una arquitectura en la nube, el ORM necesita compilar tus librerías locales:
+   ```bash
+   npx prisma generate
+   ```
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+4. **Levantar los Servidores:**
+   *Interfaz Visual en Vite:*
+   ```bash
+   npm run dev
+   ```
+   *Servidor API Real (Node):*
+   ```bash
+   node server.js
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Notas Rápidas de Despliegue (Heroku)
+El proyecto ha sido optimizado con un script `heroku-postbuild`. Heroku descargará Prisma, leerá tu schema, compilará Typescript (React Vite) e instanciará el servidor Express de producción automáticamente con un solo comando:
+```bash
+git push heroku main
 ```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+> **Aviso de Seguridad**: La carpeta `infopriv/` (donde se ubican los dumps enteros estructurales o en bruto de tu base de datos y esquemas delicados) se encuentra excluida permanentemente de las subidas gracias a `.gitignore`.

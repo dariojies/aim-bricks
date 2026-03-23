@@ -64,6 +64,7 @@ app.post('/api/auth/login', async (req, res) => {
       id: user.user_id,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
+      role: user.dev_role || 'student',
       readBooks: user.history.filter(h => h.libraryBook).map(h => mapBook(h.libraryBook)),
       builtBrickslabs: user.history.filter(h => h.brickslab).map(h => mapBrickslab(h.brickslab)),
       currentReservations: user.reservations.filter(r => r.status === 'Active').map(r => {
@@ -74,6 +75,103 @@ app.post('/api/auth/login', async (req, res) => {
     };
 
     res.json(profile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// Admin Endpoints
+app.get('/api/admin/reservations', async (req, res) => {
+  try {
+    const reservations = await prisma.reservation.findMany({
+      where: { status: 'Active' },
+      include: { user: true, brickslab: true, libraryBook: true }
+    });
+    
+    res.json(reservations.map(r => ({
+      id: r.id,
+      userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
+      userEmail: r.user.email,
+      itemTitle: r.brickslab ? r.brickslab.title : (r.libraryBook ? r.libraryBook.title : ''),
+      itemType: r.brickslab ? 'Aim Brickslab' : 'Libro',
+      reservationDate: r.reservationDate
+    })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/return', async (req, res) => {
+  try {
+    const { reservationId } = req.body;
+    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
+    if (!reservation) return res.status(404).json({ error: 'No encontrado' });
+    
+    await prisma.reservation.update({
+      where: { id: reservationId },
+      data: { status: 'Returned', returnDate: new Date() }
+    });
+    
+    // Add to history
+    await prisma.userHistory.create({
+      data: {
+        userId: reservation.userId,
+        brickslabId: reservation.brickslabId,
+        libraryBookId: reservation.libraryBookId,
+      }
+    });
+
+    if (reservation.brickslabId) {
+      await prisma.brickslab.update({ where: { id: reservation.brickslabId }, data: { isAvailable: true }});
+    } else if (reservation.libraryBookId) {
+      await prisma.libraryBook.update({ where: { id: reservation.libraryBookId }, data: { isAvailable: true }});
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/items', async (req, res) => {
+  try {
+    const { type, title, description, imageUrl, difficulty, minimumRank, tagsString } = req.body;
+    const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
+    
+    if (type === 'Aim Brickslab') {
+      await prisma.brickslab.create({
+        data: { title, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', difficulty: difficulty || 'Media', tags }
+      });
+    } else {
+      await prisma.libraryBook.create({
+        data: { title, author: 'Desconocido', description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f', minimumRank: minimumRank || 'Blanco', tags }
+      });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.delete('/api/admin/items/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const type = req.query.type;
+    
+    if (type === 'Aim Brickslab') {
+      // Usamos deleteMany manual para limpiar relaciones por la compatibilidad DDL
+      await prisma.reservation.deleteMany({ where: { brickslabId: id } });
+      await prisma.userHistory.deleteMany({ where: { brickslabId: id } });
+      await prisma.brickslab.delete({ where: { id } });
+    } else {
+      await prisma.reservation.deleteMany({ where: { libraryBookId: id } });
+      await prisma.userHistory.deleteMany({ where: { libraryBookId: id } });
+      await prisma.libraryBook.delete({ where: { id } });
+    }
+    res.json({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
