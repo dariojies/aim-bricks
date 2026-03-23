@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model activities {
+  activity_id String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id     String?  @db.Uuid
+  name        String   @db.VarChar(255)
+  icon        String?  @db.VarChar(255)
+  clubs       clubs?   @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
+  groups      groups[]
+}
+
+model attendance {
+  attendance_id String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_id      String?   @db.Uuid
+  student_id    String?   @db.Uuid
+  date          DateTime  @db.Date
+  status        String    @db.VarChar(50)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  groups        groups?   @relation(fields: [group_id], references: [group_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model belts {
+  id         Int     @id @default(autoincrement())
+  belt_level Int     @unique
+  name       String  @db.VarChar(255)
+  color_hex  String? @db.VarChar(50)
+}
+
+model clubs {
+  club_id    String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String       @db.VarChar(255)
+  logo       String?      @db.VarChar(1024)
+  plan       String?      @default("free") @db.VarChar(50)
+  created_at DateTime?    @default(now()) @db.Timestamp(6)
+  activities activities[]
+  users      users[]
+}
+
+model evaluation_movements {
+  movement_id   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evaluation_id String?      @db.Uuid
+  move_index    Int
+  score         Int
+  comment       String?
+  evaluations   evaluations? @relation(fields: [evaluation_id], references: [evaluation_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model evaluations {
+  evaluation_id        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id           String?                @db.Uuid
+  instructor_id        String?                @db.Uuid
+  tul_id               String?                @db.Uuid
+  evaluation_date      DateTime?              @default(now()) @db.Timestamp(6)
+  summary_comment      String?
+  evaluation_movements evaluation_movements[]
+  tuls                 tuls?                  @relation(fields: [tul_id], references: [tul_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model exercises {
+  id                     String  @id @db.VarChar(255)
+  name                   String? @db.VarChar(255)
+  musclegroup            String? @db.VarChar(255)
+  description            String?
+  difficulty             String? @db.VarChar(50)
+  incompatibleconditions String?
+}
+
+model group_students {
+  group_id   String @db.Uuid
+  student_id String @db.Uuid
+  groups     groups @relation(fields: [group_id], references: [group_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([group_id, student_id])
+}
+
+model groups {
+  group_id       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  activity_id    String?          @db.Uuid
+  name           String           @db.VarChar(255)
+  time           String?          @db.VarChar(255)
+  attendance     attendance[]
+  group_students group_students[]
+  activities     activities?      @relation(fields: [activity_id], references: [activity_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model messages {
+  id         String   @id @db.VarChar(255)
+  senderid   String?  @db.VarChar(255)
+  receiverid String?  @db.VarChar(255)
+  text       String?
+  timestamp  String?  @db.VarChar(255)
+  isread     Boolean?
+}
+
+model registrosapp {
+  id_usuario         String     @id @db.VarChar(255)
+  nombre             String?    @db.VarChar(255)
+  apellidos          String?    @db.VarChar(255)
+  correo_electronico String?    @unique @db.VarChar(255)
+  contrasena         String?    @db.VarChar(255)
+  goal               String?    @db.VarChar(255)
+  level              String?    @db.VarChar(255)
+  language           String?    @db.VarChar(50)
+  injuries           String?
+  avatarurl          String?
+  consentimiento     Boolean?
+  sessions           sessions[]
+}
+
+model sessions {
+  id                       String        @id @db.VarChar(255)
+  studentid                String?       @db.VarChar(255)
+  date                     String?       @db.VarChar(255)
+  title                    String?       @db.VarChar(255)
+  type                     String?       @db.VarChar(50)
+  exercises                String?
+  notes                    String?
+  aigenerated              Boolean?
+  completedexerciseindices String?
+  feedback                 String?
+  registrosapp             registrosapp? @relation(fields: [studentid], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tuls {
+  tul_id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String        @db.VarChar(255)
+  video_url        String?       @db.VarChar(1024)
+  moves            Int?
+  meaning          String?
+  belt_requirement Int?
+  evaluations      evaluations[]
+}
+
+model user_belts {
+  id         Int       @id @default(autoincrement())
+  user_id    String?   @db.Uuid
+  belt_level Int
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  user_id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String       @db.VarChar(255)
+  surname         String?      @db.VarChar(255)
+  email           String       @unique @db.VarChar(255)
+  password        String       @db.VarChar(255)
+  belt            String?      @db.VarChar(255)
+  phone           String?      @db.VarChar(50)
+  birthday        DateTime?    @db.Date
+  profile_picture String?      @db.VarChar(1024)
+  media_consent   Boolean?     @default(false)
+  ad_removal      Boolean?     @default(false)
+  role            String?      @default("student") @db.VarChar(50)
+  club_id         String?      @db.Uuid
+  created_at      DateTime?    @default(now()) @db.Timestamp(6)
+  plan            String?      @default("free") @db.VarChar(50)
+  username        String?      @unique @db.VarChar(255)
+  legacy_id       String?      @db.VarChar(255)
+  belt_level      Int?
+  user_belts      user_belts[]
+  clubs           clubs?       @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
+
+  // Aim-Bricks internal relations
+  reservations    Reservation[]
+  history         UserHistory[]
+}
+
+model Brickslab {
+  id              String         @id @default(uuid())
+  title           String
+  description     String
+  imageUrl        String
+  difficulty      String
+  tags            String[]
+  isAvailable     Boolean        @default(true)
+  
+  reservations    Reservation[]
+  history         UserHistory[]
+}
+
+model LibraryBook {
+  id              String         @id @default(uuid())
+  title           String
+  author          String
+  description     String
+  imageUrl        String
+  minimumRank     String
+  tags            String[]
+  isAvailable     Boolean        @default(true)
+  
+  reservations    Reservation[]
+  history         UserHistory[]
+}
+
+model Reservation {
+  id              String         @id @default(uuid())
+  userId          String         @db.Uuid
+  brickslabId     String?
+  libraryBookId   String?
+  reservationDate DateTime       @default(now())
+  returnDate      DateTime?
+  status          String         // Active, Returned, Overdue
+
+  user            users          @relation(fields: [userId], references: [user_id])
+  brickslab       Brickslab?     @relation(fields: [brickslabId], references: [id])
+  libraryBook     LibraryBook?   @relation(fields: [libraryBookId], references: [id])
+}
+
+model UserHistory {
+  id              String         @id @default(uuid())
+  userId          String         @db.Uuid
+  brickslabId     String?
+  libraryBookId   String?
+  completedAt     DateTime       @default(now())
+  notes           String?
+
+  user            users          @relation(fields: [userId], references: [user_id])
+  brickslab       Brickslab?     @relation(fields: [brickslabId], references: [id])
+  libraryBook     LibraryBook?   @relation(fields: [libraryBookId], references: [id])
+}
