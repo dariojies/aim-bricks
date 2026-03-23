@@ -23,11 +23,36 @@ function App() {
   const [loginPassword, setLoginPassword] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/api/catalog`)
-      .then(res => res.json())
-      .then(data => setItems(data))
-      .catch(console.error);
+    loadCatalog();
+    
+    // Auto-sync session
+    const saved = localStorage.getItem('aim_bricks_user');
+    if (saved) {
+      try {
+        const u = JSON.parse(saved);
+        fetch(`${API_URL}/api/auth/me`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: u.id })
+        }).then(r => r.json()).then(data => {
+          if (!data.error) {
+            setUser(data);
+            localStorage.setItem('aim_bricks_user', JSON.stringify(data));
+          }
+        }).catch(console.error);
+      } catch (e) { console.error(e); }
+    }
   }, []);
+
+  const loadCatalog = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/catalog`);
+      const data = await res.json();
+      setItems(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,8 +81,42 @@ function App() {
     }
   };
 
-  const handleReserveClick = (item: CatalogItem) => {
-    setSelectedItem(item);
+  const handleReserveClick = async (item: CatalogItem) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, type: item.type, itemId: item.id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'No se pudo completar la reserva.');
+        return;
+      }
+      
+      setSelectedItem(item);
+      loadCatalog(); // Refresh catalog stock immediately
+      
+      // Auto-sync User History to show the new reservation
+      fetch(`${API_URL}/api/auth/me`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      }).then(r => r.json()).then(newData => {
+        if (!newData.error) {
+          setUser(newData);
+          localStorage.setItem('aim_bricks_user', JSON.stringify(newData));
+        }
+      });
+      
+    } catch (err) {
+      console.error(err);
+      alert('Error en conexión con el servidor.');
+    }
   };
 
   const handleConfirmReservation = async () => {

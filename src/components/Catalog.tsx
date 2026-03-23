@@ -24,7 +24,7 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
             className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setFilter(f as any)}
           >
-            {f}
+            {f === 'Libro' ? 'Biblioteca' : f}
           </button>
         ))}
       </div>

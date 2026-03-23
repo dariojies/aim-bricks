@@ -180,6 +180,7 @@ model Brickslab {
   difficulty   String
   tags         String[]
   isAvailable  Boolean       @default(true)
+  stock        Int?          @default(1)
   reservations Reservation[]
   history      UserHistory[]
 }
@@ -193,6 +194,7 @@ model LibraryBook {
   minimumRank  String
   tags         String[]
   isAvailable  Boolean       @default(true)
+  stock        Int?          @default(1)
   reservations Reservation[]
   history      UserHistory[]
 }

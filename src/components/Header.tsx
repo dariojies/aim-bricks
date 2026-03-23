@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Box, Crown, LogIn, User, Moon, Sun } from 'lucide-react';
+import { Box, Crown, LogIn, User, Moon, Sun } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -35,12 +35,6 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
           <h1 className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Aim Brickslab y Libros</h1>
         </div>
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <a href="#" onClick={(e) => { e.preventDefault(); onHomeClick(); }} style={{ color: 'var(--text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-            <Box size={20} /> Brickslabs
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); onHomeClick(); }} style={{ color: 'var(--text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-            <BookOpen size={20} /> Biblioteca
-          </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '9999px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
             <Crown size={20} />
             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>

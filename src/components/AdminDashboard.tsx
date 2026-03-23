@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -23,6 +23,13 @@ export const AdminDashboard: React.FC = () => {
   const [newItemTitle, setNewItemTitle] = useState('');
   const [newItemDesc, setNewItemDesc] = useState('');
   const [newItemImage, setNewItemImage] = useState('');
+  const [newItemStock, setNewItemStock] = useState('1');
+
+  // Edit form state
+  const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editStock, setEditStock] = useState('1');
   
   useEffect(() => {
     fetchReservations();
@@ -80,14 +87,44 @@ export const AdminDashboard: React.FC = () => {
           type: newItemType,
           title: newItemTitle,
           description: newItemDesc,
-          imageUrl: newItemImage
+          imageUrl: newItemImage,
+          stock: newItemStock
         })
       });
       if (res.ok) {
         setNewItemTitle('');
         setNewItemDesc('');
         setNewItemImage('');
+        setNewItemStock('1');
         alert('Elemento añadido correctamente');
+        fetchCatalog();
+      }
+    } catch(e) { console.error(e); }
+  };
+
+  const handleEditClick = (item: CatalogItem) => {
+    setEditingItem(item);
+    setEditTitle(item.title);
+    setEditDesc(item.description);
+    setEditStock(item.stock?.toString() || '1');
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/items/${editingItem.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: editingItem.type,
+          title: editTitle,
+          description: editDesc,
+          stock: editStock
+        })
+      });
+      if (res.ok) {
+        setEditingItem(null);
         fetchCatalog();
       }
     } catch(e) { console.error(e); }
@@ -181,7 +218,7 @@ export const AdminDashboard: React.FC = () => {
                 <select 
                   value={newItemType} 
                   onChange={e => setNewItemType(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', appearance: 'none', WebkitAppearance: 'none', fontSize: '1rem', minHeight: '48px' }}
                 >
                   <option value="Aim Brickslab">Aim Brickslab</option>
                   <option value="Libro">Libro</option>
@@ -190,6 +227,10 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
                 <input required value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Stock Inicial (Número de copias físicas)</label>
+                <input required value={newItemStock} onChange={e => setNewItemStock(e.target.value)} type="number" min="1" step="1" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
@@ -214,19 +255,54 @@ export const AdminDashboard: React.FC = () => {
                     <img src={item.imageUrl} alt={item.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }} />
                     <div>
                       <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{item.title}</h4>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.type} • {item.status}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.type} • Stock físico: {item.stock || 1} • {item.isAvailable ? 'Disponible' : 'Agotado'}</span>
                     </div>
                   </div>
-                  <button 
-                    className="btn btn-outline" 
-                    style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }}
-                    onClick={() => handleDeleteItem(item.id, item.type)}
-                  >
-                    <Trash2 size={16} /> Eliminar
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+                      onClick={() => handleEditClick(item)}
+                    >
+                      <Pencil size={16} /> Editar
+                    </button>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }}
+                      onClick={() => handleDeleteItem(item.id, item.type)}
+                    >
+                      <Trash2 size={16} /> Eliminar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {editingItem && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-panel" style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '100%', maxWidth: '500px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Editar {editingItem.type}</h3>
+            <form onSubmit={handleEditSubmit} style={{ display: 'grid', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
+                <input required value={editTitle} onChange={e => setEditTitle(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Stock Total</label>
+                <input required type="number" min="1" step="1" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
+                <textarea required value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '100px' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setEditingItem(null)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Guardar Cambios</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

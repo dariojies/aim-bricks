@@ -8,6 +8,8 @@ export interface CatalogItem {
   type: ItemType;
   description: string;
   status: ItemStatus;
+  isAvailable?: boolean;
+  stock?: number;
   imageUrl: string;
 }
 
