@@ -10,7 +10,10 @@ const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
 
 function App() {
   const [items, setItems] = useState<CatalogItem[]>([]);
-  const [user, setUser] = useState<any>(null); // Usamos any para simplificar el mapeo que añadimos nuevo (id, email)
+  const [user, setUser] = useState<any>(() => {
+    const saved = localStorage.getItem('aim_bricks_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin'>('catalog');
   
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
@@ -34,12 +37,18 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: loginPassword })
       });
+      const parsed = await res.json();
       if (res.ok) {
-        const profile = await res.json();
-        setUser(profile);
+        const userProfile = parsed.profile || parsed;
+        setUser(userProfile);
+        localStorage.setItem('aim_bricks_user', JSON.stringify(userProfile));
+        if (parsed.token) localStorage.setItem('aim_bricks_token', parsed.token);
+        
         setShowLoginModal(false);
+        setLoginEmail('');
+        setLoginPassword('');
       } else {
-        alert('Credenciales incorrectas');
+        alert(parsed.error || 'Autenticación fallida');
       }
     } catch (err) {
       console.error(err);
@@ -79,12 +88,20 @@ function App() {
     }
   };
 
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentView('catalog');
+    localStorage.removeItem('aim_bricks_user');
+    localStorage.removeItem('aim_bricks_token');
+  };
+
   return (
     <div className="container">
       <Header 
         isLoggedIn={!!user} 
         userRole={user?.role}
         onLoginClick={() => setShowLoginModal(true)} 
+        onLogoutClick={handleLogout}
         onProfileClick={() => setCurrentView('profile')} 
         onAdminClick={() => setCurrentView('admin')}
         onHomeClick={() => setCurrentView('catalog')}
