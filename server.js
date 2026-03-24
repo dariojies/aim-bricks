@@ -275,7 +275,7 @@ app.get('/api/catalog', async (req, res) => {
         return {
           id: b.id, title: b.title, description: b.description, imageUrl: b.imageUrl,
           difficulty: b.difficulty, tags: b.tags, type: 'Aim Brickslab', 
-          isAvailable: available > 0, stock: b.stock || 1, legoReference: b.legoReference
+          isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1, legoReference: b.legoReference
         };
       }),
       ...libraryBooks.map(b => {
@@ -283,7 +283,7 @@ app.get('/api/catalog', async (req, res) => {
         return {
           id: b.id, title: b.title, author: b.author, isbn: b.isbn, description: b.description, imageUrl: b.imageUrl,
           minimumRank: b.minimumRank, tags: b.tags, type: 'Libro', 
-          isAvailable: available > 0, stock: b.stock || 1
+          isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1
         };
       })
     ];
