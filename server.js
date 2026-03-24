@@ -53,7 +53,8 @@ app.post('/api/auth/login', async (req, res) => {
       },
       include: {
         reservations: { include: { brickslab: true, libraryBook: true } },
-        history: { include: { brickslab: true, libraryBook: true } }
+        history: { include: { brickslab: true, libraryBook: true } },
+        brickslab_ranks: true
       }
     });
 
@@ -79,7 +80,11 @@ app.post('/api/auth/login', async (req, res) => {
         if (r.brickslab) return `Aim Brickslab: ${r.brickslab.title}`;
         if (r.libraryBook) return `Libro: ${r.libraryBook.title}`;
         return 'Reserva';
-      })
+      }),
+      permissions: {
+        brickslab: user.brickslab_ranks?.[0]?.canReserveBrickslab || false,
+        library: user.brickslab_ranks?.[0]?.canReserveLibrary || false
+      }
     };
 
     res.json({ token, profile });
@@ -98,7 +103,8 @@ app.post('/api/auth/me', async (req, res) => {
       where: { user_id: userId },
       include: {
         reservations: { include: { brickslab: true, libraryBook: true } },
-        history: { include: { brickslab: true, libraryBook: true } }
+        history: { include: { brickslab: true, libraryBook: true } },
+        brickslab_ranks: true
       }
     });
 
@@ -115,7 +121,11 @@ app.post('/api/auth/me', async (req, res) => {
         if (r.brickslab) return `Aim Brickslab: ${r.brickslab.title}`;
         if (r.libraryBook) return `Libro: ${r.libraryBook.title}`;
         return 'Reserva';
-      })
+      }),
+      permissions: {
+        brickslab: user.brickslab_ranks?.[0]?.canReserveBrickslab || false,
+        library: user.brickslab_ranks?.[0]?.canReserveLibrary || false
+      }
     };
 
     res.json(profile);
@@ -126,6 +136,51 @@ app.post('/api/auth/me', async (req, res) => {
 });
 
 // Admin Endpoints
+app.get('/api/admin/users/permissions', async (req, res) => {
+  try {
+    const usersList = await prisma.users.findMany({
+      include: { brickslab_ranks: true },
+      orderBy: { name: 'asc' }
+    });
+    res.json(usersList.map(u => ({
+      id: u.user_id,
+      name: `${u.name} ${u.surname || ''}`.trim(),
+      email: u.email,
+      role: u.dev_role || 'student',
+      permissions: {
+        brickslab: u.brickslab_ranks?.[0]?.canReserveBrickslab || false,
+        library: u.brickslab_ranks?.[0]?.canReserveLibrary || false
+      }
+    })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/users/permissions', async (req, res) => {
+  try {
+    const { userId, brickslab, library } = req.body;
+    
+    // Upsert equivalent since we might not have a record yet
+    const existing = await prisma.brickslab_ranks.findUnique({ where: { userId } });
+    if (existing) {
+      await prisma.brickslab_ranks.update({
+        where: { userId },
+        data: { canReserveBrickslab: brickslab, canReserveLibrary: library }
+      });
+    } else {
+      await prisma.brickslab_ranks.create({
+        data: { userId, canReserveBrickslab: brickslab, canReserveLibrary: library }
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
 app.get('/api/admin/reservations', async (req, res) => {
   try {
     const reservations = await prisma.reservation.findMany({
@@ -297,6 +352,18 @@ app.get('/api/catalog', async (req, res) => {
 app.post('/api/reservations', async (req, res) => {
   try {
     const { userId, type, itemId } = req.body;
+
+    // Permissions check
+    const ranks = await prisma.brickslab_ranks.findUnique({ where: { userId } });
+    const canReserveBrickslab = ranks?.canReserveBrickslab || false;
+    const canReserveLibrary = ranks?.canReserveLibrary || false;
+
+    if (type === 'Aim Brickslab' && !canReserveBrickslab) {
+      return res.status(403).json({ error: "No tienes el rango 'Brickslab' para reservar esta categoría." });
+    }
+    if (type === 'Libro' && !canReserveLibrary) {
+      return res.status(403).json({ error: "No tienes el rango 'Biblioteca' para reservar esta categoría." });
+    }
 
     const userActiveInCategory = await prisma.reservation.count({
       where: {

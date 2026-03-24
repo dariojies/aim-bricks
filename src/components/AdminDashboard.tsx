@@ -14,9 +14,10 @@ interface AdminReservation {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   
   // Add item form state
   const [newItemType, setNewItemType] = useState('Aim Brickslab');
@@ -40,7 +41,32 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     fetchReservations();
     fetchCatalog();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/users/permissions`);
+      if (res.ok) setUsers(await res.json());
+    } catch(e) { console.error(e); }
+  };
+
+  const handleRankToggle = async (userId: string, currentPerms: any, field: 'brickslab' | 'library') => {
+    // Optimistic UI update or block during request? We can just do request then fetch
+    const newPerms = { 
+      brickslab: currentPerms?.brickslab || false, 
+      library: currentPerms?.library || false,
+      [field]: !currentPerms?.[field] 
+    };
+    try {
+      const res = await fetch(`${API_URL}/api/admin/users/permissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, brickslab: newPerms.brickslab, library: newPerms.library })
+      });
+      if (res.ok) fetchUsers();
+    } catch(e) { console.error(e); }
+  };
 
   const fetchReservations = async () => {
     try {
@@ -163,6 +189,12 @@ export const AdminDashboard: React.FC = () => {
         >
           Gestión de Catálogo
         </button>
+        <button 
+          className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('users')}
+        >
+          Gestión de Rangos
+        </button>
       </div>
 
       {activeTab === 'reservations' && (
@@ -217,6 +249,48 @@ export const AdminDashboard: React.FC = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'users' && (
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Gestión de Rangos</h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                  <th style={{ padding: '1rem 0.5rem' }}>Usuario</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Email</th>
+                  <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Rango Brickslab</th>
+                  <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Rango Biblioteca</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                    <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{u.name}</td>
+                    <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
+                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={u.permissions?.brickslab || false} 
+                        onChange={() => handleRankToggle(u.id, u.permissions, 'brickslab')}
+                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                      />
+                    </td>
+                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={u.permissions?.library || false} 
+                        onChange={() => handleRankToggle(u.id, u.permissions, 'library')}
+                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

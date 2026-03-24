@@ -59,6 +59,10 @@ export interface UserProfile {
   readBooks: CatalogItem[];
   builtBrickslabs: CatalogItem[];
   currentReservations: string[];
+  permissions?: {
+    brickslab: boolean;
+    library: boolean;
+  };
 }
 
 export const mockUser: UserProfile = {

@@ -86,6 +86,15 @@ function App() {
       setShowLoginModal(true);
       return;
     }
+
+    if (item.type === 'Aim Brickslab' && !user.permissions?.brickslab) {
+      alert('Necesitas el rango "Brickslab" para reservar este artículo.');
+      return;
+    }
+    if (item.type === 'Libro' && !user.permissions?.library) {
+      alert('Necesitas el rango "Biblioteca" para reservar este artículo.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/reservations`, {
         method: 'POST',

@@ -169,6 +169,7 @@ model users {
   reservations    Reservation[]
   history         UserHistory[]
   user_belts      user_belts[]
+  brickslab_ranks brickslab_ranks[]
   clubs           clubs?        @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
 }
 
@@ -224,4 +225,12 @@ model UserHistory {
   brickslab     Brickslab?   @relation(fields: [brickslabId], references: [id])
   libraryBook   LibraryBook? @relation(fields: [libraryBookId], references: [id])
   user          users        @relation(fields: [userId], references: [user_id])
+}
+
+model brickslab_ranks {
+  id                  String  @id @default(uuid())
+  userId              String  @db.Uuid @unique
+  canReserveBrickslab Boolean @default(false)
+  canReserveLibrary   Boolean @default(false)
+  user                users   @relation(fields: [userId], references: [user_id], onDelete: Cascade)
 }
