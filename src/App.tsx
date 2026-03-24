@@ -22,6 +22,8 @@ function App() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
+  const [showRankAlert, setShowRankAlert] = useState<{show: boolean, type: 'Brickslab' | 'Biblioteca' | null}>({show: false, type: null});
+
   useEffect(() => {
     loadCatalog();
     
@@ -88,11 +90,11 @@ function App() {
     }
 
     if (item.type === 'Aim Brickslab' && !user.permissions?.brickslab) {
-      alert('Necesitas el rango "Brickslab" para reservar este artículo.');
+      setShowRankAlert({show: true, type: 'Brickslab'});
       return;
     }
     if (item.type === 'Libro' && !user.permissions?.library) {
-      alert('Necesitas el rango "Biblioteca" para reservar este artículo.');
+      setShowRankAlert({show: true, type: 'Biblioteca'});
       return;
     }
     try {
@@ -237,6 +239,40 @@ function App() {
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Entrar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Aviso de Rango */}
+      {showRankAlert.show && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 60, padding: '1rem'
+        }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ 
+                width: '60px', height: '60px', background: 'rgba(239, 68, 68, 0.1)', 
+                color: '#EF4444', borderRadius: '50%', display: 'flex', alignItems: 'center', 
+                justifyContent: 'center', margin: '0 auto 1rem auto' 
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem' }}>Acceso Restringido</h2>
+              <p style={{ color: 'var(--text-muted)' }}>
+                Necesitas el rango <strong>{showRankAlert.type}</strong> para reservar este artículo.
+              </p>
+              <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem', fontSize: '0.95rem' }}>
+                Por favor, dirígete a <strong>Secretaría</strong> para informarte sobre cómo obtener acceso a las reservas.
+              </p>
+            </div>
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%' }} 
+              onClick={() => setShowRankAlert({show: false, type: null})}
+            >
+              Entendido
+            </button>
           </div>
         </div>
       )}
