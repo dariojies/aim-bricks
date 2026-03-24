@@ -31,6 +31,9 @@ export const AdminDashboard: React.FC = () => {
   const [legoReferenceInput, setLegoReferenceInput] = useState('');
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
+  
+  // User Search
+  const [userSearchTerm, setUserSearchTerm] = useState('');
 
   // Edit form state
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -254,7 +257,16 @@ export const AdminDashboard: React.FC = () => {
 
       {activeTab === 'users' && (
         <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Gestión de Rangos</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.5rem', margin: 0 }}>Gestión de Rangos</h3>
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre o correo..." 
+              value={userSearchTerm}
+              onChange={(e) => setUserSearchTerm(e.target.value)}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minWidth: '250px' }}
+            />
+          </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
               <thead>
@@ -266,7 +278,10 @@ export const AdminDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
+                {users.filter(u => 
+                  u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || 
+                  u.email.toLowerCase().includes(userSearchTerm.toLowerCase())
+                ).map(u => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                     <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{u.name}</td>
                     <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
