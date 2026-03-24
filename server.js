@@ -176,17 +176,30 @@ app.post('/api/admin/return', async (req, res) => {
 
 app.post('/api/admin/items', async (req, res) => {
   try {
-    const { type, title, description, imageUrl, difficulty, minimumRank, tagsString, stock } = req.body;
+    const { type, title, description, imageUrl, difficulty, minimumRank, tagsString, stock, isLego, legoReferenceInput, isbn, author } = req.body;
     const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
     const parsedStock = parseInt(stock || '1', 10);
     
     if (type === 'Aim Brickslab') {
+      let finalTitle = title;
+      let finalLegoRef = null;
+      
+      if (isLego && legoReferenceInput) {
+        const parts = legoReferenceInput.trim().split(' ');
+        const number = parts.pop();
+        const theme = parts.join(' ').trim();
+        finalTitle = theme ? `LEGO® ${theme} - ${title}` : `LEGO® ${title}`;
+        finalLegoRef = number;
+      } else if (isLego) {
+        finalTitle = `LEGO® ${title}`;
+      }
+
       await prisma.brickslab.create({
-        data: { title, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', difficulty: difficulty || 'Media', tags, stock: parsedStock }
+        data: { title: finalTitle, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', difficulty: difficulty || 'Media', tags, stock: parsedStock, legoReference: finalLegoRef }
       });
     } else {
       await prisma.libraryBook.create({
-        data: { title, author: 'Desconocido', description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f', minimumRank: minimumRank || 'Blanco', tags, stock: parsedStock }
+        data: { title, author: author || 'Desconocido', isbn: isbn || null, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f', minimumRank: minimumRank || 'Blanco', tags, stock: parsedStock }
       });
     }
     res.json({ success: true });
@@ -262,13 +275,13 @@ app.get('/api/catalog', async (req, res) => {
         return {
           id: b.id, title: b.title, description: b.description, imageUrl: b.imageUrl,
           difficulty: b.difficulty, tags: b.tags, type: 'Aim Brickslab', 
-          isAvailable: available > 0, stock: b.stock || 1
+          isAvailable: available > 0, stock: b.stock || 1, legoReference: b.legoReference
         };
       }),
       ...libraryBooks.map(b => {
         const available = (b.stock || 1) - (activeCounts[b.id] || 0);
         return {
-          id: b.id, title: b.title, author: b.author, description: b.description, imageUrl: b.imageUrl,
+          id: b.id, title: b.title, author: b.author, isbn: b.isbn, description: b.description, imageUrl: b.imageUrl,
           minimumRank: b.minimumRank, tags: b.tags, type: 'Libro', 
           isAvailable: available > 0, stock: b.stock || 1
         };

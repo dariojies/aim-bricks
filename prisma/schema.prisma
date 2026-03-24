@@ -173,22 +173,24 @@ model users {
 }
 
 model Brickslab {
-  id           String        @id @default(uuid())
-  title        String
-  description  String
-  imageUrl     String
-  difficulty   String
-  tags         String[]
-  isAvailable  Boolean       @default(true)
-  stock        Int?          @default(1)
-  reservations Reservation[]
-  history      UserHistory[]
+  id            String        @id @default(uuid())
+  title         String
+  description   String
+  imageUrl      String
+  difficulty    String
+  tags          String[]
+  isAvailable   Boolean       @default(true)
+  stock         Int?          @default(1)
+  legoReference String?
+  reservations  Reservation[]
+  history       UserHistory[]
 }
 
 model LibraryBook {
   id           String        @id @default(uuid())
   title        String
   author       String
+  isbn         String?
   description  String
   imageUrl     String
   minimumRank  String

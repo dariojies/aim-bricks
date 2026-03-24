@@ -25,6 +25,12 @@ export const AdminDashboard: React.FC = () => {
   const [newItemImage, setNewItemImage] = useState('');
   const [newItemStock, setNewItemStock] = useState('1');
 
+  // New specific fields
+  const [isLego, setIsLego] = useState(false);
+  const [legoReferenceInput, setLegoReferenceInput] = useState('');
+  const [author, setAuthor] = useState('');
+  const [isbn, setIsbn] = useState('');
+
   // Edit form state
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -88,7 +94,11 @@ export const AdminDashboard: React.FC = () => {
           title: newItemTitle,
           description: newItemDesc,
           imageUrl: newItemImage,
-          stock: newItemStock
+          stock: newItemStock,
+          isLego,
+          legoReferenceInput,
+          author,
+          isbn
         })
       });
       if (res.ok) {
@@ -96,6 +106,10 @@ export const AdminDashboard: React.FC = () => {
         setNewItemDesc('');
         setNewItemImage('');
         setNewItemStock('1');
+        setIsLego(false);
+        setLegoReferenceInput('');
+        setAuthor('');
+        setIsbn('');
         alert('Elemento añadido correctamente');
         fetchCatalog();
       }
@@ -224,6 +238,35 @@ export const AdminDashboard: React.FC = () => {
                   <option value="Libro">Libro</option>
                 </select>
               </div>
+
+              {newItemType === 'Aim Brickslab' && (
+                <>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="isLego" checked={isLego} onChange={e => setIsLego(e.target.checked)} />
+                    <label htmlFor="isLego" style={{ color: 'var(--text)' }}>Es un set de LEGO®</label>
+                  </div>
+                  {isLego && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Número de referencia LEGO (Ej: Harry Potter 71043)</label>
+                      <input value={legoReferenceInput} onChange={e => setLegoReferenceInput(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {newItemType === 'Libro' && (
+                <>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Autor(es)</label>
+                    <input value={author} onChange={e => setAuthor(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>ISBN</label>
+                    <input value={isbn} onChange={e => setIsbn(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                  </div>
+                </>
+              )}
+
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
                 <input required value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
@@ -255,6 +298,16 @@ export const AdminDashboard: React.FC = () => {
                     <img src={item.imageUrl} alt={item.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }} />
                     <div>
                       <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{item.title}</h4>
+                      {item.type === 'Aim Brickslab' && item.legoReference && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Ref: {item.legoReference}</div>
+                      )}
+                      {item.type === 'Libro' && (item.author || item.isbn) && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                          {item.author && item.author !== 'Desconocido' && <span>{item.author}</span>}
+                          {item.author && item.author !== 'Desconocido' && item.isbn && <span>•</span>}
+                          {item.isbn && <span>ISBN: {item.isbn}</span>}
+                        </div>
+                      )}
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.type} • Stock físico: {item.stock || 1} • {item.isAvailable ? 'Disponible' : 'Agotado'}</span>
                     </div>
                   </div>

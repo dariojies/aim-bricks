@@ -19,7 +19,19 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect }) => {
               {item.type === 'Aim Brickslab' ? <Box size={16} /> : <BookOpen size={16} />}
               {item.type}
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{item.title}</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0' }}>{item.title}</h3>
+            {item.type === 'Aim Brickslab' && item.legoReference && (
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Ref: {item.legoReference}
+              </div>
+            )}
+            {item.type === 'Libro' && (item.author || item.isbn) && (
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                {item.author && item.author !== 'Desconocido' && <span>{item.author}</span>}
+                {item.author && item.author !== 'Desconocido' && item.isbn && <span>•</span>}
+                {item.isbn && <span>ISBN: {item.isbn}</span>}
+              </div>
+            )}
           </div>
           <span style={{ 
             display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600,

@@ -11,6 +11,9 @@ export interface CatalogItem {
   isAvailable?: boolean;
   stock?: number;
   imageUrl: string;
+  legoReference?: string;
+  isbn?: string;
+  author?: string;
 }
 
 export const mockItems: CatalogItem[] = [
