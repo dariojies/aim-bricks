@@ -35,7 +35,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
           <h1 className="text-gradient header-title">Aim Brickslab y Libros</h1>
         </div>
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '9999px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
             <Crown size={20} />
             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
           </div>

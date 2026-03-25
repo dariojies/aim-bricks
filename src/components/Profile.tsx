@@ -67,7 +67,7 @@ export const Profile: React.FC<Props> = ({ user }) => {
               {user.currentReservations.map(id => (
                 <div key={id} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem 1.5rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontWeight: 500 }}>Reserva confirmada. ID: {id}</span>
-                  <span style={{ fontSize: '0.875rem', color: '#10B981', padding: '0.25rem 0.75rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '9999px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#10B981', padding: '0.25rem 0.75rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                     Activa
                   </span>
                 </div>
