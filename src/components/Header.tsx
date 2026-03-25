@@ -29,8 +29,8 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
 
   return (
     <>
-      <header className="glass-panel" style={{ padding: '1rem 2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={onHomeClick}>
+      <header className="glass-panel responsive-header" style={{ padding: '1rem 2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', justifySelf: 'center' }} onClick={onHomeClick}>
           <Box className="text-accent" size={32} />
           <h1 className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Aim Brickslab y Libros</h1>
         </div>

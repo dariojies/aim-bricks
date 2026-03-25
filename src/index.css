@@ -107,3 +107,47 @@ body {
 }
 
 .text-accent { color: var(--accent); }
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .responsive-header {
+    flex-direction: column !important;
+    gap: 1.5rem;
+    padding: 1.5rem !important;
+    text-align: center;
+  }
+  
+  .responsive-header nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .responsive-catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)) !important;
+  }
+
+  .responsive-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Make tables scrollable smoothly */
+  .table-responsive-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .responsive-modal {
+    padding: 1.25rem !important;
+  }
+}
+

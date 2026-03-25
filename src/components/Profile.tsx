@@ -21,7 +21,7 @@ export const Profile: React.FC<Props> = ({ user }) => {
             <BookOpen size={24} /> Libros Leídos ({user.readBooks.length})
           </h3>
           {user.readBooks.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
               {user.readBooks.map(book => (
                 <div key={book.id} style={{ display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
                   <img src={book.imageUrl} alt={book.title} style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '6px' }} />
@@ -42,7 +42,7 @@ export const Profile: React.FC<Props> = ({ user }) => {
             <Box size={24} /> Brickslabs Montados ({user.builtBrickslabs.length})
           </h3>
           {user.builtBrickslabs.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
               {user.builtBrickslabs.map(set => (
                 <div key={set.id} style={{ display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
                   <img src={set.imageUrl} alt={set.title} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px' }} />

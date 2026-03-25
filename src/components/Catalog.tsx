@@ -22,6 +22,7 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
           <button
             key={f}
             className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'}`}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
             onClick={() => setFilter(f as any)}
           >
             {f === 'Libro' ? 'Biblioteca' : f}
@@ -29,7 +30,7 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>
+      <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
         {filteredItems.map(item => (
           <ItemCard key={item.id} item={item} onSelect={onReserveClick} />
         ))}
