@@ -14,7 +14,7 @@ interface AdminReservation {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -42,6 +42,10 @@ export const AdminDashboard: React.FC = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editStock, setEditStock] = useState('1');
+
+  // Password reset state
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
   
   useEffect(() => {
     fetchReservations();
@@ -175,6 +179,28 @@ export const AdminDashboard: React.FC = () => {
     } catch(e) { console.error(e); }
   };
 
+  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForPassword || !newUserPassword) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/users/password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUserForPassword, newPassword: newUserPassword })
+      });
+      if (res.ok) {
+        setNewUserPassword('');
+        setSelectedUserForPassword('');
+        alert('Contraseña actualizada correctamente para el usuario seleccionado.');
+      } else {
+        alert('Hubo un error al actualizar la contraseña.');
+      }
+    } catch(e) { 
+      console.error(e); 
+      alert('Error de conexión con el servidor.');
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>
@@ -199,6 +225,12 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('users')}
         >
           Gestión de Rangos
+        </button>
+        <button 
+          className={`btn ${activeTab === 'passwords' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('passwords')}
+        >
+          Contraseñas
         </button>
       </div>
 
@@ -334,6 +366,44 @@ export const AdminDashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'passwords' && (
+        <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
+          <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Recuperación de Contraseña</h3>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Selecciona un usuario del sistema para sustituir su contraseña actual por una nueva. Esta clave será cifrada de manera segura.</p>
+          
+          <form onSubmit={handlePasswordChangeSubmit} style={{ display: 'grid', gap: '1.5rem', maxWidth: '500px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Usuario a modificar</label>
+              <select 
+                required
+                value={selectedUserForPassword} 
+                onChange={e => setSelectedUserForPassword(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+              >
+                <option value="">-- Selecciona un usuario --</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nueva Contraseña</label>
+              <input 
+                required
+                type="text" 
+                value={newUserPassword}
+                onChange={e => setNewUserPassword(e.target.value)}
+                placeholder="Ejemplo: nueva_clave_segura_123"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+              />
+            </div>
+            
+            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Cambiar Contraseña</button>
+          </form>
         </div>
       )}
 

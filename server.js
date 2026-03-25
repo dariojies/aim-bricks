@@ -181,6 +181,28 @@ app.post('/api/admin/users/permissions', async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
+app.post('/api/admin/users/password', async (req, res) => {
+  try {
+    const { userId, newPassword } = req.body;
+    if (!userId || !newPassword) {
+      return res.status(400).json({ error: 'Faltan datos requeridos (ID de usuario o contraseña)' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await prisma.users.update({
+      where: { user_id: userId },
+      data: { password: hashedPassword }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar la contraseña' });
+  }
+});
+
 app.get('/api/admin/reservations', async (req, res) => {
   try {
     const reservations = await prisma.bricks_reservation.findMany({
