@@ -46,6 +46,7 @@ export const AdminDashboard: React.FC = () => {
   // Password reset state
   const [selectedUserForPassword, setSelectedUserForPassword] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
+  const [passwordUserSearchTerm, setPasswordUserSearchTerm] = useState('');
   
   useEffect(() => {
     fetchReservations();
@@ -377,6 +378,13 @@ export const AdminDashboard: React.FC = () => {
           <form onSubmit={handlePasswordChangeSubmit} style={{ display: 'grid', gap: '1.5rem', maxWidth: '500px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Usuario a modificar</label>
+              <input 
+                type="text" 
+                placeholder="Buscar por nombre o correo para filtrar la lista..." 
+                value={passwordUserSearchTerm}
+                onChange={e => setPasswordUserSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', marginBottom: '0.5rem' }}
+              />
               <select 
                 required
                 value={selectedUserForPassword} 
@@ -384,7 +392,10 @@ export const AdminDashboard: React.FC = () => {
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
               >
                 <option value="">-- Selecciona un usuario --</option>
-                {users.map(u => (
+                {users.filter(u => 
+                  u.name.toLowerCase().includes(passwordUserSearchTerm.toLowerCase()) || 
+                  u.email.toLowerCase().includes(passwordUserSearchTerm.toLowerCase())
+                ).map(u => (
                   <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                 ))}
               </select>
