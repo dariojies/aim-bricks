@@ -311,18 +311,18 @@ app.delete('/api/admin/items/:id', async (req, res) => {
 app.put('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, title, description, stock } = req.body;
+    const { type, title, description, stock, imageUrl } = req.body;
     const parsedStock = parseInt(stock || '1', 10);
     
     if (type === 'Aim Brickslab') {
       await prisma.bricks_brickslab.update({
         where: { id },
-        data: { title, description, stock: parsedStock }
+        data: { title, description, stock: parsedStock, imageUrl }
       });
     } else {
       await prisma.bricks_librarybook.update({
         where: { id },
-        data: { title, description, stock: parsedStock }
+        data: { title, description, stock: parsedStock, imageUrl }
       });
     }
     res.json({ success: true });

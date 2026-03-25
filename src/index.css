@@ -185,3 +185,13 @@ body {
   }
 }
 
+.scroll-to-top {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .scroll-to-top {
+    display: flex !important;
+  }
+}
+

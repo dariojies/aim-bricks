@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
+import { ArrowUp } from 'lucide-react';
 import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
@@ -24,6 +25,8 @@ function App() {
 
   const [showRankAlert, setShowRankAlert] = useState<{show: boolean, type: 'Brickslab' | 'Biblioteca' | null}>({show: false, type: null});
 
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
   useEffect(() => {
     loadCatalog();
     
@@ -44,7 +47,17 @@ function App() {
         }).catch(console.error);
       } catch (e) { console.error(e); }
     }
+
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const loadCatalog = async () => {
     try {
@@ -275,6 +288,22 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Floating Scroll to Top button */}
+      {showScrollTop && (
+        <button 
+          className="btn btn-primary scroll-to-top" 
+          onClick={scrollToTop}
+          style={{ 
+            position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90, 
+            width: '50px', height: '50px', borderRadius: '50%', padding: 0, 
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)' 
+          }}
+          aria-label="Volver arriba"
+        >
+          <ArrowUp size={24} />
+        </button>
       )}
     </div>
   );

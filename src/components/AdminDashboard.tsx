@@ -42,6 +42,7 @@ export const AdminDashboard: React.FC = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editStock, setEditStock] = useState('1');
+  const [editImage, setEditImage] = useState('');
 
   // Password reset state
   const [selectedUserForPassword, setSelectedUserForPassword] = useState('');
@@ -157,6 +158,7 @@ export const AdminDashboard: React.FC = () => {
     setEditTitle(item.title);
     setEditDesc(item.description);
     setEditStock(item.stock?.toString() || '1');
+    setEditImage(item.imageUrl || '');
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -170,7 +172,8 @@ export const AdminDashboard: React.FC = () => {
           type: editingItem.type,
           title: editTitle,
           description: editDesc,
-          stock: editStock
+          stock: editStock,
+          imageUrl: editImage
         })
       });
       if (res.ok) {
@@ -549,6 +552,10 @@ export const AdminDashboard: React.FC = () => {
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Stock Total</label>
                 <input required type="number" min="1" step="1" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>URL de la Imagen</label>
+                <input required value={editImage} onChange={e => setEditImage(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
