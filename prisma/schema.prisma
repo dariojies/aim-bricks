@@ -166,29 +166,29 @@ model users {
   legacy_id       String?       @db.VarChar(255)
   belt_level      Int?
   dev_role        String?       @db.VarChar(50)
-  reservations    Reservation[]
-  history         UserHistory[]
+  reservations    bricks_reservation[]
+  history         bricks_userhistory[]
   user_belts      user_belts[]
-  brickslab_ranks brickslab_ranks[]
+  bricks_ranks    bricks_ranks[]
   clubs           clubs?        @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
 }
 
-model Brickslab {
-  id            String        @id @default(uuid())
+model bricks_brickslab {
+  id            String               @id @default(uuid())
   title         String
   description   String
   imageUrl      String
   difficulty    String
   tags          String[]
-  isAvailable   Boolean       @default(true)
-  stock         Int?          @default(1)
+  isAvailable   Boolean              @default(true)
+  stock         Int?                 @default(1)
   legoReference String?
-  reservations  Reservation[]
-  history       UserHistory[]
+  reservations  bricks_reservation[]
+  history       bricks_userhistory[]
 }
 
-model LibraryBook {
-  id           String        @id @default(uuid())
+model bricks_librarybook {
+  id           String               @id @default(uuid())
   title        String
   author       String
   isbn         String?
@@ -196,38 +196,38 @@ model LibraryBook {
   imageUrl     String
   minimumRank  String
   tags         String[]
-  isAvailable  Boolean       @default(true)
-  stock        Int?          @default(1)
-  reservations Reservation[]
-  history      UserHistory[]
+  isAvailable  Boolean              @default(true)
+  stock        Int?                 @default(1)
+  reservations bricks_reservation[]
+  history      bricks_userhistory[]
 }
 
-model Reservation {
-  id              String       @id @default(uuid())
-  userId          String       @db.Uuid
+model bricks_reservation {
+  id              String             @id @default(uuid())
+  userId          String             @db.Uuid
   brickslabId     String?
   libraryBookId   String?
-  reservationDate DateTime     @default(now())
+  reservationDate DateTime           @default(now())
   returnDate      DateTime?
   status          String
-  brickslab       Brickslab?   @relation(fields: [brickslabId], references: [id])
-  libraryBook     LibraryBook? @relation(fields: [libraryBookId], references: [id])
-  user            users        @relation(fields: [userId], references: [user_id])
+  brickslab       bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
+  libraryBook     bricks_librarybook? @relation(fields: [libraryBookId], references: [id])
+  user            users              @relation(fields: [userId], references: [user_id])
 }
 
-model UserHistory {
-  id            String       @id @default(uuid())
-  userId        String       @db.Uuid
+model bricks_userhistory {
+  id            String             @id @default(uuid())
+  userId        String             @db.Uuid
   brickslabId   String?
   libraryBookId String?
-  completedAt   DateTime     @default(now())
+  completedAt   DateTime           @default(now())
   notes         String?
-  brickslab     Brickslab?   @relation(fields: [brickslabId], references: [id])
-  libraryBook   LibraryBook? @relation(fields: [libraryBookId], references: [id])
-  user          users        @relation(fields: [userId], references: [user_id])
+  brickslab     bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
+  libraryBook   bricks_librarybook? @relation(fields: [libraryBookId], references: [id])
+  user          users              @relation(fields: [userId], references: [user_id])
 }
 
-model brickslab_ranks {
+model bricks_ranks {
   id                  String  @id @default(uuid())
   userId              String  @db.Uuid @unique
   canReserveBrickslab Boolean @default(false)

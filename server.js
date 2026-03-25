@@ -54,7 +54,7 @@ app.post('/api/auth/login', async (req, res) => {
       include: {
         reservations: { include: { brickslab: true, libraryBook: true } },
         history: { include: { brickslab: true, libraryBook: true } },
-        brickslab_ranks: true
+        bricks_ranks: true
       }
     });
 
@@ -82,8 +82,8 @@ app.post('/api/auth/login', async (req, res) => {
         return 'Reserva';
       }),
       permissions: {
-        brickslab: user.brickslab_ranks?.[0]?.canReserveBrickslab || false,
-        library: user.brickslab_ranks?.[0]?.canReserveLibrary || false
+        brickslab: user.bricks_ranks?.[0]?.canReserveBrickslab || false,
+        library: user.bricks_ranks?.[0]?.canReserveLibrary || false
       }
     };
 
@@ -104,7 +104,7 @@ app.post('/api/auth/me', async (req, res) => {
       include: {
         reservations: { include: { brickslab: true, libraryBook: true } },
         history: { include: { brickslab: true, libraryBook: true } },
-        brickslab_ranks: true
+        bricks_ranks: true
       }
     });
 
@@ -123,8 +123,8 @@ app.post('/api/auth/me', async (req, res) => {
         return 'Reserva';
       }),
       permissions: {
-        brickslab: user.brickslab_ranks?.[0]?.canReserveBrickslab || false,
-        library: user.brickslab_ranks?.[0]?.canReserveLibrary || false
+        brickslab: user.bricks_ranks?.[0]?.canReserveBrickslab || false,
+        library: user.bricks_ranks?.[0]?.canReserveLibrary || false
       }
     };
 
@@ -139,7 +139,7 @@ app.post('/api/auth/me', async (req, res) => {
 app.get('/api/admin/users/permissions', async (req, res) => {
   try {
     const usersList = await prisma.users.findMany({
-      include: { brickslab_ranks: true },
+      include: { bricks_ranks: true },
       orderBy: { name: 'asc' }
     });
     res.json(usersList.map(u => ({
@@ -148,8 +148,8 @@ app.get('/api/admin/users/permissions', async (req, res) => {
       email: u.email,
       role: u.dev_role || 'student',
       permissions: {
-        brickslab: u.brickslab_ranks?.[0]?.canReserveBrickslab || false,
-        library: u.brickslab_ranks?.[0]?.canReserveLibrary || false
+        brickslab: u.bricks_ranks?.[0]?.canReserveBrickslab || false,
+        library: u.bricks_ranks?.[0]?.canReserveLibrary || false
       }
     })));
   } catch (error) {
@@ -163,14 +163,14 @@ app.post('/api/admin/users/permissions', async (req, res) => {
     const { userId, brickslab, library } = req.body;
     
     // Upsert equivalent since we might not have a record yet
-    const existing = await prisma.brickslab_ranks.findUnique({ where: { userId } });
+    const existing = await prisma.bricks_ranks.findUnique({ where: { userId } });
     if (existing) {
-      await prisma.brickslab_ranks.update({
+      await prisma.bricks_ranks.update({
         where: { userId },
         data: { canReserveBrickslab: brickslab, canReserveLibrary: library }
       });
     } else {
-      await prisma.brickslab_ranks.create({
+      await prisma.bricks_ranks.create({
         data: { userId, canReserveBrickslab: brickslab, canReserveLibrary: library }
       });
     }
@@ -183,7 +183,7 @@ app.post('/api/admin/users/permissions', async (req, res) => {
 });
 app.get('/api/admin/reservations', async (req, res) => {
   try {
-    const reservations = await prisma.reservation.findMany({
+    const reservations = await prisma.bricks_reservation.findMany({
       where: { status: 'Active' },
       include: { user: true, brickslab: true, libraryBook: true }
     });
@@ -205,16 +205,16 @@ app.get('/api/admin/reservations', async (req, res) => {
 app.post('/api/admin/return', async (req, res) => {
   try {
     const { reservationId } = req.body;
-    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
+    const reservation = await prisma.bricks_reservation.findUnique({ where: { id: reservationId } });
     if (!reservation) return res.status(404).json({ error: 'No encontrado' });
     
-    await prisma.reservation.update({
+    await prisma.bricks_reservation.update({
       where: { id: reservationId },
       data: { status: 'Returned', returnDate: new Date() }
     });
     
     // Add to history
-    await prisma.userHistory.create({
+    await prisma.bricks_userhistory.create({
       data: {
         userId: reservation.userId,
         brickslabId: reservation.brickslabId,
@@ -249,11 +249,11 @@ app.post('/api/admin/items', async (req, res) => {
         finalTitle = `LEGO® ${title}`;
       }
 
-      await prisma.brickslab.create({
+      await prisma.bricks_brickslab.create({
         data: { title: finalTitle, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', difficulty: difficulty || 'Media', tags, stock: parsedStock, legoReference: finalLegoRef }
       });
     } else {
-      await prisma.libraryBook.create({
+      await prisma.bricks_librarybook.create({
         data: { title, author: author || 'Desconocido', isbn: isbn || null, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f', minimumRank: minimumRank || 'Blanco', tags, stock: parsedStock }
       });
     }
@@ -271,13 +271,13 @@ app.delete('/api/admin/items/:id', async (req, res) => {
     
     if (type === 'Aim Brickslab') {
       // Usamos deleteMany manual para limpiar relaciones por la compatibilidad DDL
-      await prisma.reservation.deleteMany({ where: { brickslabId: id } });
-      await prisma.userHistory.deleteMany({ where: { brickslabId: id } });
-      await prisma.brickslab.delete({ where: { id } });
+      await prisma.bricks_reservation.deleteMany({ where: { brickslabId: id } });
+      await prisma.bricks_userhistory.deleteMany({ where: { brickslabId: id } });
+      await prisma.bricks_brickslab.delete({ where: { id } });
     } else {
-      await prisma.reservation.deleteMany({ where: { libraryBookId: id } });
-      await prisma.userHistory.deleteMany({ where: { libraryBookId: id } });
-      await prisma.libraryBook.delete({ where: { id } });
+      await prisma.bricks_reservation.deleteMany({ where: { libraryBookId: id } });
+      await prisma.bricks_userhistory.deleteMany({ where: { libraryBookId: id } });
+      await prisma.bricks_librarybook.delete({ where: { id } });
     }
     res.json({ success: true });
   } catch (error) {
@@ -293,12 +293,12 @@ app.put('/api/admin/items/:id', async (req, res) => {
     const parsedStock = parseInt(stock || '1', 10);
     
     if (type === 'Aim Brickslab') {
-      await prisma.brickslab.update({
+      await prisma.bricks_brickslab.update({
         where: { id },
         data: { title, description, stock: parsedStock }
       });
     } else {
-      await prisma.libraryBook.update({
+      await prisma.bricks_librarybook.update({
         where: { id },
         data: { title, description, stock: parsedStock }
       });
@@ -313,9 +313,9 @@ app.put('/api/admin/items/:id', async (req, res) => {
 app.get('/api/catalog', async (req, res) => {
   try {
     const [brickslabs, libraryBooks, activeReservations] = await Promise.all([
-      prisma.brickslab.findMany(),
-      prisma.libraryBook.findMany(),
-      prisma.reservation.findMany({ where: { status: 'Active' } })
+      prisma.bricks_brickslab.findMany(),
+      prisma.bricks_librarybook.findMany(),
+      prisma.bricks_reservation.findMany({ where: { status: 'Active' } })
     ]);
 
     const activeCounts = activeReservations.reduce((acc, r) => {
@@ -354,7 +354,7 @@ app.post('/api/reservations', async (req, res) => {
     const { userId, type, itemId } = req.body;
 
     // Permissions check
-    const ranks = await prisma.brickslab_ranks.findUnique({ where: { userId } });
+    const ranks = await prisma.bricks_ranks.findUnique({ where: { userId } });
     const canReserveBrickslab = ranks?.canReserveBrickslab || false;
     const canReserveLibrary = ranks?.canReserveLibrary || false;
 
@@ -365,7 +365,7 @@ app.post('/api/reservations', async (req, res) => {
       return res.status(403).json({ error: "No tienes el rango 'Biblioteca' para reservar esta categoría." });
     }
 
-    const userActiveInCategory = await prisma.reservation.count({
+    const userActiveInCategory = await prisma.bricks_reservation.count({
       where: {
         userId,
         status: 'Active',
@@ -377,7 +377,7 @@ app.post('/api/reservations', async (req, res) => {
       return res.status(400).json({ error: `Ya tienes un ${type === 'Libro' ? 'Libro' : 'Aim Brickslab'} reservado. Debes terminar y entregarlo antes de poder reservar otro de la misma categoría.` });
     }
 
-    const activeCurrent = await prisma.reservation.count({
+    const activeCurrent = await prisma.bricks_reservation.count({
       where: { 
         status: 'Active',
         ...(type === 'Aim Brickslab' ? { brickslabId: itemId } : { libraryBookId: itemId })
@@ -386,10 +386,10 @@ app.post('/api/reservations', async (req, res) => {
 
     let maxStock = 1;
     if (type === 'Aim Brickslab') {
-      const item = await prisma.brickslab.findUnique({ where: { id: itemId } });
+      const item = await prisma.bricks_brickslab.findUnique({ where: { id: itemId } });
       maxStock = item ? item.stock || 1 : 1;
     } else {
-      const item = await prisma.libraryBook.findUnique({ where: { id: itemId } });
+      const item = await prisma.bricks_librarybook.findUnique({ where: { id: itemId } });
       maxStock = item ? item.stock || 1 : 1;
     }
 
@@ -397,7 +397,7 @@ app.post('/api/reservations', async (req, res) => {
       return res.status(400).json({ error: 'No quedan unidades disponibles de este artículo.' });
     }
     
-    await prisma.reservation.create({
+    await prisma.bricks_reservation.create({
       data: {
         userId,
         status: 'Active',

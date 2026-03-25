@@ -6,7 +6,16 @@ Una moderna aplicación web diseñada para la reserva y gestión del catálogo l
 *   **Frontend:** React 19, TypeScript, Vite. Diseño de interfaz (UI) ultra estético basado en Glassmorphism.
 *   **Backend:** Node.js, Express (API REST en `server.js`).
 *   **Base de Datos:** PostgreSQL en la nube (Compartida de forma hermética con otros 5 submódulos).
-*   **ORM:** Prisma Client (v6) - Configurado para inspeccionar la DB e inyectar tablas exclusivas (`Brickslab`, `LibraryBook`, `Reservation`, `UserHistory`) sin manipular los datos genéricos.
+*   **ORM:** Prisma Client (v6) - Configurado para inspeccionar la DB e interactuar con el esquema.
+
+## Estructura de Base de Datos
+La aplicación hace uso de las siguientes tablas en PostgreSQL gestionadas por Prisma:
+- **`users`**: Tabla principal de usuarios compartida con otros sistemas. Gestiona el acceso (`email`, `password`) y roles.
+- **`bricks_brickslab`**: Almacena el catálogo físico de los sets de LEGO® disponibles, incluyendo su estado de stock y número de referencia.
+- **`bricks_librarybook`**: Almacena el catálogo de literatura, con metadatos como el autor y el ISBN.
+- **`bricks_reservation`**: Controla las reservas actualmente "Activas". Relaciona a un `userId` con un `brickslabId` o `libraryBookId` bloqueando el stock dinámicamente.
+- **`bricks_userhistory`**: Guarda el histórico de elementos completados/devueltos para rellenar el historial del perfil del usuario.
+- **`bricks_ranks`**: Tabla exclusiva de este sistema de reservas que administra los permisos individualizados ("Rango Brickslab" y "Rango Biblioteca") sin entrometerse en la tabla global de usuarios.
 
 ## Funcionalidades Core
 1.  **Catálogo en Vivo:** Exploración de Brickslabs y Libros disponibles con etiquetas de dificultad, estado de disponibilidad y sinopsis.
