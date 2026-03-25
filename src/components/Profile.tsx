@@ -9,7 +9,7 @@ export const Profile: React.FC<Props> = ({ user }) => {
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 0' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h2 className="text-gradient" style={{ fontSize: '3rem', marginBottom: '1rem' }}>Mi Perfil</h2>
+        <h2 className="text-gradient hero-title">Mi Perfil</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem' }}>
           ¡Hola, {user.name}! Aquí tienes un resumen de tu actividad en Aim Brickslab y Libros.
         </p>

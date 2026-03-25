@@ -32,7 +32,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
       <header className="glass-panel responsive-header" style={{ padding: '1rem 2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', justifySelf: 'center' }} onClick={onHomeClick}>
           <Box className="text-accent" size={32} />
-          <h1 className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Aim Brickslab y Libros</h1>
+          <h1 className="text-gradient header-title">Aim Brickslab y Libros</h1>
         </div>
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '9999px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
@@ -41,7 +41,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
           </div>
 
           {isLoggedIn ? (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="responsive-header-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
               {(userRole === 'admin' || userRole === 'superadmin') && (
                 <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#8B5CF6', color: '#8B5CF6' }} onClick={onAdminClick}>
                   Panel Admin
@@ -55,9 +55,11 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
               </button>
             </div>
           ) : (
-            <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={onLoginClick}>
-              <LogIn size={18} /> Iniciar Sesión
-            </button>
+            <div className="responsive-header-buttons" style={{ display: 'flex', width: '100%' }}>
+              <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', width: '100%', justifyContent: 'center' }} onClick={onLoginClick}>
+                <LogIn size={18} /> Iniciar Sesión
+              </button>
+            </div>
           )}
         </nav>
       </header>

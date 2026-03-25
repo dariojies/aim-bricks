@@ -181,7 +181,7 @@ function App() {
         {currentView === 'catalog' ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-              <h2 className="text-gradient" style={{ fontSize: '3rem', marginBottom: '1rem' }}>Catálogo Local</h2>
+              <h2 className="text-gradient hero-title">Catálogo Local</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto' }}>
                 Explora y reserva tus Aim Brickslabs y Libros favoritos para disfrutar en nuestro local.
               </p>
