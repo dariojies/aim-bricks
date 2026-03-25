@@ -32,10 +32,10 @@ export const AdminDashboard: React.FC = () => {
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
   
-  // User Search & Filters
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [filterBrickslab, setFilterBrickslab] = useState(false);
   const [filterLibrary, setFilterLibrary] = useState(false);
+  const [filterAnyRank, setFilterAnyRank] = useState(false);
 
   // Edit form state
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -276,6 +276,13 @@ export const AdminDashboard: React.FC = () => {
               >
                 Tienen Biblioteca
               </button>
+              <button 
+                className={`btn ${filterAnyRank ? 'btn-primary' : 'btn-outline'}`} 
+                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                onClick={() => setFilterAnyRank(!filterAnyRank)}
+              >
+                Abonados
+              </button>
               <input 
                 type="text" 
                 placeholder="Buscar por nombre o correo..." 
@@ -300,7 +307,8 @@ export const AdminDashboard: React.FC = () => {
                   const matchSearch = u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
                   const matchBrickslab = filterBrickslab ? u.permissions?.brickslab : true;
                   const matchLibrary = filterLibrary ? u.permissions?.library : true;
-                  return matchSearch && matchBrickslab && matchLibrary;
+                  const matchAnyRank = filterAnyRank ? (u.permissions?.brickslab || u.permissions?.library) : true;
+                  return matchSearch && matchBrickslab && matchLibrary && matchAnyRank;
                 }).map(u => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                     <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{u.name}</td>
