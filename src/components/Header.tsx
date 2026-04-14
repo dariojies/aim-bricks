@@ -120,7 +120,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
               <ul style={{ color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1rem' }}>
                 <li>Asegúrate de que el set esté lo más completo posible.</li>
                 <li>Si tienes las instrucciones o la caja original, inclúyelas.</li>
-                <li>Tráelo a local de Aim Education y entrégalo en recepción.</li>
+                <li>Tráelo al local de Aim Education y entrégalo en recepción.</li>
               </ul>
             </div>
             <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowDonationModal(false)}>
