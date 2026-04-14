@@ -13,6 +13,9 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
   const filteredItems = items.filter(item => {
     if (filter === 'Todos') return true;
     return item.type === filter;
+  }).sort((a, b) => {
+    if (a.isAvailable === b.isAvailable) return 0;
+    return a.isAvailable ? -1 : 1;
   });
 
   return (

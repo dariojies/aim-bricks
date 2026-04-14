@@ -15,15 +15,20 @@ La aplicación hace uso de las siguientes tablas en PostgreSQL gestionadas por P
 - **`bricks_librarybook`**: Almacena el catálogo de literatura, con metadatos como el autor y el ISBN.
 - **`bricks_reservation`**: Controla las reservas actualmente "Activas". Relaciona a un `userId` con un `brickslabId` o `libraryBookId` bloqueando el stock dinámicamente.
 - **`bricks_userhistory`**: Guarda el histórico de elementos completados/devueltos para rellenar el historial del perfil del usuario.
-- **`bricks_ranks`**: Tabla exclusiva de este sistema de reservas que administra los permisos individualizados ("Rango Brickslab" y "Rango Biblioteca") sin entrometerse en la tabla global de usuarios.
+- **`bricks_missing_pieces`**: Tabla dedicada a gestionar reportes de alumnos sobre piezas perdidas en los sets de LEGO.
+- **`bricks_poll`**, **`bricks_poll_option`**, **`bricks_poll_vote`**: Sistema de votaciones dinámico, ligado exclusivamente a usuarios con el rango `canReserveBrickslab`.
+- **`bricks_ranks`**: Tabla exclusiva de este sistema que administra los permisos individualizados ("Rango Brickslab" y "Rango Biblioteca") sin entrometerse en la tabla global de usuarios.
 
 ## Funcionalidades Core
-1.  **Catálogo en Vivo:** Exploración de Brickslabs y Libros disponibles con etiquetas de dificultad, estado de disponibilidad y sinopsis.
-2.  **Sistema de Reservas Compartido:** Los alumnos inician sesión de forma segura y pueden reservar material al instante.
-3.  **Perfil Inteligente:** Historial persistente en la DB con todo el material montado o leído.
-4.  **Panel de Administración (Gestión):** Protegido por una columna dedicada `dev_role` en la base de datos de usuarios. Permite al instructor:
-    - Control de las reservas activas (con botón para confirmar devolución).
-    - CRUD Automático (Dar de alta manuales y legos, o eliminarlos depurando el historial para no romper relaciones).
+1.  **Catálogo en Vivo y Sincronizado:** Exploración con etiquetas de dificultad y estado. El catálogo ahora hace polling silencioso cada 10s para mantener la disponibilidad de inventario 100% sincrónica para todos los clientes sin necesidad de recargar la página.
+2.  **Sistema de Reservas (3 Fases):** Los alumnos inician sesión de forma segura y pueden reservar material. El flujo consta de *Reserva Pendiente de Recogida* -> *Entregado al Alumno* -> *Devuelto*. Permite también la cancelación de reservas activas por parte del usuario antes de recoger el ítem.
+3.  **Perfil y Autenticación Mejorada:** Historial persistente en la DB. Además de ver tus reservas, ahora se integra un sistema de Reseteo Seguro: Si un Admin resetea una clave web, el alumno estará forzado a cambiar su clave en un modal ciego temporal en su primer inicio de sesión.
+4.  **Sistema de Votaciones y de Incidencias:**
+    - Panel de encuestas globales limitadas a usuarios con permisos Brickslab para decidir futuras compras.
+    - Botón UI de "Piezas Faltantes" para poder notificar piezas perdidas a la administración tras el préstamo.
+5.  **Panel de Administración Integral:** Protegido por una columna dedicada `dev_role` en la tabla global. Permite al instructor:
+    - Control avanzado de las reservas con sus tres estados y botón centralizado de recogida/devolución.
+    - CRUD completo, gestor de contraseñas, revisión de incidencias (piezas) y lanzamiento de nuevas votaciones.
 
 ## Instrucciones para Ejecución Local
 

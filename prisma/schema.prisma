@@ -7,170 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model activities {
-  activity_id String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  club_id     String?  @db.Uuid
-  name        String   @db.VarChar(255)
-  icon        String?  @db.VarChar(255)
-  clubs       clubs?   @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
-  groups      groups[]
-}
-
-model attendance {
-  attendance_id String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  group_id      String?   @db.Uuid
-  student_id    String?   @db.Uuid
-  date          DateTime  @db.Date
-  status        String    @db.VarChar(50)
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-  groups        groups?   @relation(fields: [group_id], references: [group_id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model belts {
-  id         Int     @id @default(autoincrement())
-  belt_level Int     @unique
-  name       String  @db.VarChar(255)
-  color_hex  String? @db.VarChar(50)
-}
-
-model clubs {
-  club_id    String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String       @db.VarChar(255)
-  logo       String?      @db.VarChar(1024)
-  plan       String?      @default("free") @db.VarChar(50)
-  created_at DateTime?    @default(now()) @db.Timestamp(6)
-  activities activities[]
-  users      users[]
-}
-
-model evaluation_movements {
-  movement_id   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  evaluation_id String?      @db.Uuid
-  move_index    Int
-  score         Int
-  comment       String?
-  evaluations   evaluations? @relation(fields: [evaluation_id], references: [evaluation_id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model evaluations {
-  evaluation_id        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id           String?                @db.Uuid
-  instructor_id        String?                @db.Uuid
-  tul_id               String?                @db.Uuid
-  evaluation_date      DateTime?              @default(now()) @db.Timestamp(6)
-  summary_comment      String?
-  evaluation_movements evaluation_movements[]
-  tuls                 tuls?                  @relation(fields: [tul_id], references: [tul_id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model exercises {
-  id                     String  @id @db.VarChar(255)
-  name                   String? @db.VarChar(255)
-  musclegroup            String? @db.VarChar(255)
-  description            String?
-  difficulty             String? @db.VarChar(50)
-  incompatibleconditions String?
-}
-
-model group_students {
-  group_id   String @db.Uuid
-  student_id String @db.Uuid
-  groups     groups @relation(fields: [group_id], references: [group_id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([group_id, student_id])
-}
-
-model groups {
-  group_id       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  activity_id    String?          @db.Uuid
-  name           String           @db.VarChar(255)
-  time           String?          @db.VarChar(255)
-  attendance     attendance[]
-  group_students group_students[]
-  activities     activities?      @relation(fields: [activity_id], references: [activity_id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model messages {
-  id         String   @id @db.VarChar(255)
-  senderid   String?  @db.VarChar(255)
-  receiverid String?  @db.VarChar(255)
-  text       String?
-  timestamp  String?  @db.VarChar(255)
-  isread     Boolean?
-}
-
-model registrosapp {
-  id_usuario         String     @id @db.VarChar(255)
-  nombre             String?    @db.VarChar(255)
-  apellidos          String?    @db.VarChar(255)
-  correo_electronico String?    @unique @db.VarChar(255)
-  contrasena         String?    @db.VarChar(255)
-  goal               String?    @db.VarChar(255)
-  level              String?    @db.VarChar(255)
-  language           String?    @db.VarChar(50)
-  injuries           String?
-  avatarurl          String?
-  consentimiento     Boolean?
-  sessions           sessions[]
-}
-
-model sessions {
-  id                       String        @id @db.VarChar(255)
-  studentid                String?       @db.VarChar(255)
-  date                     String?       @db.VarChar(255)
-  title                    String?       @db.VarChar(255)
-  type                     String?       @db.VarChar(50)
-  exercises                String?
-  notes                    String?
-  aigenerated              Boolean?
-  completedexerciseindices String?
-  feedback                 String?
-  registrosapp             registrosapp? @relation(fields: [studentid], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model tuls {
-  tul_id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name             String        @db.VarChar(255)
-  video_url        String?       @db.VarChar(1024)
-  moves            Int?
-  meaning          String?
-  belt_requirement Int?
-  evaluations      evaluations[]
-}
-
-model user_belts {
-  id         Int       @id @default(autoincrement())
-  user_id    String?   @db.Uuid
-  belt_level Int
-  updated_at DateTime? @default(now()) @db.Timestamp(6)
-  users      users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
-}
-
 model users {
-  user_id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String        @db.VarChar(255)
-  surname         String?       @db.VarChar(255)
-  email           String        @unique @db.VarChar(255)
-  password        String        @db.VarChar(255)
-  belt            String?       @db.VarChar(255)
-  phone           String?       @db.VarChar(50)
-  birthday        DateTime?     @db.Date
-  profile_picture String?       @db.VarChar(1024)
-  media_consent   Boolean?      @default(false)
-  ad_removal      Boolean?      @default(false)
-  role            String?       @default("student") @db.VarChar(50)
-  club_id         String?       @db.Uuid
-  created_at      DateTime?     @default(now()) @db.Timestamp(6)
-  plan            String?       @default("free") @db.VarChar(50)
-  username        String?       @unique @db.VarChar(255)
-  legacy_id       String?       @db.VarChar(255)
-  belt_level      Int?
-  dev_role        String?       @db.VarChar(50)
-  reservations    bricks_reservation[]
-  history         bricks_userhistory[]
-  user_belts      user_belts[]
-  bricks_ranks    bricks_ranks[]
-  clubs           clubs?        @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
+  user_id                                                            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                                                               String                    @db.VarChar(255)
+  surname                                                            String?                   @db.VarChar(255)
+  email                                                              String                    @unique @db.VarChar(255)
+  password                                                           String                    @db.VarChar(255)
+  belt                                                               String?                   @db.VarChar(255)
+  phone                                                              String?                   @db.VarChar(50)
+  birthday                                                           DateTime?                 @db.Date
+  profile_picture                                                    String?
+  media_consent                                                      Boolean?                  @default(false)
+  ad_removal                                                         Boolean?                  @default(false)
+  role                                                               String?                   @default("student") @db.VarChar(50)
+  club_id                                                            String?                   @db.Uuid
+  created_at                                                         DateTime?                 @default(now()) @db.Timestamp(6)
+  plan                                                               String?                   @default("free") @db.VarChar(50)
+  username                                                           String?                   @unique @db.VarChar(255)
+  legacy_id                                                          String?                   @db.VarChar(255)
+  belt_level                                                         Int?
+  dev_role                                                           String?                   @db.VarChar(50)
+  aim_education_access                                               aim_education_access?
+  bricks_ranks                                                       bricks_ranks?
+  reservations                                                       bricks_reservation[]
+  history                                                            bricks_userhistory[]
+  tickets_registrosoporte_tickets_registrosoporte_assigned_toTousers tickets_registrosoporte[] @relation("tickets_registrosoporte_assigned_toTousers")
+  tickets_registrosoporte_tickets_registrosoporte_user_idTousers     tickets_registrosoporte[] @relation("tickets_registrosoporte_user_idTousers")
+  tul_active_buffs                                                   tul_active_buffs[]
+  tul_clan_chat                                                      tul_clan_chat[]
+  tul_clan_members                                                   tul_clan_members[]
+  tul_inventory                                                      tul_inventory[]
+  tul_puntos                                                         tul_puntos?
+  tul_rpg                                                            tul_rpg?
+  tul_user_belts                                                     tul_user_belts[]
+  requires_password_change                                           Boolean?                  @default(false)
+  bricks_missing_pieces                                              bricks_missing_pieces[]
+  bricks_poll_vote                                                   bricks_poll_vote[]
+  clubs                                                              tul_clubs?                @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
 }
 
 model bricks_brickslab {
@@ -185,6 +58,7 @@ model bricks_brickslab {
   legoReference String?
   reservations  bricks_reservation[]
   history       bricks_userhistory[]
+  missing_pieces bricks_missing_pieces[]
 }
 
 model bricks_librarybook {
@@ -203,34 +77,627 @@ model bricks_librarybook {
 }
 
 model bricks_reservation {
-  id              String             @id @default(uuid())
-  userId          String             @db.Uuid
+  id              String              @id @default(uuid())
+  userId          String              @db.Uuid
   brickslabId     String?
   libraryBookId   String?
-  reservationDate DateTime           @default(now())
+  reservationDate DateTime            @default(now())
   returnDate      DateTime?
   status          String
   brickslab       bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
   libraryBook     bricks_librarybook? @relation(fields: [libraryBookId], references: [id])
-  user            users              @relation(fields: [userId], references: [user_id])
+  user            users               @relation(fields: [userId], references: [user_id])
 }
 
 model bricks_userhistory {
-  id            String             @id @default(uuid())
-  userId        String             @db.Uuid
+  id            String              @id @default(uuid())
+  userId        String              @db.Uuid
   brickslabId   String?
   libraryBookId String?
-  completedAt   DateTime           @default(now())
+  completedAt   DateTime            @default(now())
   notes         String?
   brickslab     bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
   libraryBook   bricks_librarybook? @relation(fields: [libraryBookId], references: [id])
-  user          users              @relation(fields: [userId], references: [user_id])
+  user          users               @relation(fields: [userId], references: [user_id])
 }
 
 model bricks_ranks {
   id                  String  @id @default(uuid())
-  userId              String  @db.Uuid @unique
+  userId              String  @unique @db.Uuid
   canReserveBrickslab Boolean @default(false)
   canReserveLibrary   Boolean @default(false)
   user                users   @relation(fields: [userId], references: [user_id], onDelete: Cascade)
+}
+
+model aim_education_access {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String?   @unique @db.Uuid
+  access_rank String    @db.VarChar(255)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model aim_education_attendance {
+  id                  String  @id @db.VarChar(255)
+  date                String? @db.VarChar(255)
+  group_id            String? @db.VarChar(255)
+  present_student_ids String?
+  session_notes       String?
+}
+
+model aim_education_games {
+  id           String  @id @db.VarChar(255)
+  title        String? @db.VarChar(255)
+  description  String?
+  category     String? @db.VarChar(50)
+  difficulty   String? @db.VarChar(50)
+  duration_min Int?
+  tags         String?
+}
+
+model aim_education_groups {
+  id          String  @id @db.VarChar(255)
+  name        String? @db.VarChar(255)
+  description String?
+  level       String? @db.VarChar(50)
+  created_at  String? @db.VarChar(255)
+}
+
+model aim_education_sessions {
+  id             String  @id @db.VarChar(255)
+  group_id       String? @db.VarChar(255)
+  title          String? @db.VarChar(255)
+  date           String? @db.VarChar(255)
+  items          String?
+  total_duration Int?
+  description    String?
+}
+
+model aim_education_students_extra {
+  id                String   @id @db.VarChar(255)
+  group_id          String?  @db.VarChar(255)
+  position          String?  @db.VarChar(255)
+  emergency_contact String?  @db.VarChar(255)
+  notes             String?
+  active            Boolean?
+  referral_code     String?  @db.VarChar(255)
+  referred_by_id    String?  @db.VarChar(255)
+  monthly_fee       Decimal? @db.Decimal
+}
+
+model aim_education_wallet {
+  id          String   @id @db.VarChar(255)
+  student_id  String?  @db.VarChar(255)
+  type        String?  @db.VarChar(50)
+  amount      Decimal? @db.Decimal
+  description String?
+  date        String?  @db.VarChar(255)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model artemis_base_lunar {
+  id              Int           @id @default(autoincrement())
+  artemis_user_id Int
+  sentadillas     Int
+  fecha           DateTime?     @default(now()) @db.Timestamptz(6)
+  artemis_users   artemis_users @relation(fields: [artemis_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model artemis_estado_global {
+  id                   Int       @id @default(autoincrement())
+  total_km             BigInt    @default(0)
+  total_energia        BigInt    @default(0)
+  ultima_actualizacion DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model artemis_mision_memoria {
+  id              Int           @id @default(autoincrement())
+  artemis_user_id Int
+  tiempo_exacto   Int
+  fecha           DateTime?     @default(now()) @db.Timestamptz(6)
+  artemis_users   artemis_users @relation(fields: [artemis_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model artemis_rumbo_luna {
+  id              Int           @id @default(autoincrement())
+  artemis_user_id Int
+  centimetros     Int
+  fecha           DateTime?     @default(now()) @db.Timestamptz(6)
+  artemis_users   artemis_users @relation(fields: [artemis_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model artemis_users {
+  id                     Int                      @id @default(autoincrement())
+  user_id                String?                  @db.Uuid
+  astronaut_number       String                   @unique @db.VarChar(4)
+  phone_number           String?                  @db.VarChar(20)
+  registration_date      DateTime?                @default(now()) @db.Timestamptz(6)
+  email                  String?                  @unique @db.VarChar(255)
+  full_name              String?                  @db.VarChar(255)
+  artemis_base_lunar     artemis_base_lunar[]
+  artemis_mision_memoria artemis_mision_memoria[]
+  artemis_rumbo_luna     artemis_rumbo_luna[]
+}
+
+model race_admin_assignments {
+  email      String    @id @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model race_economic_records {
+  id           String    @id(map: "economic_records_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course       String    @db.VarChar(100)
+  amount       Decimal   @db.Decimal(10, 2)
+  payment_date DateTime  @db.Date
+  observations String?
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model race_registrations {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type               String    @db.VarChar(50)
+  course             String?   @db.VarChar(100)
+  full_name          String    @db.VarChar(255)
+  total_participants Int?      @default(1)
+  ampa_members       Int?      @default(0)
+  wants_shirts       Boolean?  @default(false)
+  shirt_4y           Int?      @default(0)
+  shirt_8y           Int?      @default(0)
+  shirt_12y          Int?      @default(0)
+  shirt_16y          Int?      @default(0)
+  shirt_s            Int?      @default(0)
+  shirt_m            Int?      @default(0)
+  shirt_l            Int?      @default(0)
+  shirt_xl           Int?      @default(0)
+  shirt_xxl          Int?      @default(0)
+  observations       String?
+  dorsal_start       Int?
+  dorsal_end         Int?
+  registration_date  DateTime? @default(now()) @db.Timestamp(6)
+  is_paid            Boolean?  @default(false)
+  external_email     String?   @db.VarChar(255)
+  external_phone     String?   @db.VarChar(50)
+}
+
+model race_sessions {
+  sid    String   @id(map: "session_pkey") @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+}
+
+model race_teacher_assignments {
+  email           String @id(map: "teacher_assignments_pkey") @db.VarChar(255)
+  assigned_course String @db.VarChar(100)
+}
+
+model tickets_registrosoporte {
+  id                                               Int       @id @default(autoincrement())
+  user_id                                          String?   @db.Uuid
+  subject                                          String    @db.VarChar(255)
+  description                                      String
+  status                                           String?   @default("open") @db.VarChar(50)
+  priority                                         String?   @default("low") @db.VarChar(20)
+  due_date                                         DateTime? @db.Timestamp(6)
+  assigned_to                                      String?   @db.Uuid
+  app_label                                        String?   @default("Learning Dungeon") @db.VarChar(50)
+  dev_response                                     String?
+  email_sent                                       Boolean?  @default(false)
+  created_at                                       DateTime? @default(now()) @db.Timestamp(6)
+  users_tickets_registrosoporte_assigned_toTousers users?    @relation("tickets_registrosoporte_assigned_toTousers", fields: [assigned_to], references: [user_id], onUpdate: NoAction)
+  users_tickets_registrosoporte_user_idTousers     users?    @relation("tickets_registrosoporte_user_idTousers", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model training_evaluation_movements {
+  movement_id   String  @id @db.Uuid
+  evaluation_id String  @db.Uuid
+  move_index    Int?
+  score         Int?
+  comment       String?
+}
+
+model training_evaluations {
+  evaluation_id   String    @id @db.Uuid
+  student_id      String    @db.Uuid
+  instructor_id   String    @db.Uuid
+  tul_id          String?   @db.Uuid
+  evaluation_date DateTime? @db.Timestamp(6)
+  summary_comment String?
+}
+
+model training_exercises {
+  id                     String  @id(map: "exercises_pkey") @db.VarChar(255)
+  name                   String? @db.VarChar(255)
+  musclegroup            String? @db.VarChar(255)
+  description            String?
+  difficulty             String? @db.VarChar(50)
+  incompatibleconditions String?
+}
+
+model training_group_students {
+  group_id   String @db.Uuid
+  student_id String @db.Uuid
+
+  @@id([group_id, student_id])
+}
+
+model training_groups {
+  group_id    String  @id @db.Uuid
+  activity_id String? @db.Uuid
+  name        String? @db.VarChar(255)
+  time        String? @db.VarChar(255)
+}
+
+model training_messages {
+  id         String   @id(map: "messages_pkey") @db.VarChar(255)
+  senderid   String?  @db.VarChar(255)
+  receiverid String?  @db.VarChar(255)
+  text       String?
+  timestamp  String?  @db.VarChar(255)
+  isread     Boolean?
+}
+
+model training_registrosapp {
+  id_usuario         String              @id(map: "registrosapp_pkey") @db.VarChar(255)
+  nombre             String?             @db.VarChar(255)
+  apellidos          String?             @db.VarChar(255)
+  correo_electronico String?             @unique(map: "registrosapp_correo_electronico_key") @db.VarChar(255)
+  contrasena         String?             @db.VarChar(255)
+  goal               String?             @db.VarChar(255)
+  level              String?             @db.VarChar(255)
+  language           String?             @db.VarChar(50)
+  injuries           String?
+  avatarurl          String?
+  consentimiento     Boolean?
+  training_sessions  training_sessions[]
+}
+
+model training_sessions {
+  id                       String                 @id(map: "sessions_pkey") @db.VarChar(255)
+  studentid                String?                @db.VarChar(255)
+  date                     String?                @db.VarChar(255)
+  title                    String?                @db.VarChar(255)
+  type                     String?                @db.VarChar(50)
+  exercises                String?
+  notes                    String?
+  aigenerated              Boolean?
+  completedexerciseindices String?
+  feedback                 String?
+  training_registrosapp    training_registrosapp? @relation(fields: [studentid], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "sessions_studentid_fkey")
+}
+
+model tul_active_buffs {
+  buff_id    Int      @id @default(autoincrement())
+  user_id    String?  @db.Uuid
+  multiplier Decimal? @default(1.0) @db.Decimal
+  expires_at DateTime @db.Timestamp(6)
+  users      users?   @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_activities {
+  activity_id String       @id(map: "activities_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id     String?      @db.Uuid
+  name        String       @db.VarChar(255)
+  icon        String?      @db.VarChar(255)
+  tul_clubs   tul_clubs?   @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction, map: "activities_club_id_fkey")
+  tul_groups  tul_groups[]
+}
+
+model tul_attendance {
+  attendance_id String      @id(map: "attendance_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_id      String?     @db.Uuid
+  student_id    String?     @db.Uuid
+  date          DateTime    @db.Date
+  status        String      @db.VarChar(50)
+  created_at    DateTime?   @default(now()) @db.Timestamp(6)
+  is_auto       Boolean?    @default(false)
+  tul_groups    tul_groups? @relation(fields: [group_id], references: [group_id], onDelete: Cascade, onUpdate: NoAction, map: "attendance_group_id_fkey")
+
+  @@unique([group_id, student_id, date], map: "unique_attendance_per_group_student_date")
+}
+
+model tul_belts {
+  id         Int     @id(map: "belts_pkey") @default(autoincrement())
+  belt_level Int     @unique(map: "belts_belt_level_key")
+  name       String  @db.VarChar(255)
+  color_hex  String? @db.VarChar(50)
+}
+
+model tul_boss_participants {
+  boss_id String @db.Uuid
+  clan_id String @db.Uuid
+  user_id String @db.Uuid
+
+  @@id([boss_id, clan_id, user_id])
+}
+
+model tul_bosses {
+  boss_id                String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id                String?                  @db.Uuid
+  name                   String                   @db.VarChar(255)
+  total_hp               Int
+  image_url              String?                  @db.VarChar(1024)
+  reward_points          Int?                     @default(0)
+  is_active              Boolean?                 @default(true)
+  created_at             DateTime?                @default(now()) @db.Timestamp(6)
+  current_hp             Int?
+  team_healing_pool      Int?                     @default(0)
+  category               String?                  @default("monster") @db.VarChar(50)
+  rarity_weight          Int?                     @default(100)
+  loot_table             Json?                    @default("[]")
+  exp_reward             Int?                     @default(50)
+  attack_interval_min    Int?                     @default(3000)
+  attack_interval_max    Int?                     @default(7000)
+  base_damage            Int?                     @default(10)
+  tul_clubs              tul_clubs?               @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
+  tul_clan_boss_progress tul_clan_boss_progress[]
+}
+
+model tul_clan_boss_progress {
+  clan_id              String     @db.Uuid
+  boss_id              String     @db.Uuid
+  current_hp           Int
+  last_attacked_at     DateTime?  @default(now()) @db.Timestamp(6)
+  boss_level           Int?       @default(1)
+  last_rare_spawn_date DateTime?  @db.Timestamp(6)
+  tul_bosses           tul_bosses @relation(fields: [boss_id], references: [boss_id], onDelete: Cascade, onUpdate: NoAction)
+  tul_clans            tul_clans  @relation(fields: [clan_id], references: [clan_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([clan_id, boss_id])
+}
+
+model tul_clan_chat {
+  message_id String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clan_id    String?    @db.Uuid
+  user_id    String?    @db.Uuid
+  user_name  String?    @db.VarChar(255)
+  message    String
+  created_at DateTime?  @default(now()) @db.Timestamp(6)
+  tul_clans  tul_clans? @relation(fields: [clan_id], references: [clan_id], onDelete: Cascade, onUpdate: NoAction)
+  users      users?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_clan_inventory {
+  clan_inventory_id Int               @id @default(autoincrement())
+  clan_id           String?           @db.Uuid
+  item_id           String?           @db.Uuid
+  quantity          Int?              @default(1)
+  acquired_at       DateTime?         @default(now()) @db.Timestamp(6)
+  tul_clans         tul_clans?        @relation(fields: [clan_id], references: [clan_id], onDelete: Cascade, onUpdate: NoAction)
+  tul_market_items  tul_market_items? @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_clan_members {
+  clan_id   String    @db.Uuid
+  user_id   String    @db.Uuid
+  role      String?   @default("member") @db.VarChar(50)
+  joined_at DateTime? @default(now()) @db.Timestamp(6)
+  tul_clans tul_clans @relation(fields: [clan_id], references: [clan_id], onDelete: Cascade, onUpdate: NoAction)
+  users     users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([clan_id, user_id])
+}
+
+model tul_clans {
+  clan_id                String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id                String?                  @db.Uuid
+  name                   String                   @db.VarChar(255)
+  emblem                 String?                  @db.VarChar(1024)
+  created_at             DateTime?                @default(now()) @db.Timestamp(6)
+  logo                   String?
+  bank_points            Int?                     @default(0)
+  tul_clan_boss_progress tul_clan_boss_progress[]
+  tul_clan_chat          tul_clan_chat[]
+  tul_clan_inventory     tul_clan_inventory[]
+  tul_clan_members       tul_clan_members[]
+  tul_clubs              tul_clubs?               @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_clubs {
+  club_id          String             @id(map: "clubs_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @db.VarChar(255)
+  logo             String?            @db.VarChar(1024)
+  plan             String?            @default("free") @db.VarChar(50)
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  tul_activities   tul_activities[]
+  tul_bosses       tul_bosses[]
+  tul_clans        tul_clans[]
+  tul_loot_chests  tul_loot_chests[]
+  tul_market_items tul_market_items[]
+  tul_vocabulary   tul_vocabulary[]
+  users            users[]
+}
+
+model tul_evaluation_movements {
+  movement_id     String           @id(map: "evaluation_movements_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evaluation_id   String?          @db.Uuid
+  move_index      Int
+  score           Int
+  comment         String?
+  tul_evaluations tul_evaluations? @relation(fields: [evaluation_id], references: [evaluation_id], onDelete: Cascade, onUpdate: NoAction, map: "evaluation_movements_evaluation_id_fkey")
+}
+
+model tul_evaluations {
+  evaluation_id            String                     @id(map: "evaluations_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id               String?                    @db.Uuid
+  instructor_id            String?                    @db.Uuid
+  tul_id                   String?                    @db.Uuid
+  evaluation_date          DateTime?                  @default(now()) @db.Timestamp(6)
+  summary_comment          String?
+  tul_evaluation_movements tul_evaluation_movements[]
+  tul_tuls                 tul_tuls?                  @relation(fields: [tul_id], references: [tul_id], onDelete: Cascade, onUpdate: NoAction, map: "evaluations_tul_id_fkey")
+}
+
+model tul_group_students {
+  group_id   String     @db.Uuid
+  student_id String     @db.Uuid
+  tul_groups tul_groups @relation(fields: [group_id], references: [group_id], onDelete: Cascade, onUpdate: NoAction, map: "group_students_group_id_fkey")
+
+  @@id([group_id, student_id], map: "group_students_pkey")
+}
+
+model tul_groups {
+  group_id           String               @id(map: "groups_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  activity_id        String?              @db.Uuid
+  name               String               @db.VarChar(255)
+  time               String?              @db.VarChar(255)
+  tul_attendance     tul_attendance[]
+  tul_group_students tul_group_students[]
+  tul_activities     tul_activities?      @relation(fields: [activity_id], references: [activity_id], onDelete: Cascade, onUpdate: NoAction, map: "groups_activity_id_fkey")
+}
+
+model tul_inventory {
+  inventory_id     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String?           @db.Uuid
+  item_id          String?           @db.Uuid
+  is_used          Boolean?          @default(false)
+  acquired_at      DateTime?         @default(now()) @db.Timestamp(6)
+  is_equipped      Boolean?          @default(false)
+  tul_market_items tul_market_items? @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  users            users?            @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_loot_chests {
+  chest_id      String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id       String?         @db.Uuid
+  name          String          @db.VarChar(255)
+  description   String?
+  image_url     String?         @db.VarChar(1024)
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  tul_clubs     tul_clubs?      @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
+  tul_loot_pool tul_loot_pool[]
+}
+
+model tul_loot_pool {
+  pool_id          Int               @id @default(autoincrement())
+  chest_id         String?           @db.Uuid
+  item_id          String?           @db.Uuid
+  weight           Int?              @default(1)
+  tul_loot_chests  tul_loot_chests?  @relation(fields: [chest_id], references: [chest_id], onDelete: Cascade, onUpdate: NoAction)
+  tul_market_items tul_market_items? @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_market_items {
+  item_id               String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id               String?              @db.Uuid
+  name                  String               @db.VarChar(255)
+  description           String?
+  cost_points           Int
+  type                  String?              @default("virtual") @db.VarChar(50)
+  image_url             String?              @db.VarChar(1024)
+  stock                 Int?                 @default(-1)
+  created_at            DateTime?            @default(now()) @db.Timestamp(6)
+  combat_stats          String?
+  item_type             String?              @default("equippable") @db.VarChar(50)
+  rarity                String?              @default("common") @db.VarChar(50)
+  special_effects       Json?                @default("[]")
+  is_merchant_exclusive Boolean?             @default(false)
+  is_in_base_store      Boolean?             @default(true)
+  is_merchant_sellable  Boolean?             @default(false)
+  is_merchant_buyable   Boolean?             @default(false)
+  sell_price_min        Int?
+  sell_price_max        Int?
+  buy_price_min         Int?
+  buy_price_max         Int?
+  weight                Float?               @default(0.5)
+  tul_clan_inventory    tul_clan_inventory[]
+  tul_inventory         tul_inventory[]
+  tul_loot_pool         tul_loot_pool[]
+  tul_clubs             tul_clubs?           @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_puntos {
+  user_id String   @id @db.Uuid
+  points  Decimal? @default(0) @db.Decimal
+  users   users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_rpg {
+  user_id      String @id @db.Uuid
+  rpg_class    String @db.VarChar(50)
+  level        Int?   @default(1)
+  exp          Int?   @default(0)
+  hp           Int?   @default(100)
+  max_hp       Int?   @default(100)
+  current_hp   Int?   @default(100)
+  strength     Int?   @default(5)
+  vitality     Int?   @default(5)
+  agility      Int?   @default(5)
+  focus        Int?   @default(5)
+  mana         Int?   @default(50)
+  max_mana     Int?   @default(50)
+  potency      Int?   @default(5)
+  skill_points Int?   @default(0)
+  max_weight   Float? @default(100)
+  mana_stat    Int?   @default(5)
+  users        users  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tul_tuls {
+  tul_id           String            @id(map: "tuls_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String            @db.VarChar(255)
+  video_url        String?           @db.VarChar(1024)
+  moves            Int?
+  meaning          String?
+  belt_requirement Int?
+  tul_evaluations  tul_evaluations[]
+}
+
+model tul_user_belts {
+  id         Int       @id(map: "user_belts_pkey") @default(autoincrement())
+  user_id    String?   @db.Uuid
+  belt_level Int
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "user_belts_user_id_fkey")
+}
+
+model tul_vocabulary {
+  vocabulary_id String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  club_id       String?    @db.Uuid
+  term          String
+  meaning       String
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  belt_level    Int?       @default(0)
+  tul_clubs     tul_clubs? @relation(fields: [club_id], references: [club_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model bricks_missing_pieces {
+  id          String   @id @default(uuid())
+  brickslabId String
+  userId      String   @db.Uuid
+  description String
+  reportedAt  DateTime @default(now())
+  status      String   @default("Pending")
+  brickslab   bricks_brickslab @relation(fields: [brickslabId], references: [id], onDelete: Cascade)
+  user        users            @relation(fields: [userId], references: [user_id], onDelete: Cascade)
+}
+
+model bricks_poll {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  options     bricks_poll_option[]
+}
+
+model bricks_poll_option {
+  id          String   @id @default(uuid())
+  pollId      String
+  title       String
+  imageUrl    String
+  votes       bricks_poll_vote[]
+  poll        bricks_poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+}
+
+model bricks_poll_vote {
+  id          String   @id @default(uuid())
+  optionId    String
+  userId      String   @db.Uuid
+  option      bricks_poll_option @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user        users              @relation(fields: [userId], references: [user_id], onDelete: Cascade)
+  
+  @@unique([optionId, userId])
 }

@@ -11,13 +11,15 @@ interface AdminReservation {
   itemTitle: string;
   itemType: string;
   reservationDate: string;
+  status?: string;
 }
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   
   // Add item form state
   const [newItemType, setNewItemType] = useState('Aim Brickslab');
@@ -49,11 +51,24 @@ export const AdminDashboard: React.FC = () => {
   const [newUserPassword, setNewUserPassword] = useState('');
   const [passwordUserSearchTerm, setPasswordUserSearchTerm] = useState('');
   
+  // Polls state
+  const [pollTitle, setPollTitle] = useState('');
+  const [pollDesc, setPollDesc] = useState('');
+  const [pollOptions, setPollOptions] = useState([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+  
   useEffect(() => {
     fetchReservations();
     fetchCatalog();
     fetchUsers();
+    fetchReports();
   }, []);
+
+  const fetchReports = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/pieces`);
+      if (res.ok) setReports(await res.json());
+    } catch(e) { console.error(e); }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -96,6 +111,20 @@ export const AdminDashboard: React.FC = () => {
   const handleReturn = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/api/admin/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservationId: id })
+      });
+      if (res.ok) {
+        fetchReservations();
+        fetchCatalog();
+      }
+    } catch(e) { console.error(e) }
+  };
+
+  const handleDeliver = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/deliver`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reservationId: id })
@@ -236,6 +265,18 @@ export const AdminDashboard: React.FC = () => {
         >
           Contraseñas
         </button>
+        <button 
+          className={`btn ${activeTab === 'pieces' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('pieces')}
+        >
+          Reportes de Piezas
+        </button>
+        <button 
+          className={`btn ${activeTab === 'polls' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('polls')}
+        >
+          Votaciones
+        </button>
       </div>
 
       {activeTab === 'reservations' && (
@@ -252,6 +293,7 @@ export const AdminDashboard: React.FC = () => {
                     <th style={{ padding: '1rem 0.5rem' }}>Artículo</th>
                     <th style={{ padding: '1rem 0.5rem' }}>Tipo</th>
                     <th style={{ padding: '1rem 0.5rem' }}>Fecha</th>
+                    <th style={{ padding: '1rem 0.5rem' }}>Estado</th>
                     <th style={{ padding: '1rem 0.5rem' }}>Acción</th>
                   </tr>
                 </thead>
@@ -276,13 +318,34 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td style={{ padding: '1rem 0.5rem' }}>{new Date(r.reservationDate).toLocaleDateString()}</td>
                       <td style={{ padding: '1rem 0.5rem' }}>
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                          onClick={() => handleReturn(r.id)}
-                        >
-                          <CheckCircle size={16} /> Entregado
-                        </button>
+                        <span style={{ 
+                          padding: '0.25rem 0.75rem', 
+                          borderRadius: '999px',
+                          fontSize: '0.75rem',
+                          background: r.status === 'Reserved' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                          color: r.status === 'Reserved' ? '#EAB308' : '#22C55E'
+                        }}>
+                          {r.status === 'Reserved' ? 'Pendiente Recogida' : 'Entregado a Alumno'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '1rem 0.5rem' }}>
+                        {r.status === 'Reserved' ? (
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            onClick={() => handleDeliver(r.id)}
+                          >
+                            <CheckCircle size={16} /> Marcar Entregado
+                          </button>
+                        ) : (
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
+                            onClick={() => handleReturn(r.id)}
+                          >
+                            <CheckCircle size={16} /> Marcar Devuelto
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -567,6 +630,94 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'pieces' && (
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Reportes de Piezas Faltantes</h3>
+          {reports.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>No hay reportes de piezas perdidas por el momento.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {reports.map((report: any) => (
+                <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: report.status === 'Pending' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--surface-border)' }}>
+                  <div>
+                    <h4 style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '0.25rem' }}>{report.itemName}</h4>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                      <span style={{ color: 'var(--accent)' }}>{report.userName}</span> ({report.userEmail})
+                    </p>
+                    <p style={{ fontSize: '0.875rem', color: '#EF4444', fontStyle: 'italic' }}>
+                      Descripción: "{report.description}"
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Reportado el: {new Date(report.reportedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    {report.status === 'Pending' ? (
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                        onClick={async () => {
+                          await fetch(`${API_URL}/api/admin/pieces/resolve`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reportId: report.id })
+                          });
+                          fetchReports();
+                        }}
+                      >
+                        Marcar Resuelto
+                      </button>
+                    ) : (
+                      <span style={{ color: '#10B981', fontSize: '0.875rem', fontWeight: 600 }}>Cerrado</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'polls' && (
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Crear Nueva Votación</h3>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>
+          <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={async (e) => {
+            e.preventDefault();
+            await fetch(`${API_URL}/api/admin/polls`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: pollTitle, description: pollDesc, options: pollOptions })
+            });
+            alert('Votación publicada.');
+            setPollTitle(''); setPollDesc(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+          }}>
+            <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+            <input required placeholder="Descripción (opcional)" value={pollDesc} onChange={e => setPollDesc(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+            
+            <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
+            {pollOptions.map((opt, i) => (
+              <div key={i} style={{ display: 'flex', gap: '1rem' }}>
+                <input required placeholder={`Nombre Opción ${i+1}`} value={opt.title} onChange={e => {
+                  const newOpts = [...pollOptions];
+                  newOpts[i].title = e.target.value;
+                  setPollOptions(newOpts);
+                }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                <input required placeholder={`URL Imagen ${i+1}`} value={opt.imageUrl} onChange={e => {
+                  const newOpts = [...pollOptions];
+                  newOpts[i].imageUrl = e.target.value;
+                  setPollOptions(newOpts);
+                }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '' }])}>Añadir Opción</button>
+              <button type="submit" className="btn btn-primary">Publicar Votación</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

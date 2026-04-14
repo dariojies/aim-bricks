@@ -58,7 +58,7 @@ export interface UserProfile {
   role?: string;
   readBooks: CatalogItem[];
   builtBrickslabs: CatalogItem[];
-  currentReservations: string[];
+  currentReservations: { id: string, status: string, text: string, isBrickslab?: boolean, brickslabId?: string }[];
   permissions?: {
     brickslab: boolean;
     library: boolean;

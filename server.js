@@ -76,15 +76,18 @@ app.post('/api/auth/login', async (req, res) => {
       role: user.dev_role || 'student',
       readBooks: user.history.filter(h => h.libraryBook).map(h => mapBook(h.libraryBook)),
       builtBrickslabs: user.history.filter(h => h.brickslab).map(h => mapBrickslab(h.brickslab)),
-      currentReservations: user.reservations.filter(r => r.status === 'Active').map(r => {
-        if (r.brickslab) return `Aim Brickslab: ${r.brickslab.title}`;
-        if (r.libraryBook) return `Libro: ${r.libraryBook.title}`;
-        return 'Reserva';
-      }),
+      currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
+        id: r.id,
+        status: r.status === 'Active' ? 'Reserved' : r.status,
+        text: r.brickslab ? `Aim Brickslab: ${r.brickslab.title}` : (r.libraryBook ? `Libro: ${r.libraryBook.title}` : 'Reserva'),
+        isBrickslab: !!r.brickslab,
+        brickslabId: r.brickslabId
+      })),
       permissions: {
         brickslab: user.bricks_ranks?.[0]?.canReserveBrickslab || false,
         library: user.bricks_ranks?.[0]?.canReserveLibrary || false
-      }
+      },
+      requiresPasswordChange: user.requires_password_change || false
     };
 
     res.json({ token, profile });
@@ -117,21 +120,43 @@ app.post('/api/auth/me', async (req, res) => {
       role: user.dev_role || 'student',
       readBooks: user.history.filter(h => h.libraryBook).map(h => mapBook(h.libraryBook)),
       builtBrickslabs: user.history.filter(h => h.brickslab).map(h => mapBrickslab(h.brickslab)),
-      currentReservations: user.reservations.filter(r => r.status === 'Active').map(r => {
-        if (r.brickslab) return `Aim Brickslab: ${r.brickslab.title}`;
-        if (r.libraryBook) return `Libro: ${r.libraryBook.title}`;
-        return 'Reserva';
-      }),
+      currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
+        id: r.id,
+        status: r.status === 'Active' ? 'Reserved' : r.status,
+        text: r.brickslab ? `Aim Brickslab: ${r.brickslab.title}` : (r.libraryBook ? `Libro: ${r.libraryBook.title}` : 'Reserva'),
+        isBrickslab: !!r.brickslab,
+        brickslabId: r.brickslabId
+      })),
       permissions: {
         brickslab: user.bricks_ranks?.[0]?.canReserveBrickslab || false,
         library: user.bricks_ranks?.[0]?.canReserveLibrary || false
-      }
+      },
+      requiresPasswordChange: user.requires_password_change || false
     };
 
     res.json(profile);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/auth/force-password-change', async (req, res) => {
+  try {
+    const { userId, newPassword } = req.body;
+    if (!userId || !newPassword) return res.status(400).json({ error: 'Faltan datos.' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await prisma.users.update({
+      where: { user_id: userId },
+      data: { password: hashedPassword, requires_password_change: false }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cambiar contraseña obligatoria.' });
   }
 });
 
@@ -193,7 +218,7 @@ app.post('/api/admin/users/password', async (req, res) => {
     
     await prisma.users.update({
       where: { user_id: userId },
-      data: { password: hashedPassword }
+      data: { password: hashedPassword, requires_password_change: true }
     });
     
     res.json({ success: true });
@@ -206,7 +231,7 @@ app.post('/api/admin/users/password', async (req, res) => {
 app.get('/api/admin/reservations', async (req, res) => {
   try {
     const reservations = await prisma.bricks_reservation.findMany({
-      where: { status: 'Active' },
+      where: { status: { in: ['Active', 'Reserved', 'Delivered'] } },
       include: { user: true, brickslab: true, libraryBook: true }
     });
     
@@ -216,8 +241,27 @@ app.get('/api/admin/reservations', async (req, res) => {
       userEmail: r.user.email,
       itemTitle: r.brickslab ? r.brickslab.title : (r.libraryBook ? r.libraryBook.title : ''),
       itemType: r.brickslab ? 'Aim Brickslab' : 'Libro',
-      reservationDate: r.reservationDate
+      reservationDate: r.reservationDate,
+      status: r.status === 'Active' ? 'Reserved' : r.status // Map legacy Active to Reserved
     })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/deliver', async (req, res) => {
+  try {
+    const { reservationId } = req.body;
+    const reservation = await prisma.bricks_reservation.findUnique({ where: { id: reservationId } });
+    if (!reservation) return res.status(404).json({ error: 'No encontrado' });
+    
+    await prisma.bricks_reservation.update({
+      where: { id: reservationId },
+      data: { status: 'Delivered' }
+    });
+    
+    res.json({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
@@ -422,7 +466,7 @@ app.post('/api/reservations', async (req, res) => {
     await prisma.bricks_reservation.create({
       data: {
         userId,
-        status: 'Active',
+        status: 'Reserved',
         brickslabId: type === 'Aim Brickslab' ? itemId : null,
         libraryBookId: type === 'Libro' ? itemId : null,
       }
@@ -432,6 +476,188 @@ app.post('/api/reservations', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al reservar' });
+  }
+});
+
+app.delete('/api/reservations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the reservation
+    const reservation = await prisma.bricks_reservation.findUnique({ where: { id } });
+    if (!reservation) return res.status(404).json({ error: 'Reserva no encontrada.' });
+    if (reservation.status === 'Delivered' || reservation.status === 'Returned') {
+      return res.status(400).json({ error: 'No se puede cancelar en este estado.' });
+    }
+    
+    // Delete the reservation - this naturally updates availability since we COUNT active/reserved
+    await prisma.bricks_reservation.delete({ where: { id } });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error cancelando reserva.' });
+  }
+});
+
+// Missing pieces endpoints
+app.post('/api/pieces/report', async (req, res) => {
+  try {
+    const { userId, brickslabId, description } = req.body;
+    if (!userId || !brickslabId || !description) return res.status(400).json({ error: 'Faltan datos' });
+    
+    await prisma.bricks_missing_pieces.create({
+      data: {
+        userId,
+        brickslabId,
+        description,
+        status: 'Pending'
+      }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error reportando piezas perdidas.' });
+  }
+});
+
+app.get('/api/admin/pieces', async (req, res) => {
+  try {
+    const reports = await prisma.bricks_missing_pieces.findMany({
+      include: {
+        user: true,
+        brickslab: true
+      },
+      orderBy: { reportedAt: 'desc' }
+    });
+    
+    res.json(reports.map(r => ({
+      id: r.id,
+      userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
+      userEmail: r.user.email,
+      itemName: r.brickslab.title,
+      description: r.description,
+      reportedAt: r.reportedAt,
+      status: r.status
+    })));
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error cargando reportes.' });
+  }
+});
+
+app.post('/api/admin/pieces/resolve', async (req, res) => {
+  try {
+    const { reportId } = req.body;
+    await prisma.bricks_missing_pieces.update({
+      where: { id: reportId },
+      data: { status: 'Replaced' }
+    });
+    res.json({ success: true });
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error resolviendo reporte.' });
+  }
+});
+
+// Polls Endpoints
+app.get('/api/polls', async (req, res) => {
+  try {
+    const activePoll = await prisma.bricks_poll.findFirst({
+      where: { isActive: true },
+      include: {
+        options: {
+          include: { _count: { select: { votes: true } } }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (!activePoll) return res.json(null);
+    
+    // Map options to include vote count
+    res.json({
+      id: activePoll.id,
+      title: activePoll.title,
+      description: activePoll.description,
+      options: activePoll.options.map(opt => ({
+        id: opt.id,
+        title: opt.title,
+        imageUrl: opt.imageUrl,
+        votes: opt._count.votes
+      }))
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching polls' });
+  }
+});
+
+app.post('/api/polls/vote', async (req, res) => {
+  try {
+    const { userId, optionId } = req.body;
+    
+    // Ensure user has brickslab rank
+    const user = await prisma.users.findUnique({
+      where: { user_id: userId },
+      include: { bricks_ranks: true }
+    });
+    
+    if (!user || user.bricks_ranks.length === 0 || !user.bricks_ranks[0].canReserveBrickslab) {
+      return res.status(403).json({ error: 'Necesitas el rango Aim Brickslab para votar.' });
+    }
+    
+    // Check if user already voted in this poll
+    const option = await prisma.bricks_poll_option.findUnique({ where: { id: optionId } });
+    if (!option) return res.status(404).json({ error: 'Opción no encontrada' });
+    
+    const existingVote = await prisma.bricks_poll_vote.findFirst({
+      where: {
+        userId,
+        option: { pollId: option.pollId }
+      }
+    });
+
+    if (existingVote) {
+      return res.status(400).json({ error: 'Ya has votado en esta encuesta.' });
+    }
+    
+    await prisma.bricks_poll_vote.create({
+      data: { userId, optionId }
+    });
+    
+    res.json({ success: true });
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error voting' });
+  }
+});
+
+app.post('/api/admin/polls', async (req, res) => {
+  try {
+    const { title, description, options } = req.body; // options is array of { title, imageUrl }
+    
+    // Deactivate previous
+    await prisma.bricks_poll.updateMany({
+      where: { isActive: true },
+      data: { isActive: false }
+    });
+    
+    // Create new
+    await prisma.bricks_poll.create({
+      data: {
+        title,
+        description,
+        options: {
+          create: options
+        }
+      }
+    });
+    
+    res.json({ success: true });
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error creating poll' });
   }
 });
 

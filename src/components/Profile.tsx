@@ -3,9 +3,11 @@ import type { UserProfile } from '../data/mockData';
 
 interface Props {
   user: UserProfile;
+  onCancelReservation?: (id: string) => void;
+  onReportPieces?: (brickslabId: string, description: string) => void;
 }
 
-export const Profile: React.FC<Props> = ({ user }) => {
+export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPieces }) => {
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 0' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
@@ -64,12 +66,35 @@ export const Profile: React.FC<Props> = ({ user }) => {
           </h3>
           {user.currentReservations.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {user.currentReservations.map(id => (
-                <div key={id} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem 1.5rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 500 }}>Reserva confirmada. ID: {id}</span>
-                  <span style={{ fontSize: '0.875rem', color: '#10B981', padding: '0.25rem 0.75rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                    Activa
-                  </span>
+              {user.currentReservations.map(res => (
+                <div key={res.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem 1.5rem', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 500 }}>{res.text}</span>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.875rem', color: res.status === 'Reserved' ? '#EAB308' : '#3B82F6', padding: '0.25rem 0.75rem', background: res.status === 'Reserved' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: `1px solid ${res.status === 'Reserved' ? 'rgba(234, 179, 8, 0.3)' : 'rgba(59, 130, 246, 0.3)'}` }}>
+                      {res.status === 'Reserved' ? 'Pendiente Recogida' : 'Entregado a Alumno'}
+                    </span>
+                    {res.status === 'Reserved' && onCancelReservation && (
+                      <button 
+                        className="btn btn-outline" 
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#EF4444', color: '#EF4444' }}
+                        onClick={() => onCancelReservation(res.id)}
+                      >
+                        Cancelar Reserva
+                      </button>
+                    )}
+                    {res.status === 'Delivered' && res.isBrickslab && onReportPieces && (
+                      <button 
+                        className="btn btn-outline" 
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#F59E0B', color: '#F59E0B' }}
+                        onClick={() => {
+                          const desc = prompt('¿Qué pieza falta? Describe color y forma si lo recuerdas:');
+                          if (desc && res.brickslabId) onReportPieces(res.brickslabId, desc);
+                        }}
+                      >
+                        ¿Faltan Piezas?
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
