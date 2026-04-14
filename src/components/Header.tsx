@@ -15,7 +15,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
-  
+
   const [showDonationModal, setShowDonationModal] = useState(false);
 
   useEffect(() => {
@@ -41,10 +41,10 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
             <Crown size={20} />
             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
           </div>
-          
-          <button 
-            className="btn btn-outline" 
-            style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+
+          <button
+            className="btn btn-outline"
+            style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             onClick={() => setShowDonationModal(true)}
           >
             <Heart size={18} fill="#EF4444" /> Dona un set LEGO®
@@ -75,25 +75,25 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
       </header>
 
       {/* Botón flotante para Alternar Tema */}
-      <button 
-        onClick={toggleTheme} 
-        style={{ 
-          position: 'fixed', 
-          bottom: '2rem', 
-          right: '2rem', 
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
           zIndex: 9999,
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          width: '56px', 
-          height: '56px', 
-          borderRadius: '50%', 
-          cursor: 'pointer', 
-          background: 'var(--accent)', 
-          border: 'none', 
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          background: 'var(--accent)',
+          border: 'none',
           color: 'white',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
-        }} 
+        }}
         aria-label="Alternar tema"
       >
         {theme === 'dark' ? <Sun size={28} /> : <Moon size={28} />}
@@ -120,7 +120,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
               <ul style={{ color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1rem' }}>
                 <li>Asegúrate de que el set esté lo más completo posible.</li>
                 <li>Si tienes las instrucciones o la caja original, inclúyelas.</li>
-                <li>Tráelo a la sede principal de Aim y entrégalo en recepción.</li>
+                <li>Tráelo a local de Aim Education y entrégalo en recepción.</li>
               </ul>
             </div>
             <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowDonationModal(false)}>
