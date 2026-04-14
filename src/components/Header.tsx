@@ -80,7 +80,7 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
         style={{
           position: 'fixed',
           bottom: '2rem',
-          right: '2rem',
+          left: '2rem',
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
