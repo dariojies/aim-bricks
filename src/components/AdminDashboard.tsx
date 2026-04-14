@@ -136,6 +136,19 @@ export const AdminDashboard: React.FC = () => {
     } catch(e) { console.error(e) }
   };
 
+  const handleAdminCancel = async (id: string) => {
+    if (!confirm('¿Estás seguro de que quieres anular esta reserva que aún no ha sido recogida?')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/reservations/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchReservations();
+        fetchCatalog();
+      } else {
+        alert('No se pudo cancelar la reserva.');
+      }
+    } catch(e) { console.error(e) }
+  };
+
   const handleDeleteItem = async (id: string, type: string) => {
     if (!confirm('¿Seguro que quieres borrar este artículo permanentemente?')) return;
     try {
@@ -330,13 +343,22 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td style={{ padding: '1rem 0.5rem' }}>
                         {r.status === 'Reserved' ? (
-                          <button 
-                            className="btn btn-primary" 
-                            style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={() => handleDeliver(r.id)}
-                          >
-                            <CheckCircle size={16} /> Marcar Entregado
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button 
+                              className="btn btn-primary" 
+                              style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                              onClick={() => handleDeliver(r.id)}
+                            >
+                              <CheckCircle size={16} /> Marcar Entregado
+                            </button>
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#EF4444', color: '#EF4444' }}
+                              onClick={() => handleAdminCancel(r.id)}
+                            >
+                              Anular
+                            </button>
+                          </div>
                         ) : (
                           <button 
                             className="btn btn-primary" 
