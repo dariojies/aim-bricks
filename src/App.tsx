@@ -78,31 +78,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (showEnrollmentModal) {
-      const script = document.createElement('script');
-      script.src = 'https://js-eu1.hsforms.net/forms/v2.js';
-      script.async = true;
-      script.onload = () => {
-        // @ts-ignore
-        if (window.hbspt) {
-          // @ts-ignore
-          window.hbspt.forms.create({
-            region: "eu1",
-            portalId: "26062951",
-            formId: "045484a9-99c4-42e3-9bf5-f83ab7897795",
-            target: "#hubspot-form-container"
-          });
-        }
-      };
-      document.body.appendChild(script);
-      return () => {
-        try {
-          document.body.removeChild(script);
-        } catch (e) {
-          console.error('Error removing script:', e);
-        }
-      };
-    }
+    // Logic removed in favor of direct iframe embed for reliability
   }, [showEnrollmentModal]);
 
   const scrollToTop = () => {
@@ -523,10 +499,15 @@ function App() {
                 Cerrar
               </button>
             </div>
-            <div id="hubspot-form-container" style={{ minHeight: '400px' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <div className="loading-spinner"></div>
-              </div>
+            <div id="hubspot-form-container" style={{ minHeight: '600px' }}>
+              <iframe 
+                src="https://share-eu1.hsforms.com/2PTjFBJ03SICw-tO1NDWjUQ2fimav" 
+                width="100%" 
+                height="600" 
+                frameBorder="0"
+                style={{ borderRadius: '8px' }}
+                title="Solicitud de Inscripción"
+              ></iframe>
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem', textAlign: 'center' }}>
               Procesado de forma segura a través de HubSpot CRM.
