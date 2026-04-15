@@ -84,8 +84,8 @@ app.post('/api/auth/login', async (req, res) => {
         brickslabId: r.brickslabId
       })),
       permissions: {
-        brickslab: user.bricks_ranks?.[0]?.canReserveBrickslab || false,
-        library: user.bricks_ranks?.[0]?.canReserveLibrary || false
+        brickslab: user.bricks_ranks?.canReserveBrickslab || false,
+        library: user.bricks_ranks?.canReserveLibrary || false
       },
       requiresPasswordChange: user.requires_password_change || false
     };
@@ -128,8 +128,8 @@ app.post('/api/auth/me', async (req, res) => {
         brickslabId: r.brickslabId
       })),
       permissions: {
-        brickslab: user.bricks_ranks?.[0]?.canReserveBrickslab || false,
-        library: user.bricks_ranks?.[0]?.canReserveLibrary || false
+        brickslab: user.bricks_ranks?.canReserveBrickslab || false,
+        library: user.bricks_ranks?.canReserveLibrary || false
       },
       requiresPasswordChange: user.requires_password_change || false
     };
@@ -173,8 +173,8 @@ app.get('/api/admin/users/permissions', async (req, res) => {
       email: u.email,
       role: u.dev_role || 'student',
       permissions: {
-        brickslab: u.bricks_ranks?.[0]?.canReserveBrickslab || false,
-        library: u.bricks_ranks?.[0]?.canReserveLibrary || false
+        brickslab: u.bricks_ranks?.canReserveBrickslab || false,
+        library: u.bricks_ranks?.canReserveLibrary || false
       }
     })));
   } catch (error) {
@@ -603,7 +603,7 @@ app.post('/api/polls/vote', async (req, res) => {
       include: { bricks_ranks: true }
     });
     
-    if (!user || user.bricks_ranks.length === 0 || !user.bricks_ranks[0].canReserveBrickslab) {
+    if (!user || !user.bricks_ranks || !user.bricks_ranks.canReserveBrickslab) {
       return res.status(403).json({ error: 'Necesitas el rango Aim Brickslab para votar.' });
     }
     
