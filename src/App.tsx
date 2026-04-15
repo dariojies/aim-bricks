@@ -27,6 +27,7 @@ function App() {
   const [forcePasswordNew2, setForcePasswordNew2] = useState('');
 
   const [showRankAlert, setShowRankAlert] = useState<{show: boolean, type: 'Brickslab' | 'Biblioteca' | null}>({show: false, type: null});
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activePoll, setActivePoll] = useState<any>(null);
@@ -75,6 +76,24 @@ function App() {
       clearInterval(catalogInterval);
     };
   }, []);
+
+  useEffect(() => {
+    if (showEnrollmentModal) {
+      const timeout = setTimeout(() => {
+        // @ts-ignore
+        if (window.hbspt) {
+          // @ts-ignore
+          window.hbspt.forms.create({
+            region: "eu1",
+            portalId: "26062951",
+            formId: "045484a9-99c4-42e3-9bf5-f83ab7897795",
+            target: "#hubspot-form-container"
+          });
+        }
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [showEnrollmentModal]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -277,6 +296,26 @@ function App() {
               </p>
             </div>
             
+            {user && !user.permissions?.brickslab && (
+              <div className="glass-panel animate-fade-in" style={{ 
+                marginBottom: '3rem', padding: '2rem', border: '1px solid var(--accent)', 
+                background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(0,0,0,0) 100%)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' 
+              }}>
+                <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--text)' }}>🚀 ¿Quieres unirte a Aim Brickslab?</h3>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', maxWidth: '700px' }}>
+                  Aún no tienes acceso para reservar sets de LEGO®. Completa tu solicitud de inscripción ahora y empieza a disfrutar de toda la colección en nuestro local.
+                </p>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => setShowEnrollmentModal(true)}
+                  style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
+                >
+                  Solicitar Inscripción
+                </button>
+              </div>
+            )}
+            
             {activePoll && (
               <div className="glass-panel animate-fade-in" style={{ marginBottom: '3rem', padding: '2rem', border: '2px solid var(--accent)' }}>
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)', textAlign: 'center' }}>📊 Cuestionario Activo: {activePoll.title}</h3>
@@ -438,6 +477,35 @@ function App() {
             >
               Entendido
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Inscripción HubSpot */}
+      {showEnrollmentModal && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
+        }}>
+          <div className="glass-panel animate-fade-in responsive-modal" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.5rem' }}>Solicitud de Inscripción</h2>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => setShowEnrollmentModal(false)}
+                style={{ padding: '0.25rem 0.75rem' }}
+              >
+                Cerrar
+              </button>
+            </div>
+            <div id="hubspot-form-container" style={{ minHeight: '400px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <div className="loading-spinner"></div>
+              </div>
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem', textAlign: 'center' }}>
+              Procesado de forma segura a través de HubSpot CRM.
+            </p>
           </div>
         </div>
       )}

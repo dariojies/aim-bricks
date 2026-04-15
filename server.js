@@ -381,7 +381,7 @@ app.get('/api/catalog', async (req, res) => {
     const [brickslabs, libraryBooks, activeReservations] = await Promise.all([
       prisma.bricks_brickslab.findMany(),
       prisma.bricks_librarybook.findMany(),
-      prisma.bricks_reservation.findMany({ where: { status: 'Active' } })
+      prisma.bricks_reservation.findMany({ where: { status: { in: ['Reserved', 'Delivered'] } } })
     ]);
 
     const activeCounts = activeReservations.reduce((acc, r) => {
@@ -434,7 +434,7 @@ app.post('/api/reservations', async (req, res) => {
     const userActiveInCategory = await prisma.bricks_reservation.count({
       where: {
         userId,
-        status: 'Active',
+        status: { in: ['Reserved', 'Delivered'] },
         ...(type === 'Aim Brickslab' ? { brickslabId: { not: null } } : { libraryBookId: { not: null } })
       }
     });
@@ -445,7 +445,7 @@ app.post('/api/reservations', async (req, res) => {
 
     const activeCurrent = await prisma.bricks_reservation.count({
       where: { 
-        status: 'Active',
+        status: { in: ['Reserved', 'Delivered'] },
         ...(type === 'Aim Brickslab' ? { brickslabId: itemId } : { libraryBookId: itemId })
       }
     });

@@ -48,9 +48,21 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
               {user.builtBrickslabs.map(set => (
                 <div key={set.id} style={{ display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
                   <img src={set.imageUrl} alt={set.title} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px' }} />
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{set.title}</h4>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>¡Misión cumplida!</span>
+                    {onReportPieces && (
+                      <button 
+                        className="btn btn-outline" 
+                        style={{ display: 'block', marginTop: '0.5rem', padding: '0.2rem 0.5rem', fontSize: '0.7rem', borderColor: '#F59E0B', color: '#F59E0B' }}
+                        onClick={() => {
+                          const desc = prompt('¿Qué pieza falta? Describe color y forma si lo recuerdas:');
+                          if (desc) onReportPieces(set.id, desc);
+                        }}
+                      >
+                        ¿Faltaban Piezas?
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
