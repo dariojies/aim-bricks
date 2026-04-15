@@ -276,6 +276,41 @@ function App() {
 
   return (
     <div className="container">
+      {(!user || !user.permissions?.brickslab) && (
+        <div style={{ 
+          background: 'linear-gradient(90deg, #10B981, #3B82F6)', 
+          color: 'white', 
+          padding: '0.6rem 1rem', 
+          textAlign: 'center', 
+          fontSize: '0.9rem', 
+          fontWeight: 600,
+          borderRadius: '8px',
+          marginBottom: '1rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
+        }}>
+          <span>🚀 ¿Quieres reservar sets de LEGO®? Solicita tu acceso a Aim Brickslab ahora</span>
+          <button 
+            onClick={() => setShowEnrollmentModal(true)}
+            style={{ 
+              background: 'white', 
+              color: '#10B981', 
+              border: 'none', 
+              padding: '0.3rem 0.8rem', 
+              borderRadius: '6px', 
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              fontWeight: 700
+            }}
+          >
+            Saber más
+          </button>
+        </div>
+      )}
+
       <Header 
         isLoggedIn={!!user} 
         userRole={user?.role}
@@ -295,26 +330,6 @@ function App() {
                 Explora y reserva tus Aim Brickslabs y Libros favoritos para disfrutar en nuestro local.
               </p>
             </div>
-            
-            {user && !user.permissions?.brickslab && (
-              <div className="glass-panel animate-fade-in" style={{ 
-                marginBottom: '3rem', padding: '2rem', border: '1px solid var(--accent)', 
-                background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(0,0,0,0) 100%)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' 
-              }}>
-                <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--text)' }}>🚀 ¿Quieres unirte a Aim Brickslab?</h3>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', maxWidth: '700px' }}>
-                  Aún no tienes acceso para reservar sets de LEGO®. Completa tu solicitud de inscripción ahora y empieza a disfrutar de toda la colección en nuestro local.
-                </p>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={() => setShowEnrollmentModal(true)}
-                  style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
-                >
-                  Solicitar Inscripción
-                </button>
-              </div>
-            )}
             
             {activePoll && (
               <div className="glass-panel animate-fade-in" style={{ marginBottom: '3rem', padding: '2rem', border: '2px solid var(--accent)' }}>
