@@ -79,19 +79,16 @@ function App() {
 
   useEffect(() => {
     if (showEnrollmentModal) {
-      const timeout = setTimeout(() => {
+      // @ts-ignore
+      if (window.hbspt) {
         // @ts-ignore
-        if (window.hbspt) {
-          // @ts-ignore
-          window.hbspt.forms.create({
-            region: "eu1",
-            portalId: "26062951",
-            formId: "045484a9-99c4-42e3-9bf5-f83ab7897795",
-            target: "#hubspot-form-container"
-          });
-        }
-      }, 100);
-      return () => clearTimeout(timeout);
+        window.hbspt.forms.create({
+          region: "eu1",
+          portalId: "26062951",
+          formId: "045484a9-99c4-42e3-9bf5-f83ab7897795",
+          target: "#hubspot-form-container"
+        });
+      }
     }
   }, [showEnrollmentModal]);
 
