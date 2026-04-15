@@ -79,16 +79,29 @@ function App() {
 
   useEffect(() => {
     if (showEnrollmentModal) {
-      // @ts-ignore
-      if (window.hbspt) {
+      const script = document.createElement('script');
+      script.src = 'https://js-eu1.hsforms.net/forms/v2.js';
+      script.async = true;
+      script.onload = () => {
         // @ts-ignore
-        window.hbspt.forms.create({
-          region: "eu1",
-          portalId: "26062951",
-          formId: "045484a9-99c4-42e3-9bf5-f83ab7897795",
-          target: "#hubspot-form-container"
-        });
-      }
+        if (window.hbspt) {
+          // @ts-ignore
+          window.hbspt.forms.create({
+            region: "eu1",
+            portalId: "26062951",
+            formId: "045484a9-99c4-42e3-9bf5-f83ab7897795",
+            target: "#hubspot-form-container"
+          });
+        }
+      };
+      document.body.appendChild(script);
+      return () => {
+        try {
+          document.body.removeChild(script);
+        } catch (e) {
+          console.error('Error removing script:', e);
+        }
+      };
     }
   }, [showEnrollmentModal]);
 
