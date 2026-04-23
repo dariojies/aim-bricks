@@ -680,6 +680,7 @@ model bricks_poll {
   description String
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
+  expiresAt   DateTime?
   options     bricks_poll_option[]
 }
 

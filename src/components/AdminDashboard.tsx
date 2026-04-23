@@ -54,14 +54,24 @@ export const AdminDashboard: React.FC = () => {
   // Polls state
   const [pollTitle, setPollTitle] = useState('');
   const [pollDesc, setPollDesc] = useState('');
+  const [pollExpiresAt, setPollExpiresAt] = useState('');
   const [pollOptions, setPollOptions] = useState([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+  const [activePolls, setActivePolls] = useState<any[]>([]);
   
   useEffect(() => {
     fetchReservations();
     fetchCatalog();
     fetchUsers();
     fetchReports();
+    fetchActivePolls();
   }, []);
+
+  const fetchActivePolls = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/polls/active`);
+      if (res.ok) setActivePolls(await res.json());
+    } catch(e) { console.error(e); }
+  };
 
   const fetchReports = async () => {
     try {
@@ -704,42 +714,103 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {activeTab === 'polls' && (
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Crear Nueva Votación</h3>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>
-          <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={async (e) => {
-            e.preventDefault();
-            await fetch(`${API_URL}/api/admin/polls`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title: pollTitle, description: pollDesc, options: pollOptions })
-            });
-            alert('Votación publicada.');
-            setPollTitle(''); setPollDesc(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
-          }}>
-            <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-            <input required placeholder="Descripción (opcional)" value={pollDesc} onChange={e => setPollDesc(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-            
-            <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
-            {pollOptions.map((opt, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem' }}>
-                <input required placeholder={`Nombre Opción ${i+1}`} value={opt.title} onChange={e => {
-                  const newOpts = [...pollOptions];
-                  newOpts[i].title = e.target.value;
-                  setPollOptions(newOpts);
-                }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                <input required placeholder={`URL Imagen ${i+1}`} value={opt.imageUrl} onChange={e => {
-                  const newOpts = [...pollOptions];
-                  newOpts[i].imageUrl = e.target.value;
-                  setPollOptions(newOpts);
-                }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-              </div>
-            ))}
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '' }])}>Añadir Opción</button>
-              <button type="submit" className="btn btn-primary">Publicar Votación</button>
+        <div style={{ display: 'grid', gap: '2rem' }}>
+          {activePolls.length > 0 && (
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--accent)' }}>Estado de Votación Actual</h3>
+              {activePolls.map(poll => {
+                const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
+                return (
+                  <div key={poll.id} style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                      <div>
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{poll.title}</h4>
+                        <p style={{ color: 'var(--text-muted)' }}>{poll.description}</p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent)' }}>
+                          Finaliza el: {poll.expiresAt ? new Date(poll.expiresAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Indefinido'}
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Votos: {totalVotes}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                      {poll.options.map((opt: any) => {
+                        const percentage = totalVotes > 0 ? (opt.votes / totalVotes * 100).toFixed(1) : '0';
+                        return (
+                          <div key={opt.id} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
+                            {opt.imageUrl && <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />}
+                            <div style={{ padding: '1rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ fontWeight: 600 }}>{opt.title}</span>
+                                <span style={{ color: 'var(--accent)' }}>{opt.votes} v ( {percentage}% )</span>
+                              </div>
+                              <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent)' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </form>
+          )}
+
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Crear Nueva Votación</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>
+            <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={async (e) => {
+              e.preventDefault();
+              await fetch(`${API_URL}/api/admin/polls`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  title: pollTitle, 
+                  description: pollDesc, 
+                  expiresAt: pollExpiresAt,
+                  options: pollOptions 
+                })
+              });
+              alert('Votación publicada.');
+              setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+              fetchActivePolls();
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '4px' }}>Fecha fin (opcional, por defecto 1 del mes siguiente + 1)</label>
+                  <input type="datetime-local" value={pollExpiresAt} onChange={e => setPollExpiresAt(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.85rem' }} />
+                </div>
+              </div>
+              <input required placeholder="Descripción (opcional)" value={pollDesc} onChange={e => setPollDesc(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              
+              <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
+              {pollOptions.map((opt, i) => {
+                return (
+                  <div key={i} style={{ display: 'flex', gap: '1rem' }}>
+                    <input required placeholder={`Nombre Opción ${i+1}`} value={opt.title} onChange={e => {
+                      const newOpts = [...pollOptions];
+                      newOpts[i].title = e.target.value;
+                      setPollOptions(newOpts);
+                    }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                    <input required placeholder={`URL Imagen ${i+1}`} value={opt.imageUrl} onChange={e => {
+                      const newOpts = [...pollOptions];
+                      newOpts[i].imageUrl = e.target.value;
+                      setPollOptions(newOpts);
+                    }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                  </div>
+                );
+              })}
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '' }])}>Añadir Opción</button>
+                <button type="submit" className="btn btn-primary">Publicar Votación</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

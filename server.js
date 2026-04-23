@@ -580,6 +580,7 @@ app.get('/api/polls', async (req, res) => {
       id: activePoll.id,
       title: activePoll.title,
       description: activePoll.description,
+      expiresAt: activePoll.expiresAt,
       options: activePoll.options.map(opt => ({
         id: opt.id,
         title: opt.title,
@@ -635,7 +636,7 @@ app.post('/api/polls/vote', async (req, res) => {
 
 app.post('/api/admin/polls', async (req, res) => {
   try {
-    const { title, description, options } = req.body; // options is array of { title, imageUrl }
+    const { title, description, options, expiresAt } = req.body;
     
     // Deactivate previous
     await prisma.bricks_poll.updateMany({
@@ -643,11 +644,20 @@ app.post('/api/admin/polls', async (req, res) => {
       data: { isActive: false }
     });
     
+    let finalExpiration = expiresAt ? new Date(expiresAt) : null;
+    
+    if (!finalExpiration) {
+      // Logic: 1st of next month from now at 10 AM Madrid time
+      const now = new Date();
+      finalExpiration = new Date(now.getFullYear(), now.getMonth() + 1, 1, 10, 0, 0);
+    }
+    
     // Create new
     await prisma.bricks_poll.create({
       data: {
         title,
         description,
+        expiresAt: finalExpiration,
         options: {
           create: options
         }
@@ -658,6 +668,36 @@ app.post('/api/admin/polls', async (req, res) => {
   } catch(error) {
     console.error(error);
     res.status(500).json({ error: 'Error creating poll' });
+  }
+});
+
+app.get('/api/admin/polls/active', async (req, res) => {
+  try {
+    const polls = await prisma.bricks_poll.findMany({
+      where: { isActive: true },
+      include: {
+        options: {
+          include: { _count: { select: { votes: true } } }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json(polls.map(poll => ({
+      id: poll.id,
+      title: poll.title,
+      description: poll.description,
+      expiresAt: poll.expiresAt,
+      options: poll.options.map(opt => ({
+        id: opt.id,
+        title: opt.title,
+        imageUrl: opt.imageUrl,
+        votes: opt._count.votes
+      }))
+    })));
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error loading admin polls' });
   }
 });
 
