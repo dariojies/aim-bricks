@@ -5,10 +5,9 @@ import { ItemCard } from './ItemCard';
 interface Props {
   items: CatalogItem[];
   onReserveClick: (item: CatalogItem) => void;
-  sidebar?: React.ReactNode;
 }
 
-export const Catalog: React.FC<Props> = ({ items, onReserveClick, sidebar }) => {
+export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
   const [filter, setFilter] = useState<'Todos' | 'Aim Brickslab' | 'Libro'>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -26,15 +25,15 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, sidebar }) => 
 
   return (
     <div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
         <input 
           type="text" 
-          placeholder="🔍 Buscar un set de LEGO o un libro..." 
+          placeholder="🔍 Buscar..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ 
-            width: '100%', 
-            padding: '1rem', 
+            width: '300px', 
+            padding: '0.85rem', 
             borderRadius: '12px', 
             border: '1px solid var(--surface-border)', 
             background: 'var(--surface)', 
@@ -45,7 +44,7 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, sidebar }) => 
           }}
         />
         
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           {['Todos', 'Aim Brickslab', 'Libro'].map(f => (
             <button
               key={f}
@@ -59,21 +58,13 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, sidebar }) => 
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: sidebar ? '1fr 350px' : '1fr', gap: '2rem', alignItems: 'start' }} className="responsive-dashboard-grid">
-        <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem', alignContent: 'start' }}>
-          {filteredItems.map(item => (
-            <ItemCard key={item.id} item={item} onSelect={onReserveClick} />
-          ))}
-          {filteredItems.length === 0 && (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-              No se encontraron artículos que coincidan con tu búsqueda.
-            </div>
-          )}
-        </div>
-        
-        {sidebar && (
-          <div className="catalog-sidebar">
-            {sidebar}
+      <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+        {filteredItems.map(item => (
+          <ItemCard key={item.id} item={item} onSelect={onReserveClick} />
+        ))}
+        {filteredItems.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+            No se encontraron artículos que coincidan con tu búsqueda.
           </div>
         )}
       </div>
