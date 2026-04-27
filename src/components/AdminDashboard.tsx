@@ -823,7 +823,7 @@ export const AdminDashboard: React.FC = () => {
                 })
               });
               alert(editingPollId ? 'Votación actualizada.' : 'Votación publicada.');
-              setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+              setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '', id: undefined }, { title: '', imageUrl: '', id: undefined }]);
               setEditingPollId(null);
               fetchActivePolls();
             }}>
@@ -859,7 +859,7 @@ export const AdminDashboard: React.FC = () => {
                 {editingPollId && (
                   <button type="button" className="btn btn-outline" onClick={() => {
                     setEditingPollId(null);
-                    setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+                    setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '', id: undefined }, { title: '', imageUrl: '', id: undefined }]);
                   }}>
                     Cancelar Edición
                   </button>
