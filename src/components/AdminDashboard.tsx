@@ -6,6 +6,8 @@ const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
 
 interface AdminReservation {
   id: string;
+  userId: string;
+  itemId: string;
   userName: string;
   userEmail: string;
   itemTitle: string;
@@ -55,8 +57,9 @@ export const AdminDashboard: React.FC = () => {
   const [pollTitle, setPollTitle] = useState('');
   const [pollDesc, setPollDesc] = useState('');
   const [pollExpiresAt, setPollExpiresAt] = useState('');
-  const [pollOptions, setPollOptions] = useState([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+  const [pollOptions, setPollOptions] = useState([{ title: '', imageUrl: '', id: undefined as string | undefined }, { title: '', imageUrl: '', id: undefined as string | undefined }]);
   const [activePolls, setActivePolls] = useState<any[]>([]);
+  const [editingPollId, setEditingPollId] = useState<string | null>(null);
   
   useEffect(() => {
     fetchReservations();
@@ -370,13 +373,37 @@ export const AdminDashboard: React.FC = () => {
                             </button>
                           </div>
                         ) : (
-                          <button 
-                            className="btn btn-primary" 
-                            style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
-                            onClick={() => handleReturn(r.id)}
-                          >
-                            <CheckCircle size={16} /> Marcar Devuelto
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button 
+                              className="btn btn-primary" 
+                              style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
+                              onClick={() => handleReturn(r.id)}
+                            >
+                              <CheckCircle size={16} /> Marcar Devuelto
+                            </button>
+                            {r.itemType === 'Aim Brickslab' && (
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#F59E0B', color: '#F59E0B' }}
+                                onClick={async () => {
+                                  const desc = prompt(`Reportar piezas faltantes para ${r.itemTitle}.\nDescribe las piezas que faltan:`);
+                                  if (desc) {
+                                    try {
+                                      const res = await fetch(`${API_URL}/api/pieces/report`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ userId: r.userId, brickslabId: r.itemId, description: desc })
+                                      });
+                                      if (res.ok) alert('Reporte de piezas enviado.');
+                                      else alert('Error al enviar el reporte.');
+                                    } catch(e) { console.error(e); }
+                                  }
+                                }}
+                              >
+                                Faltan Piezas
+                              </button>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -724,7 +751,22 @@ export const AdminDashboard: React.FC = () => {
                   <div key={poll.id} style={{ marginBottom: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                       <div>
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{poll.title}</h4>
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {poll.title}
+                          <button 
+                            className="btn btn-outline" 
+                            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => {
+                              setEditingPollId(poll.id);
+                              setPollTitle(poll.title);
+                              setPollDesc(poll.description || '');
+                              setPollExpiresAt(poll.expiresAt ? new Date(poll.expiresAt).toISOString().slice(0, 16) : '');
+                              setPollOptions(poll.options.map((o: any) => ({ title: o.title, imageUrl: o.imageUrl, id: o.id })));
+                            }}
+                          >
+                            Editar
+                          </button>
+                        </h4>
                         <p style={{ color: 'var(--text-muted)' }}>{poll.description}</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -761,12 +803,17 @@ export const AdminDashboard: React.FC = () => {
           )}
 
           <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Crear Nueva Votación</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>
+              {editingPollId ? 'Editar Votación' : 'Crear Nueva Votación'}
+            </h3>
+            {!editingPollId && <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>}
             <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={async (e) => {
               e.preventDefault();
-              await fetch(`${API_URL}/api/admin/polls`, {
-                method: 'POST',
+              const url = editingPollId ? `${API_URL}/api/admin/polls/${editingPollId}` : `${API_URL}/api/admin/polls`;
+              const method = editingPollId ? 'PUT' : 'POST';
+              
+              await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                   title: pollTitle, 
@@ -775,8 +822,9 @@ export const AdminDashboard: React.FC = () => {
                   options: pollOptions 
                 })
               });
-              alert('Votación publicada.');
+              alert(editingPollId ? 'Votación actualizada.' : 'Votación publicada.');
               setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+              setEditingPollId(null);
               fetchActivePolls();
             }}>
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
@@ -806,8 +854,16 @@ export const AdminDashboard: React.FC = () => {
                 );
               })}
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '' }])}>Añadir Opción</button>
-                <button type="submit" className="btn btn-primary">Publicar Votación</button>
+                <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '', id: undefined }])}>Añadir Opción</button>
+                <button type="submit" className="btn btn-primary">{editingPollId ? 'Guardar Cambios' : 'Publicar Votación'}</button>
+                {editingPollId && (
+                  <button type="button" className="btn btn-outline" onClick={() => {
+                    setEditingPollId(null);
+                    setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '' }, { title: '', imageUrl: '' }]);
+                  }}>
+                    Cancelar Edición
+                  </button>
+                )}
               </div>
             </form>
           </div>

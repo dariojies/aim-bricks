@@ -36,41 +36,45 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
           <Box className="text-accent" size={32} />
           <h1 className="text-gradient header-title">Aim Brickslab y Libros</h1>
         </div>
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
-            <Crown size={20} />
-            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
-          </div>
+        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div className="responsive-header-buttons" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {userRole !== 'admin' && userRole !== 'superadmin' && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
+                  <Crown size={20} />
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
+                </div>
 
-          <button
-            className="btn btn-outline"
-            style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            onClick={() => setShowDonationModal(true)}
-          >
-            <Heart size={18} fill="#EF4444" /> Dona un set LEGO®
-          </button>
-
-          {isLoggedIn ? (
-            <div className="responsive-header-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
-              {(userRole === 'admin' || userRole === 'superadmin') && (
-                <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#8B5CF6', color: '#8B5CF6' }} onClick={onAdminClick}>
-                  Panel Admin
+                <button
+                  className="btn btn-outline"
+                  style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  onClick={() => setShowDonationModal(true)}
+                >
+                  <Heart size={18} fill="#EF4444" /> Dona un set LEGO®
                 </button>
-              )}
-              <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
-                <User size={18} /> Mi Perfil
-              </button>
-              <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }} onClick={onLogoutClick}>
-                Cerrar Sesión
-              </button>
-            </div>
-          ) : (
-            <div className="responsive-header-buttons" style={{ display: 'flex', width: '100%' }}>
-              <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', width: '100%', justifyContent: 'center' }} onClick={onLoginClick}>
+              </>
+            )}
+
+            {isLoggedIn ? (
+              <>
+                {(userRole === 'admin' || userRole === 'superadmin') && (
+                  <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#8B5CF6', color: '#8B5CF6' }} onClick={onAdminClick}>
+                    Panel Admin
+                  </button>
+                )}
+                <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
+                  <User size={18} /> Mi Perfil
+                </button>
+                <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }} onClick={onLogoutClick}>
+                  Cerrar Sesión
+                </button>
+              </>
+            ) : (
+              <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onLoginClick}>
                 <LogIn size={18} /> Iniciar Sesión
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </nav>
       </header>
 

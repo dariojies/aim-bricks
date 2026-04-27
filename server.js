@@ -237,6 +237,8 @@ app.get('/api/admin/reservations', async (req, res) => {
     
     res.json(reservations.map(r => ({
       id: r.id,
+      userId: r.userId,
+      itemId: r.brickslab ? r.brickslabId : r.libraryBookId,
       userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
       userEmail: r.user.email,
       itemTitle: r.brickslab ? r.brickslab.title : (r.libraryBook ? r.libraryBook.title : ''),
@@ -668,6 +670,47 @@ app.post('/api/admin/polls', async (req, res) => {
   } catch(error) {
     console.error(error);
     res.status(500).json({ error: 'Error creating poll' });
+  }
+});
+
+app.put('/api/admin/polls/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, expiresAt, options } = req.body;
+    
+    let finalExpiration = expiresAt ? new Date(expiresAt) : null;
+    
+    await prisma.bricks_poll.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        ...(finalExpiration ? { expiresAt: finalExpiration } : {})
+      }
+    });
+    
+    for (const opt of options) {
+      if (opt.id) {
+        await prisma.bricks_pollOption.update({
+          where: { id: opt.id },
+          data: { title: opt.title, imageUrl: opt.imageUrl }
+        });
+      } else {
+        await prisma.bricks_pollOption.create({
+          data: {
+            title: opt.title,
+            imageUrl: opt.imageUrl,
+            pollId: id,
+            votes: 0
+          }
+        });
+      }
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar votación' });
   }
 });
 

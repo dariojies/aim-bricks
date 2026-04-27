@@ -317,43 +317,50 @@ function App() {
               </p>
             </div>
             
-            {activePoll && (
-              <div className="glass-panel animate-fade-in" style={{ marginBottom: '3rem', padding: '2rem', border: '2px solid var(--accent)' }}>
-                <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)', textAlign: 'center' }}>📊 Cuestionario Activo: {activePoll.title}</h3>
-                {activePoll.description && <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{activePoll.description}</p>}
-                
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {activePoll.options.map((opt: any) => (
-                    <div key={opt.id} style={{ flex: '1 1 200px', maxWidth: '300px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                      <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
-                      <div style={{ padding: '1rem', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <h4 style={{ fontWeight: 600 }}>{opt.title}</h4>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Votos actuales: {opt.votes}</span>
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ marginTop: 'auto' }}
-                          onClick={async () => {
-                            if (!user) return setShowLoginModal(true);
-                            const res = await fetch(`${API_URL}/api/polls/vote`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ userId: user.id, optionId: opt.id })
-                            });
-                            const data = await res.json();
-                            if (res.ok) alert('¡Voto registrado con éxito!');
-                            else alert(data.error || 'Error al votar.');
-                          }}
-                        >
-                          Votar por este set
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="responsive-dashboard-grid" style={{ display: 'grid', gridTemplateColumns: activePoll ? '1fr 350px' : '1fr', gap: '2rem', alignItems: 'start' }}>
+              <div style={{ minWidth: 0 }}>
+                <Catalog items={items} onReserveClick={handleReserveClick} />
               </div>
-            )}
-            
-            <Catalog items={items} onReserveClick={handleReserveClick} />
+              
+              {activePoll && (
+                <aside>
+                  <div className="glass-panel animate-fade-in" style={{ padding: '1.5rem', border: '2px solid var(--accent)' }}>
+                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--accent)', textAlign: 'center' }}>📊 Cuestionario Activo</h3>
+                    <h4 style={{ fontSize: '1.1rem', textAlign: 'center', marginBottom: '0.5rem' }}>{activePoll.title}</h4>
+                    {activePoll.description && <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>{activePoll.description}</p>}
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {activePoll.options.map((opt: any) => (
+                        <div key={opt.id} style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
+                          <div style={{ padding: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <h5 style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>{opt.title}</h5>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Votos actuales: {opt.votes}</span>
+                            <button 
+                              className="btn btn-primary" 
+                              style={{ marginTop: '0.5rem', padding: '0.5rem', fontSize: '0.875rem' }}
+                              onClick={async () => {
+                                if (!user) return setShowLoginModal(true);
+                                const res = await fetch(`${API_URL}/api/polls/vote`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ userId: user.id, optionId: opt.id })
+                                });
+                                const data = await res.json();
+                                if (res.ok) alert('¡Voto registrado con éxito!');
+                                else alert(data.error || 'Error al votar.');
+                              }}
+                            >
+                              Votar por este set
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </aside>
+              )}
+            </div>
           </>
         ) : currentView === 'profile' && user ? (
           <Profile user={user} onCancelReservation={handleCancelReservation} onReportPieces={handleReportPieces} />
