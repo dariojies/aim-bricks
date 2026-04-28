@@ -22,7 +22,7 @@ export const AdminDashboard: React.FC = () => {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
-  
+
   // Add item form state
   const [newItemType, setNewItemType] = useState('Aim Brickslab');
   const [newItemTitle, setNewItemTitle] = useState('');
@@ -35,11 +35,16 @@ export const AdminDashboard: React.FC = () => {
   const [legoReferenceInput, setLegoReferenceInput] = useState('');
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
-  
+
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [filterBrickslab, setFilterBrickslab] = useState(false);
   const [filterLibrary, setFilterLibrary] = useState(false);
   const [filterAnyRank, setFilterAnyRank] = useState(false);
+
+  // Manual Reservation state
+  const [selectedUserForReservation, setSelectedUserForReservation] = useState('');
+  const [selectedItemForReservation, setSelectedItemForReservation] = useState('');
+  const [reservationSearchUserTerm, setReservationSearchUserTerm] = useState('');
 
   // Edit form state
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -52,7 +57,7 @@ export const AdminDashboard: React.FC = () => {
   const [selectedUserForPassword, setSelectedUserForPassword] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [passwordUserSearchTerm, setPasswordUserSearchTerm] = useState('');
-  
+
   // Polls state
   const [pollTitle, setPollTitle] = useState('');
   const [pollDesc, setPollDesc] = useState('');
@@ -60,7 +65,7 @@ export const AdminDashboard: React.FC = () => {
   const [pollOptions, setPollOptions] = useState([{ title: '', imageUrl: '', id: undefined as string | undefined }, { title: '', imageUrl: '', id: undefined as string | undefined }]);
   const [activePolls, setActivePolls] = useState<any[]>([]);
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
-  
+
   useEffect(() => {
     fetchReservations();
     fetchCatalog();
@@ -73,29 +78,28 @@ export const AdminDashboard: React.FC = () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/polls/active`);
       if (res.ok) setActivePolls(await res.json());
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const fetchReports = async () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/pieces`);
       if (res.ok) setReports(await res.json());
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/users/permissions`);
       if (res.ok) setUsers(await res.json());
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const handleRankToggle = async (userId: string, currentPerms: any, field: 'brickslab' | 'library') => {
-    // Optimistic UI update or block during request? We can just do request then fetch
-    const newPerms = { 
-      brickslab: currentPerms?.brickslab || false, 
+    const newPerms = {
+      brickslab: currentPerms?.brickslab || false,
       library: currentPerms?.library || false,
-      [field]: !currentPerms?.[field] 
+      [field]: !currentPerms?.[field]
     };
     try {
       const res = await fetch(`${API_URL}/api/admin/users/permissions`, {
@@ -104,21 +108,63 @@ export const AdminDashboard: React.FC = () => {
         body: JSON.stringify({ userId, brickslab: newPerms.brickslab, library: newPerms.library })
       });
       if (res.ok) fetchUsers();
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const fetchReservations = async () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/reservations`);
       if (res.ok) setReservations(await res.json());
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const fetchCatalog = async () => {
     try {
       const res = await fetch(`${API_URL}/api/catalog`);
       if (res.ok) setItems(await res.json());
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleCreateManualReservation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForReservation || !selectedItemForReservation) return;
+
+    const user = users.find(u => u.id === selectedUserForReservation);
+    const item = items.find(i => i.id === selectedItemForReservation);
+
+    if (!user || !item) return;
+
+    // Permissions check - STRICT
+    if (item.type === 'Aim Brickslab' && !user.permissions?.brickslab) {
+      alert('Error: Este usuario no tiene el rango necesario (Aim Brickslab) para reservar sets de LEGO.');
+      return;
+    }
+    if (item.type === 'Libro' && !user.permissions?.library) {
+      alert('Error: Este usuario no tiene el rango necesario (Biblioteca) para reservar libros.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, itemId: item.id, type: item.type })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Reserva manual creada con éxito.');
+        setSelectedUserForReservation('');
+        setSelectedItemForReservation('');
+        setReservationSearchUserTerm('');
+        fetchReservations();
+        fetchCatalog();
+      } else {
+        alert(data.error || 'Error al crear la reserva.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error en la conexión con el servidor.');
+    }
   };
 
   const handleReturn = async (id: string) => {
@@ -132,7 +178,7 @@ export const AdminDashboard: React.FC = () => {
         fetchReservations();
         fetchCatalog();
       }
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   };
 
   const handleDeliver = async (id: string) => {
@@ -146,7 +192,7 @@ export const AdminDashboard: React.FC = () => {
         fetchReservations();
         fetchCatalog();
       }
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   };
 
   const handleAdminCancel = async (id: string) => {
@@ -159,7 +205,7 @@ export const AdminDashboard: React.FC = () => {
       } else {
         alert('No se pudo cancelar la reserva.');
       }
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   };
 
   const handleDeleteItem = async (id: string, type: string) => {
@@ -172,7 +218,7 @@ export const AdminDashboard: React.FC = () => {
         fetchCatalog();
         fetchReservations();
       }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const handleAddItem = async (e: React.FormEvent) => {
@@ -205,7 +251,7 @@ export const AdminDashboard: React.FC = () => {
         alert('Elemento añadido correctamente');
         fetchCatalog();
       }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const handleEditClick = (item: CatalogItem) => {
@@ -235,7 +281,7 @@ export const AdminDashboard: React.FC = () => {
         setEditingItem(null);
         fetchCatalog();
       }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   };
 
   const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
@@ -254,8 +300,8 @@ export const AdminDashboard: React.FC = () => {
       } else {
         alert('Hubo un error al actualizar la contraseña.');
       }
-    } catch(e) { 
-      console.error(e); 
+    } catch (e) {
+      console.error(e);
       alert('Error de conexión con el servidor.');
     }
   };
@@ -265,39 +311,39 @@ export const AdminDashboard: React.FC = () => {
       <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>
         Panel de Administración
       </h2>
-      
+
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <button 
+        <button
           className={`btn ${activeTab === 'reservations' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('reservations')}
         >
           Reservas Activas
         </button>
-        <button 
+        <button
           className={`btn ${activeTab === 'catalog' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('catalog')}
         >
           Gestión de Catálogo
         </button>
-        <button 
+        <button
           className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('users')}
         >
           Gestión de Rangos
         </button>
-        <button 
+        <button
           className={`btn ${activeTab === 'passwords' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('passwords')}
         >
           Contraseñas
         </button>
-        <button 
+        <button
           className={`btn ${activeTab === 'pieces' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('pieces')}
         >
           Reportes de Piezas
         </button>
-        <button 
+        <button
           className={`btn ${activeTab === 'polls' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('polls')}
         >
@@ -306,8 +352,58 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {activeTab === 'reservations' && (
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Reservas en curso</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={24} className="text-accent" /> Crear Reserva Manual Presencial
+            </h3>
+            <form onSubmit={handleCreateManualReservation} style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr', alignItems: 'end' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Alumno</label>
+                <input 
+                  type="text" 
+                  placeholder="Buscar alumno por nombre o correo..." 
+                  value={reservationSearchUserTerm}
+                  onChange={e => setReservationSearchUserTerm(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', marginBottom: '0.5rem' }}
+                />
+                <select 
+                  required
+                  value={selectedUserForReservation} 
+                  onChange={e => setSelectedUserForReservation(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                >
+                  <option value="">-- Selecciona un alumno --</option>
+                  {users.filter(u => 
+                    u.name.toLowerCase().includes(reservationSearchUserTerm.toLowerCase()) || 
+                    u.email.toLowerCase().includes(reservationSearchUserTerm.toLowerCase())
+                  ).map(u => (
+                    <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Artículo (Set o Libro)</label>
+                <select 
+                  required
+                  value={selectedItemForReservation} 
+                  onChange={e => setSelectedItemForReservation(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                >
+                  <option value="">-- Selecciona un artículo --</option>
+                  {items.filter(i => i.isAvailable).map(i => (
+                    <option key={i.id} value={i.id}>{i.type}: {i.title} {i.legoReference ? `(Ref: ${i.legoReference})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Asignar Reserva Manualmente</button>
+              </div>
+            </form>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Reservas en curso</h3>
           {reservations.length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No hay reservas activas en este momento.</p>
           ) : (
@@ -332,8 +428,8 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td style={{ padding: '1rem 0.5rem' }}>{r.itemTitle}</td>
                       <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{ 
-                          padding: '0.25rem 0.75rem', 
+                        <span style={{
+                          padding: '0.25rem 0.75rem',
                           borderRadius: '999px',
                           fontSize: '0.75rem',
                           background: r.itemType === 'Libro' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
@@ -344,8 +440,8 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td style={{ padding: '1rem 0.5rem' }}>{new Date(r.reservationDate).toLocaleDateString()}</td>
                       <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{ 
-                          padding: '0.25rem 0.75rem', 
+                        <span style={{
+                          padding: '0.25rem 0.75rem',
                           borderRadius: '999px',
                           fontSize: '0.75rem',
                           background: r.status === 'Reserved' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
@@ -357,15 +453,15 @@ export const AdminDashboard: React.FC = () => {
                       <td style={{ padding: '1rem 0.5rem' }}>
                         {r.status === 'Reserved' ? (
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button 
-                              className="btn btn-primary" 
+                            <button
+                              className="btn btn-primary"
                               style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                               onClick={() => handleDeliver(r.id)}
                             >
                               <CheckCircle size={16} /> Marcar Entregado
                             </button>
-                            <button 
-                              className="btn btn-outline" 
+                            <button
+                              className="btn btn-outline"
                               style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#EF4444', color: '#EF4444' }}
                               onClick={() => handleAdminCancel(r.id)}
                             >
@@ -374,16 +470,16 @@ export const AdminDashboard: React.FC = () => {
                           </div>
                         ) : (
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button 
-                              className="btn btn-primary" 
+                            <button
+                              className="btn btn-primary"
                               style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
                               onClick={() => handleReturn(r.id)}
                             >
                               <CheckCircle size={16} /> Marcar Devuelto
                             </button>
                             {r.itemType === 'Aim Brickslab' && (
-                              <button 
-                                className="btn btn-outline" 
+                              <button
+                                className="btn btn-outline"
                                 style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#F59E0B', color: '#F59E0B' }}
                                 onClick={async () => {
                                   const desc = prompt(`Reportar piezas faltantes para ${r.itemTitle}.\nDescribe las piezas que faltan:`);
@@ -396,7 +492,7 @@ export const AdminDashboard: React.FC = () => {
                                       });
                                       if (res.ok) alert('Reporte de piezas enviado.');
                                       else alert('Error al enviar el reporte.');
-                                    } catch(e) { console.error(e); }
+                                    } catch (e) { console.error(e); }
                                   }
                                 }}
                               >
@@ -420,30 +516,30 @@ export const AdminDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.5rem', margin: 0 }}>Gestión de Rangos</h3>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button 
-                className={`btn ${filterBrickslab ? 'btn-primary' : 'btn-outline'}`} 
+              <button
+                className={`btn ${filterBrickslab ? 'btn-primary' : 'btn-outline'}`}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                 onClick={() => setFilterBrickslab(!filterBrickslab)}
               >
                 Tienen Brickslab
               </button>
-              <button 
-                className={`btn ${filterLibrary ? 'btn-primary' : 'btn-outline'}`} 
+              <button
+                className={`btn ${filterLibrary ? 'btn-primary' : 'btn-outline'}`}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                 onClick={() => setFilterLibrary(!filterLibrary)}
               >
                 Tienen Biblioteca
               </button>
-              <button 
-                className={`btn ${filterAnyRank ? 'btn-primary' : 'btn-outline'}`} 
+              <button
+                className={`btn ${filterAnyRank ? 'btn-primary' : 'btn-outline'}`}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                 onClick={() => setFilterAnyRank(!filterAnyRank)}
               >
                 Abonados
               </button>
-              <input 
-                type="text" 
-                placeholder="Buscar por nombre o correo..." 
+              <input
+                type="text"
+                placeholder="Buscar por nombre o correo..."
                 value={userSearchTerm}
                 onChange={(e) => setUserSearchTerm(e.target.value)}
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minWidth: '250px' }}
@@ -472,17 +568,17 @@ export const AdminDashboard: React.FC = () => {
                     <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{u.name}</td>
                     <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
                     <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={u.permissions?.brickslab || false} 
+                      <input
+                        type="checkbox"
+                        checked={u.permissions?.brickslab || false}
                         onChange={() => handleRankToggle(u.id, u.permissions, 'brickslab')}
                         style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
                       />
                     </td>
                     <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={u.permissions?.library || false} 
+                      <input
+                        type="checkbox"
+                        checked={u.permissions?.library || false}
                         onChange={() => handleRankToggle(u.id, u.permissions, 'library')}
                         style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
                       />
@@ -499,45 +595,45 @@ export const AdminDashboard: React.FC = () => {
         <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Recuperación de Contraseña</h3>
           <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Selecciona un usuario del sistema para sustituir su contraseña actual por una nueva. Esta clave será cifrada de manera segura.</p>
-          
+
           <form onSubmit={handlePasswordChangeSubmit} style={{ display: 'grid', gap: '1.5rem', maxWidth: '500px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Usuario a modificar</label>
-              <input 
-                type="text" 
-                placeholder="Buscar por nombre o correo para filtrar la lista..." 
+              <input
+                type="text"
+                placeholder="Buscar por nombre o correo para filtrar la lista..."
                 value={passwordUserSearchTerm}
                 onChange={e => setPasswordUserSearchTerm(e.target.value)}
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', marginBottom: '0.5rem' }}
               />
-              <select 
+              <select
                 required
-                value={selectedUserForPassword} 
+                value={selectedUserForPassword}
                 onChange={e => setSelectedUserForPassword(e.target.value)}
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
               >
                 <option value="">-- Selecciona un usuario --</option>
-                {users.filter(u => 
-                  u.name.toLowerCase().includes(passwordUserSearchTerm.toLowerCase()) || 
+                {users.filter(u =>
+                  u.name.toLowerCase().includes(passwordUserSearchTerm.toLowerCase()) ||
                   u.email.toLowerCase().includes(passwordUserSearchTerm.toLowerCase())
                 ).map(u => (
                   <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nueva Contraseña</label>
-              <input 
+              <input
                 required
-                type="text" 
+                type="text"
                 value={newUserPassword}
                 onChange={e => setNewUserPassword(e.target.value)}
                 placeholder="Ejemplo: nueva_clave_segura_123"
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
               />
             </div>
-            
+
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Cambiar Contraseña</button>
           </form>
         </div>
@@ -552,8 +648,8 @@ export const AdminDashboard: React.FC = () => {
             <form onSubmit={handleAddItem} className="responsive-dashboard-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Tipo de elemento</label>
-                <select 
-                  value={newItemType} 
+                <select
+                  value={newItemType}
                   onChange={e => setNewItemType(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', appearance: 'none', WebkitAppearance: 'none', fontSize: '1rem', minHeight: '48px' }}
                 >
@@ -640,15 +736,15 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                    <button 
-                      className="btn btn-outline" 
+                    <button
+                      className="btn btn-outline"
                       style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
                       onClick={() => handleEditClick(item)}
                     >
                       <Pencil size={16} /> Editar
                     </button>
-                    <button 
-                      className="btn btn-outline" 
+                    <button
+                      className="btn btn-outline"
                       style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }}
                       onClick={() => handleDeleteItem(item.id, item.type)}
                     >
@@ -715,8 +811,8 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div>
                     {report.status === 'Pending' ? (
-                      <button 
-                        className="btn btn-primary" 
+                      <button
+                        className="btn btn-primary"
                         style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                         onClick={async () => {
                           await fetch(`${API_URL}/api/admin/pieces/resolve`, {
@@ -753,8 +849,8 @@ export const AdminDashboard: React.FC = () => {
                       <div>
                         <h4 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           {poll.title}
-                          <button 
-                            className="btn btn-outline" 
+                          <button
+                            className="btn btn-outline"
                             style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
                             onClick={() => {
                               setEditingPollId(poll.id);
@@ -776,7 +872,7 @@ export const AdminDashboard: React.FC = () => {
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Votos: {totalVotes}</div>
                       </div>
                     </div>
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                       {poll.options.map((opt: any) => {
                         const percentage = totalVotes > 0 ? (opt.votes / totalVotes * 100).toFixed(1) : '0';
@@ -811,15 +907,15 @@ export const AdminDashboard: React.FC = () => {
               e.preventDefault();
               const url = editingPollId ? `${API_URL}/api/admin/polls/${editingPollId}` : `${API_URL}/api/admin/polls`;
               const method = editingPollId ? 'PUT' : 'POST';
-              
+
               await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  title: pollTitle, 
-                  description: pollDesc, 
+                body: JSON.stringify({
+                  title: pollTitle,
+                  description: pollDesc,
                   expiresAt: pollExpiresAt,
-                  options: pollOptions 
+                  options: pollOptions
                 })
               });
               alert(editingPollId ? 'Votación actualizada.' : 'Votación publicada.');
@@ -835,17 +931,17 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               <input required placeholder="Descripción (opcional)" value={pollDesc} onChange={e => setPollDesc(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-              
+
               <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
               {pollOptions.map((opt, i) => {
                 return (
                   <div key={i} style={{ display: 'flex', gap: '1rem' }}>
-                    <input required placeholder={`Nombre Opción ${i+1}`} value={opt.title} onChange={e => {
+                    <input required placeholder={`Nombre Opción ${i + 1}`} value={opt.title} onChange={e => {
                       const newOpts = [...pollOptions];
                       newOpts[i].title = e.target.value;
                       setPollOptions(newOpts);
                     }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                    <input required placeholder={`URL Imagen ${i+1}`} value={opt.imageUrl} onChange={e => {
+                    <input required placeholder={`URL Imagen ${i + 1}`} value={opt.imageUrl} onChange={e => {
                       const newOpts = [...pollOptions];
                       newOpts[i].imageUrl = e.target.value;
                       setPollOptions(newOpts);

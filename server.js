@@ -42,7 +42,7 @@ const mapBook = (b) => ({
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     // Buscar por email o username
     const user = await prisma.users.findFirst({
       where: {
@@ -147,7 +147,7 @@ app.post('/api/auth/force-password-change', async (req, res) => {
     if (!userId || !newPassword) return res.status(400).json({ error: 'Faltan datos.' });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
     await prisma.users.update({
       where: { user_id: userId },
       data: { password: hashedPassword, requires_password_change: false }
@@ -186,7 +186,7 @@ app.get('/api/admin/users/permissions', async (req, res) => {
 app.post('/api/admin/users/permissions', async (req, res) => {
   try {
     const { userId, brickslab, library } = req.body;
-    
+
     // Upsert equivalent since we might not have a record yet
     const existing = await prisma.bricks_ranks.findUnique({ where: { userId } });
     if (existing) {
@@ -213,14 +213,14 @@ app.post('/api/admin/users/password', async (req, res) => {
     if (!userId || !newPassword) {
       return res.status(400).json({ error: 'Faltan datos requeridos (ID de usuario o contraseña)' });
     }
-    
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
     await prisma.users.update({
       where: { user_id: userId },
       data: { password: hashedPassword, requires_password_change: true }
     });
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -234,7 +234,7 @@ app.get('/api/admin/reservations', async (req, res) => {
       where: { status: { in: ['Active', 'Reserved', 'Delivered'] } },
       include: { user: true, brickslab: true, libraryBook: true }
     });
-    
+
     res.json(reservations.map(r => ({
       id: r.id,
       userId: r.userId,
@@ -257,12 +257,12 @@ app.post('/api/admin/deliver', async (req, res) => {
     const { reservationId } = req.body;
     const reservation = await prisma.bricks_reservation.findUnique({ where: { id: reservationId } });
     if (!reservation) return res.status(404).json({ error: 'No encontrado' });
-    
+
     await prisma.bricks_reservation.update({
       where: { id: reservationId },
       data: { status: 'Delivered' }
     });
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -275,12 +275,12 @@ app.post('/api/admin/return', async (req, res) => {
     const { reservationId } = req.body;
     const reservation = await prisma.bricks_reservation.findUnique({ where: { id: reservationId } });
     if (!reservation) return res.status(404).json({ error: 'No encontrado' });
-    
+
     await prisma.bricks_reservation.update({
       where: { id: reservationId },
       data: { status: 'Returned', returnDate: new Date() }
     });
-    
+
     // Add to history
     await prisma.bricks_userhistory.create({
       data: {
@@ -302,11 +302,11 @@ app.post('/api/admin/items', async (req, res) => {
     const { type, title, description, imageUrl, difficulty, minimumRank, tagsString, stock, isLego, legoReferenceInput, isbn, author } = req.body;
     const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
     const parsedStock = parseInt(stock || '1', 10);
-    
+
     if (type === 'Aim Brickslab') {
       let finalTitle = title;
       let finalLegoRef = null;
-      
+
       if (isLego && legoReferenceInput) {
         const parts = legoReferenceInput.trim().split(' ');
         const number = parts.pop();
@@ -336,7 +336,7 @@ app.delete('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const type = req.query.type;
-    
+
     if (type === 'Aim Brickslab') {
       // Usamos deleteMany manual para limpiar relaciones por la compatibilidad DDL
       await prisma.bricks_reservation.deleteMany({ where: { brickslabId: id } });
@@ -359,7 +359,7 @@ app.put('/api/admin/items/:id', async (req, res) => {
     const { id } = req.params;
     const { type, title, description, stock, imageUrl } = req.body;
     const parsedStock = parseInt(stock || '1', 10);
-    
+
     if (type === 'Aim Brickslab') {
       await prisma.bricks_brickslab.update({
         where: { id },
@@ -397,7 +397,7 @@ app.get('/api/catalog', async (req, res) => {
         const available = (b.stock || 1) - (activeCounts[b.id] || 0);
         return {
           id: b.id, title: b.title, description: b.description, imageUrl: b.imageUrl,
-          difficulty: b.difficulty, tags: b.tags, type: 'Aim Brickslab', 
+          difficulty: b.difficulty, tags: b.tags, type: 'Aim Brickslab',
           isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1, legoReference: b.legoReference
         };
       }),
@@ -405,7 +405,7 @@ app.get('/api/catalog', async (req, res) => {
         const available = (b.stock || 1) - (activeCounts[b.id] || 0);
         return {
           id: b.id, title: b.title, author: b.author, isbn: b.isbn, description: b.description, imageUrl: b.imageUrl,
-          minimumRank: b.minimumRank, tags: b.tags, type: 'Libro', 
+          minimumRank: b.minimumRank, tags: b.tags, type: 'Libro',
           isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1
         };
       })
@@ -446,7 +446,7 @@ app.post('/api/reservations', async (req, res) => {
     }
 
     const activeCurrent = await prisma.bricks_reservation.count({
-      where: { 
+      where: {
         status: { in: ['Reserved', 'Delivered'] },
         ...(type === 'Aim Brickslab' ? { brickslabId: itemId } : { libraryBookId: itemId })
       }
@@ -464,7 +464,7 @@ app.post('/api/reservations', async (req, res) => {
     if (activeCurrent >= maxStock) {
       return res.status(400).json({ error: 'No quedan unidades disponibles de este artículo.' });
     }
-    
+
     await prisma.bricks_reservation.create({
       data: {
         userId,
@@ -484,17 +484,17 @@ app.post('/api/reservations', async (req, res) => {
 app.delete('/api/reservations/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Find the reservation
     const reservation = await prisma.bricks_reservation.findUnique({ where: { id } });
     if (!reservation) return res.status(404).json({ error: 'Reserva no encontrada.' });
     if (reservation.status === 'Delivered' || reservation.status === 'Returned') {
       return res.status(400).json({ error: 'No se puede cancelar en este estado.' });
     }
-    
+
     // Delete the reservation - this naturally updates availability since we COUNT active/reserved
     await prisma.bricks_reservation.delete({ where: { id } });
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -507,7 +507,7 @@ app.post('/api/pieces/report', async (req, res) => {
   try {
     const { userId, brickslabId, description } = req.body;
     if (!userId || !brickslabId || !description) return res.status(400).json({ error: 'Faltan datos' });
-    
+
     await prisma.bricks_missing_pieces.create({
       data: {
         userId,
@@ -516,7 +516,7 @@ app.post('/api/pieces/report', async (req, res) => {
         status: 'Pending'
       }
     });
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -533,7 +533,7 @@ app.get('/api/admin/pieces', async (req, res) => {
       },
       orderBy: { reportedAt: 'desc' }
     });
-    
+
     res.json(reports.map(r => ({
       id: r.id,
       userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
@@ -543,7 +543,7 @@ app.get('/api/admin/pieces', async (req, res) => {
       reportedAt: r.reportedAt,
       status: r.status
     })));
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error cargando reportes.' });
   }
@@ -557,7 +557,7 @@ app.post('/api/admin/pieces/resolve', async (req, res) => {
       data: { status: 'Replaced' }
     });
     res.json({ success: true });
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error resolviendo reporte.' });
   }
@@ -576,7 +576,7 @@ app.get('/api/polls', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
     if (!activePoll) return res.json(null);
-    
+
     // Map options to include vote count
     res.json({
       id: activePoll.id,
@@ -599,21 +599,21 @@ app.get('/api/polls', async (req, res) => {
 app.post('/api/polls/vote', async (req, res) => {
   try {
     const { userId, optionId } = req.body;
-    
+
     // Ensure user has brickslab rank
     const user = await prisma.users.findUnique({
       where: { user_id: userId },
       include: { bricks_ranks: true }
     });
-    
+
     if (!user || !user.bricks_ranks || !user.bricks_ranks.canReserveBrickslab) {
       return res.status(403).json({ error: 'Necesitas el rango Aim Brickslab para votar.' });
     }
-    
+
     // Check if user already voted in this poll
     const option = await prisma.bricks_poll_option.findUnique({ where: { id: optionId } });
     if (!option) return res.status(404).json({ error: 'Opción no encontrada' });
-    
+
     const existingVote = await prisma.bricks_poll_vote.findFirst({
       where: {
         userId,
@@ -624,13 +624,13 @@ app.post('/api/polls/vote', async (req, res) => {
     if (existingVote) {
       return res.status(400).json({ error: 'Ya has votado en esta encuesta.' });
     }
-    
+
     await prisma.bricks_poll_vote.create({
       data: { userId, optionId }
     });
-    
+
     res.json({ success: true });
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error voting' });
   }
@@ -639,21 +639,21 @@ app.post('/api/polls/vote', async (req, res) => {
 app.post('/api/admin/polls', async (req, res) => {
   try {
     const { title, description, options, expiresAt } = req.body;
-    
+
     // Deactivate previous
     await prisma.bricks_poll.updateMany({
       where: { isActive: true },
       data: { isActive: false }
     });
-    
+
     let finalExpiration = expiresAt ? new Date(expiresAt) : null;
-    
+
     if (!finalExpiration) {
       // Logic: 1st of next month from now at 10 AM Madrid time
       const now = new Date();
       finalExpiration = new Date(now.getFullYear(), now.getMonth() + 1, 1, 10, 0, 0);
     }
-    
+
     // Create new
     await prisma.bricks_poll.create({
       data: {
@@ -665,9 +665,9 @@ app.post('/api/admin/polls', async (req, res) => {
         }
       }
     });
-    
+
     res.json({ success: true });
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error creating poll' });
   }
@@ -677,9 +677,9 @@ app.put('/api/admin/polls/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, expiresAt, options } = req.body;
-    
+
     let finalExpiration = expiresAt ? new Date(expiresAt) : null;
-    
+
     await prisma.bricks_poll.update({
       where: { id },
       data: {
@@ -688,7 +688,7 @@ app.put('/api/admin/polls/:id', async (req, res) => {
         ...(finalExpiration ? { expiresAt: finalExpiration } : {})
       }
     });
-    
+
     for (const opt of options) {
       if (opt.id) {
         await prisma.bricks_pollOption.update({
@@ -706,7 +706,7 @@ app.put('/api/admin/polls/:id', async (req, res) => {
         });
       }
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -725,7 +725,7 @@ app.get('/api/admin/polls/active', async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
-    
+
     res.json(polls.map(poll => ({
       id: poll.id,
       title: poll.title,
@@ -738,9 +738,78 @@ app.get('/api/admin/polls/active', async (req, res) => {
         votes: opt._count.votes
       }))
     })));
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error loading admin polls' });
+  }
+});
+
+// Support Ticket
+app.post('/api/support', async (req, res) => {
+  try {
+    const { userId, subject, description } = req.body;
+    
+    await prisma.tickets_registrosoporte.create({
+      data: {
+        user_id: userId,
+        subject,
+        description,
+        app_label: "{Aim Brickslab}",
+        status: "open",
+        priority: "low",
+        created_at: new Date()
+      }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al enviar el ticket de soporte' });
+  }
+});
+
+// Ranking Endpoint
+app.get('/api/ranking', async (req, res) => {
+  try {
+    const history = await prisma.bricks_userhistory.findMany({
+      where: { brickslabId: { not: null } },
+      include: { user: true }
+    });
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    const stats = {};
+    history.forEach(h => {
+      if (!h.user) return; // ignore deleted users
+      const uId = h.userId;
+      if (!stats[uId]) {
+        stats[uId] = {
+          id: uId,
+          name: `${h.user.name} ${h.user.surname || ''}`.trim(),
+          avatar: h.user.profile_picture || null,
+          monthly: 0,
+          yearly: 0,
+          allTime: 0
+        };
+      }
+      
+      const d = new Date(h.completedAt);
+      stats[uId].allTime++;
+      if (d.getFullYear() === currentYear) {
+        stats[uId].yearly++;
+        if (d.getMonth() === currentMonth) {
+          stats[uId].monthly++;
+        }
+      }
+    });
+    
+    const ranking = Object.values(stats);
+    res.json(ranking);
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error loading ranking' });
   }
 });
 

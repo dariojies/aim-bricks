@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, MessageCircle, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
 import { AdminDashboard } from './components/AdminDashboard';
+import { Ranking } from './components/Ranking';
 import { type CatalogItem } from './data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -15,10 +16,10 @@ function App() {
     const saved = localStorage.getItem('aim_bricks_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin'>('catalog');
-  
+  const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin' | 'ranking'>('catalog');
+
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
-  
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -26,15 +27,21 @@ function App() {
   const [forcePasswordNew1, setForcePasswordNew1] = useState('');
   const [forcePasswordNew2, setForcePasswordNew2] = useState('');
 
-  const [showRankAlert, setShowRankAlert] = useState<{show: boolean, type: 'Brickslab' | 'Biblioteca' | null}>({show: false, type: null});
+  const [showRankAlert, setShowRankAlert] = useState<{ show: boolean, type: 'Brickslab' | 'Biblioteca' | null }>({ show: false, type: null });
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activePoll, setActivePoll] = useState<any>(null);
 
+  // Support State
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportSubject, setSupportSubject] = useState('');
+  const [supportDesc, setSupportDesc] = useState('');
+  const [supportStatus, setSupportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
   useEffect(() => {
     loadCatalog();
-    
+
     // Auto-sync session
     const saved = localStorage.getItem('aim_bricks_user');
     if (saved) {
@@ -109,7 +116,7 @@ function App() {
         setUser(userProfile);
         localStorage.setItem('aim_bricks_user', JSON.stringify(userProfile));
         if (parsed.token) localStorage.setItem('aim_bricks_token', parsed.token);
-        
+
         setShowLoginModal(false);
         setLoginEmail('');
         setLoginPassword('');
@@ -161,14 +168,14 @@ function App() {
     }
 
     if (item.type === 'Aim Brickslab' && !user.permissions?.brickslab) {
-      setShowRankAlert({show: true, type: 'Brickslab'});
+      setShowRankAlert({ show: true, type: 'Brickslab' });
       return;
     }
     if (item.type === 'Libro' && !user.permissions?.library) {
-      setShowRankAlert({show: true, type: 'Biblioteca'});
+      setShowRankAlert({ show: true, type: 'Biblioteca' });
       return;
     }
-    
+
     setSelectedItem(item);
   };
 
@@ -180,9 +187,9 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: user.id, itemId: selectedItem.id, type: selectedItem.type })
         });
-        
+
         const data = await res.json();
-        
+
         if (res.ok) {
           loadCatalog();
           fetch(`${API_URL}/api/auth/me`, {
@@ -195,7 +202,7 @@ function App() {
               localStorage.setItem('aim_bricks_user', JSON.stringify(newData));
             }
           });
-          
+
           setSelectedItem(null);
         } else {
           alert(data.error || 'Hubo un error al reservar el artículo.');
@@ -229,7 +236,7 @@ function App() {
         const data = await res.json();
         alert(data.error || 'No se pudo cancelar la reserva.');
       }
-    } catch(err) {
+    } catch (err) {
       console.error(err);
       alert('Error de red.');
     }
@@ -247,9 +254,35 @@ function App() {
         const data = await res.json();
         alert(data.error || 'No se pudo enviar el reporte.');
       }
-    } catch(err) {
+    } catch (err) {
       console.error(err);
       alert('Error de conexión.');
+    }
+  };
+
+  const handleSupportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supportSubject || !supportDesc) return;
+    
+    setSupportStatus('loading');
+    try {
+      const res = await fetch(`${API_URL}/api/support`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id || null, subject: supportSubject, description: supportDesc })
+      });
+      if (!res.ok) throw new Error('Error al enviar la tarea');
+      
+      setSupportStatus('success');
+      setTimeout(() => {
+        setSupportStatus('idle');
+        setShowSupportModal(false);
+        setSupportSubject('');
+        setSupportDesc('');
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setSupportStatus('error');
     }
   };
 
@@ -263,12 +296,12 @@ function App() {
   return (
     <div className="container">
       {(!user || !user.permissions?.brickslab) && (
-        <div style={{ 
-          background: 'linear-gradient(90deg, #10B981, #3B82F6)', 
-          color: 'white', 
-          padding: '0.6rem 1rem', 
-          textAlign: 'center', 
-          fontSize: '0.9rem', 
+        <div style={{
+          background: 'linear-gradient(90deg, #10B981, #3B82F6)',
+          color: 'white',
+          padding: '0.6rem 1rem',
+          textAlign: 'center',
+          fontSize: '0.9rem',
           fontWeight: 600,
           borderRadius: '8px',
           marginBottom: '1rem',
@@ -279,14 +312,14 @@ function App() {
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
         }}>
           <span>🚀 ¿Quieres reservar sets de LEGO®? Solicita tu acceso a Aim Brickslab ahora</span>
-          <button 
+          <button
             onClick={() => setShowEnrollmentModal(true)}
-            style={{ 
-              background: 'white', 
-              color: '#10B981', 
-              border: 'none', 
-              padding: '0.3rem 0.8rem', 
-              borderRadius: '6px', 
+            style={{
+              background: 'white',
+              color: '#10B981',
+              border: 'none',
+              padding: '0.3rem 0.8rem',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '0.8rem',
               fontWeight: 700
@@ -297,16 +330,17 @@ function App() {
         </div>
       )}
 
-      <Header 
-        isLoggedIn={!!user} 
+      <Header
+        isLoggedIn={!!user}
         userRole={user?.role}
-        onLoginClick={() => setShowLoginModal(true)} 
+        onLoginClick={() => setShowLoginModal(true)}
         onLogoutClick={handleLogout}
-        onProfileClick={() => setCurrentView('profile')} 
+        onProfileClick={() => setCurrentView('profile')}
         onAdminClick={() => setCurrentView('admin')}
         onHomeClick={() => setCurrentView('catalog')}
+        onRankingClick={() => setCurrentView('ranking')}
       />
-      
+
       <main className="animate-fade-in">
         {currentView === 'catalog' ? (
           <>
@@ -320,7 +354,7 @@ function App() {
               <div className="glass-panel animate-fade-in" style={{ marginBottom: '3rem', padding: '2rem', border: '2px solid var(--accent)' }}>
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)', textAlign: 'center' }}>📊 Cuestionario Activo: {activePoll.title}</h3>
                 {activePoll.description && <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{activePoll.description}</p>}
-                
+
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                   {activePoll.options.map((opt: any) => (
                     <div key={opt.id} style={{ flex: '1 1 200px', maxWidth: '300px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -328,8 +362,8 @@ function App() {
                       <div style={{ padding: '1rem', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <h4 style={{ fontWeight: 600 }}>{opt.title}</h4>
                         <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Votos actuales: {opt.votes}</span>
-                        <button 
-                          className="btn btn-primary" 
+                        <button
+                          className="btn btn-primary"
                           style={{ marginTop: 'auto' }}
                           onClick={async () => {
                             if (!user) return setShowLoginModal(true);
@@ -356,24 +390,26 @@ function App() {
                 </div>
               </div>
             )}
-            
-            <Catalog 
-              items={items} 
-              onReserveClick={handleReserveClick} 
+
+            <Catalog
+              items={items}
+              onReserveClick={handleReserveClick}
             />
           </>
         ) : currentView === 'profile' && user ? (
           <Profile user={user} onCancelReservation={handleCancelReservation} onReportPieces={handleReportPieces} />
         ) : currentView === 'admin' && (user?.role === 'admin' || user?.role === 'superadmin') ? (
           <AdminDashboard />
+        ) : currentView === 'ranking' ? (
+          <Ranking />
         ) : null}
       </main>
 
       {/* Modal de Reserva */}
       {selectedItem && (
-        <ReservationModal 
-          item={selectedItem} 
-          onClose={() => setSelectedItem(null)} 
+        <ReservationModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
           onConfirm={handleConfirmReservation}
           isLoggedIn={!!user}
           onLoginRequest={() => {
@@ -392,21 +428,21 @@ function App() {
           <div className="glass-panel animate-fade-in responsive-modal" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem', textAlign: 'center' }}>Iniciar Sesión</h2>
             <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input 
-                type="email" 
-                placeholder="Correo electrónico" 
+              <input
+                type="email"
+                placeholder="Correo electrónico"
                 value={loginEmail}
                 onChange={e => setLoginEmail(e.target.value)}
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
-                required 
+                required
               />
-              <input 
-                type="password" 
-                placeholder="Contraseña" 
+              <input
+                type="password"
+                placeholder="Contraseña"
                 value={loginPassword}
                 onChange={e => setLoginPassword(e.target.value)}
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
-                required 
+                required
               />
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowLoginModal(false)}>Cancelar</button>
@@ -431,22 +467,22 @@ function App() {
             <form onSubmit={handleForcePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nueva Contraseña</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={forcePasswordNew1}
                   onChange={e => setForcePasswordNew1(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
-                  required 
+                  required
                 />
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Repetir Contraseña</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={forcePasswordNew2}
                   onChange={e => setForcePasswordNew2(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
-                  required 
+                  required
                 />
               </div>
               <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', width: '100%' }}>Guardar Nueva Clave</button>
@@ -463,12 +499,12 @@ function App() {
         }}>
           <div className="glass-panel animate-fade-in responsive-modal" style={{ width: '100%', maxWidth: '400px', padding: '2rem', textAlign: 'center' }}>
             <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ 
-                width: '60px', height: '60px', background: 'rgba(239, 68, 68, 0.1)', 
-                color: '#EF4444', borderRadius: '50%', display: 'flex', alignItems: 'center', 
-                justifyContent: 'center', margin: '0 auto 1rem auto' 
+              <div style={{
+                width: '60px', height: '60px', background: 'rgba(239, 68, 68, 0.1)',
+                color: '#EF4444', borderRadius: '50%', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', margin: '0 auto 1rem auto'
               }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
               </div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem' }}>Acceso Restringido</h2>
               <p style={{ color: 'var(--text-muted)' }}>
@@ -478,10 +514,10 @@ function App() {
                 Por favor, dirígete a <strong>Secretaría</strong> para informarte sobre cómo obtener acceso a las reservas.
               </p>
             </div>
-            <button 
-              className="btn btn-primary" 
-              style={{ width: '100%' }} 
-              onClick={() => setShowRankAlert({show: false, type: null})}
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%' }}
+              onClick={() => setShowRankAlert({ show: false, type: null })}
             >
               Entendido
             </button>
@@ -498,8 +534,8 @@ function App() {
           <div className="glass-panel animate-fade-in responsive-modal" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.5rem' }}>Solicitud de Inscripción</h2>
-              <button 
-                className="btn btn-outline" 
+              <button
+                className="btn btn-outline"
                 onClick={() => setShowEnrollmentModal(false)}
                 style={{ padding: '0.25rem 0.75rem' }}
               >
@@ -507,10 +543,10 @@ function App() {
               </button>
             </div>
             <div id="hubspot-form-container" style={{ minHeight: '600px' }}>
-              <iframe 
-                src="https://share-eu1.hsforms.com/2PTjFBJ03SICw-tO1NDWjUQ2fimav" 
-                width="100%" 
-                height="600" 
+              <iframe
+                src="https://share-eu1.hsforms.com/2PTjFBJ03SICw-tO1NDWjUQ2fimav"
+                width="100%"
+                height="600"
                 frameBorder="0"
                 style={{ borderRadius: '8px' }}
                 title="Solicitud de Inscripción"
@@ -525,18 +561,107 @@ function App() {
 
       {/* Floating Scroll to Top button */}
       {showScrollTop && (
-        <button 
-          className="btn btn-primary scroll-to-top" 
+        <button
+          className="btn btn-primary scroll-to-top"
           onClick={scrollToTop}
-          style={{ 
-            position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90, 
-            width: '50px', height: '50px', borderRadius: '50%', padding: 0, 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)' 
+          style={{
+            position: 'fixed', bottom: '5.5rem', right: '1.5rem', zIndex: 90,
+            width: '50px', height: '50px', borderRadius: '50%', padding: 0,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
           }}
           aria-label="Volver arriba"
         >
           <ArrowUp size={24} />
         </button>
+      )}
+
+      {/* Floating Support Button */}
+      <button 
+        className="btn btn-primary" 
+        onClick={() => setShowSupportModal(true)}
+        style={{ 
+          position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90, 
+          width: '50px', height: '50px', borderRadius: '50%', padding: 0, 
+          boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+          background: 'linear-gradient(135deg, var(--accent), var(--accent-hover))'
+        }}
+        aria-label="Soporte"
+        title="Enviar ticket de soporte"
+      >
+        <MessageCircle size={24} />
+      </button>
+
+      {/* Support Modal */}
+      {showSupportModal && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
+        }}>
+          <div className="glass-panel animate-fade-in responsive-modal" style={{ width: '100%', maxWidth: '500px', padding: '2rem', position: 'relative' }}>
+            <button 
+              className="btn-icon" 
+              onClick={() => setShowSupportModal(false)}
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}
+            >
+              <X size={18} />
+            </button>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MessageCircle size={24} className="text-accent" /> Soporte Técnico
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                ¿Has encontrado algún problema? Envíanos un ticket.
+              </p>
+            </div>
+
+            {supportStatus === 'success' && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#10b981' }}>
+                <CheckCircle2 size={20} />
+                <strong>¡Ticket enviado con éxito!</strong>
+              </div>
+            )}
+
+            {supportStatus === 'error' && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ef4444' }}>
+                <AlertCircle size={20} />
+                <strong>Error al enviar el ticket</strong>
+              </div>
+            )}
+
+            <form onSubmit={handleSupportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Asunto *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ej: Problema con una reserva"
+                  value={supportSubject}
+                  onChange={e => setSupportSubject(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Descripción *</label>
+                <textarea 
+                  required
+                  rows={4}
+                  placeholder="Explica el problema que has encontrado..."
+                  value={supportDesc}
+                  onChange={e => setSupportDesc(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', resize: 'none' }}
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={supportStatus === 'loading'}
+                style={{ marginTop: '0.5rem' }}
+              >
+                {supportStatus === 'loading' ? 'Enviando...' : 'Enviar Ticket'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

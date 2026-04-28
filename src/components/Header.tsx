@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Crown, LogIn, User, Moon, Sun, Heart } from 'lucide-react';
+import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -9,9 +9,10 @@ interface Props {
   onProfileClick: () => void;
   onAdminClick: () => void;
   onHomeClick: () => void;
+  onRankingClick: () => void;
 }
 
-export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, onAdminClick, onHomeClick }) => {
+export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, onAdminClick, onHomeClick, onRankingClick }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
@@ -38,6 +39,11 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
         </div>
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
           <div className="responsive-header-buttons" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            
+            <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#F59E0B', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onRankingClick}>
+              <Trophy size={18} /> Ranking
+            </button>
+
             {userRole !== 'admin' && userRole !== 'superadmin' && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
