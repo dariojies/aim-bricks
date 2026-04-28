@@ -27,3 +27,6 @@ dist-ssr
 infopriv/
 
 /src/generated/prisma
+scratch/
+.env
+.env.local

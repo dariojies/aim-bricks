@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -63,6 +63,7 @@ export const AdminDashboard: React.FC = () => {
   const [pollDesc, setPollDesc] = useState('');
   const [pollExpiresAt, setPollExpiresAt] = useState('');
   const [pollOptions, setPollOptions] = useState([{ title: '', imageUrl: '', id: undefined as string | undefined }, { title: '', imageUrl: '', id: undefined as string | undefined }]);
+  const [catalogSearchTerm, setCatalogSearchTerm] = useState('');
   const [activePolls, setActivePolls] = useState<any[]>([]);
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
 
@@ -312,7 +313,136 @@ export const AdminDashboard: React.FC = () => {
         Panel de Administración
       </h2>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
+      {/* Votaciones - Siempre visibles arriba según solicitado */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '3rem' }}>
+        {activePolls.length > 0 && (
+          <div className="glass-panel animate-fade-in" style={{ padding: '2rem', border: '1px solid var(--accent)' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--accent)' }}>Estado de Votación Actual</h3>
+            {activePolls.map(poll => {
+              const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
+              return (
+                <div key={poll.id} style={{ marginBottom: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <h4 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {poll.title}
+                        <button
+                          className="btn btn-outline"
+                          style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                          onClick={() => {
+                            setEditingPollId(poll.id);
+                            setPollTitle(poll.title);
+                            setPollDesc(poll.description || '');
+                            setPollExpiresAt(poll.expiresAt ? new Date(poll.expiresAt).toISOString().slice(0, 16) : '');
+                            setPollOptions(poll.options.map((o: any) => ({ title: o.title, imageUrl: o.imageUrl, id: o.id })));
+                          }}
+                        >
+                          Editar
+                        </button>
+                      </h4>
+                      <p style={{ color: 'var(--text-muted)' }}>{poll.description}</p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent)' }}>
+                        Finaliza el: {poll.expiresAt ? new Date(poll.expiresAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Indefinido'}
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Votos: {totalVotes}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    {poll.options.map((opt: any) => {
+                      const percentage = totalVotes > 0 ? (opt.votes / totalVotes * 100).toFixed(1) : '0';
+                      return (
+                        <div key={opt.id} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
+                          {opt.imageUrl && <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />}
+                          <div style={{ padding: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                              <span style={{ fontWeight: 600 }}>{opt.title}</span>
+                              <span style={{ color: 'var(--accent)' }}>{opt.votes} v ( {percentage}% )</span>
+                            </div>
+                            <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent)' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>
+            {editingPollId ? 'Editar Votación' : 'Crear Nueva Votación'}
+          </h3>
+          {!editingPollId && <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>}
+          <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={async (e) => {
+            e.preventDefault();
+            const url = editingPollId ? `${API_URL}/api/admin/polls/${editingPollId}` : `${API_URL}/api/admin/polls`;
+            const method = editingPollId ? 'PUT' : 'POST';
+
+            await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: pollTitle,
+                description: pollDesc,
+                expiresAt: pollExpiresAt,
+                options: pollOptions
+              })
+            });
+            alert(editingPollId ? 'Votación actualizada.' : 'Votación publicada.');
+            setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '', id: undefined }, { title: '', imageUrl: '', id: undefined }]);
+            setEditingPollId(null);
+            fetchActivePolls();
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+              <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '4px' }}>Fecha fin (opcional)</label>
+                <input type="datetime-local" value={pollExpiresAt} onChange={e => setPollExpiresAt(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              </div>
+            </div>
+            <input required placeholder="Descripción (opcional)" value={pollDesc} onChange={e => setPollDesc(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+
+            <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
+            {pollOptions.map((opt, i) => {
+              return (
+                <div key={i} style={{ display: 'flex', gap: '1rem' }}>
+                  <input required placeholder={`Nombre Opción ${i + 1}`} value={opt.title} onChange={e => {
+                    const newOpts = [...pollOptions];
+                    newOpts[i].title = e.target.value;
+                    setPollOptions(newOpts);
+                  }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                  <input required placeholder={`URL Imagen ${i + 1}`} value={opt.imageUrl} onChange={e => {
+                    const newOpts = [...pollOptions];
+                    newOpts[i].imageUrl = e.target.value;
+                    setPollOptions(newOpts);
+                  }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                </div>
+              );
+            })}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '', id: undefined }])}>Añadir Opción</button>
+              <button type="submit" className="btn btn-primary">{editingPollId ? 'Guardar Cambios' : 'Publicar Votación'}</button>
+              {editingPollId && (
+                <button type="button" className="btn btn-outline" onClick={() => {
+                  setEditingPollId(null);
+                  setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '', id: undefined }, { title: '', imageUrl: '', id: undefined }]);
+                }}>
+                  Cancelar Edición
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button
           className={`btn ${activeTab === 'reservations' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('reservations')}
@@ -342,12 +472,6 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('pieces')}
         >
           Reportes de Piezas
-        </button>
-        <button
-          className={`btn ${activeTab === 'polls' ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setActiveTab('polls')}
-        >
-          Votaciones
         </button>
       </div>
 
@@ -517,6 +641,16 @@ export const AdminDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.5rem', margin: 0 }}>Gestión de Rangos</h3>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '0 0.75rem' }}>
+                <Search size={16} className="text-muted" />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  style={{ padding: '0.5rem 0', border: 'none', background: 'transparent', color: 'var(--text)', width: '150px', fontSize: '0.875rem', outline: 'none' }}
+                />
+              </div>
               <button
                 className={`btn ${filterBrickslab ? 'btn-primary' : 'btn-outline'}`}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
@@ -538,13 +672,6 @@ export const AdminDashboard: React.FC = () => {
               >
                 Abonados
               </button>
-              <input
-                type="text"
-                placeholder="Buscar por nombre o correo..."
-                value={userSearchTerm}
-                onChange={(e) => setUserSearchTerm(e.target.value)}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minWidth: '250px' }}
-              />
             </div>
           </div>
           <div className="table-responsive-wrapper">
@@ -710,14 +837,39 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Inventario Actual
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '0 0.75rem' }}>
+                  <Search size={16} className="text-muted" />
+                  <input 
+                    type="text"
+                    placeholder="Buscar set o libro..."
+                    value={catalogSearchTerm}
+                    onChange={e => setCatalogSearchTerm(e.target.value)}
+                    style={{ 
+                      padding: '0.5rem 0', 
+                      border: 'none', 
+                      background: 'transparent', 
+                      color: 'var(--text)',
+                      fontSize: '0.875rem',
+                      width: '150px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+                Inventario Actual
+              </div>
               <span style={{ fontSize: '0.875rem', background: 'var(--surface-border)', padding: '0.25rem 0.75rem', borderRadius: '8px' }}>
                 {items.length} artículos
               </span>
             </h3>
             <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-              {items.map(item => (
+              {items.filter(item => 
+                item.title.toLowerCase().includes(catalogSearchTerm.toLowerCase()) ||
+                (item.legoReference && item.legoReference.toLowerCase().includes(catalogSearchTerm.toLowerCase())) ||
+                (item.author && item.author.toLowerCase().includes(catalogSearchTerm.toLowerCase())) ||
+                (item.isbn && item.isbn.toLowerCase().includes(catalogSearchTerm.toLowerCase()))
+              ).map(item => (
                 <div key={item.id} style={{ padding: '1rem', background: 'var(--background)', borderRadius: '8px', border: '1px solid var(--surface-border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <img src={item.imageUrl} alt={item.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }} />
@@ -837,134 +989,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'polls' && (
-        <div style={{ display: 'grid', gap: '2rem' }}>
-          {activePolls.length > 0 && (
-            <div className="glass-panel" style={{ padding: '2rem' }}>
-              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--accent)' }}>Estado de Votación Actual</h3>
-              {activePolls.map(poll => {
-                const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
-                return (
-                  <div key={poll.id} style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <div>
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {poll.title}
-                          <button
-                            className="btn btn-outline"
-                            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
-                            onClick={() => {
-                              setEditingPollId(poll.id);
-                              setPollTitle(poll.title);
-                              setPollDesc(poll.description || '');
-                              setPollExpiresAt(poll.expiresAt ? new Date(poll.expiresAt).toISOString().slice(0, 16) : '');
-                              setPollOptions(poll.options.map((o: any) => ({ title: o.title, imageUrl: o.imageUrl, id: o.id })));
-                            }}
-                          >
-                            Editar
-                          </button>
-                        </h4>
-                        <p style={{ color: 'var(--text-muted)' }}>{poll.description}</p>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent)' }}>
-                          Finaliza el: {poll.expiresAt ? new Date(poll.expiresAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Indefinido'}
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Votos: {totalVotes}</div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                      {poll.options.map((opt: any) => {
-                        const percentage = totalVotes > 0 ? (opt.votes / totalVotes * 100).toFixed(1) : '0';
-                        return (
-                          <div key={opt.id} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
-                            {opt.imageUrl && <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />}
-                            <div style={{ padding: '1rem' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ fontWeight: 600 }}>{opt.title}</span>
-                                <span style={{ color: 'var(--accent)' }}>{opt.votes} v ( {percentage}% )</span>
-                              </div>
-                              <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent)' }}></div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>
-              {editingPollId ? 'Editar Votación' : 'Crear Nueva Votación'}
-            </h3>
-            {!editingPollId && <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Al crear una encuesta, desactivarás la anterior automáticamente.</p>}
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={async (e) => {
-              e.preventDefault();
-              const url = editingPollId ? `${API_URL}/api/admin/polls/${editingPollId}` : `${API_URL}/api/admin/polls`;
-              const method = editingPollId ? 'PUT' : 'POST';
-
-              await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  title: pollTitle,
-                  description: pollDesc,
-                  expiresAt: pollExpiresAt,
-                  options: pollOptions
-                })
-              });
-              alert(editingPollId ? 'Votación actualizada.' : 'Votación publicada.');
-              setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '', id: undefined }, { title: '', imageUrl: '', id: undefined }]);
-              setEditingPollId(null);
-              fetchActivePolls();
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-                <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '4px' }}>Fecha fin (opcional, por defecto 1 del mes siguiente + 1)</label>
-                  <input type="datetime-local" value={pollExpiresAt} onChange={e => setPollExpiresAt(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.85rem' }} />
-                </div>
-              </div>
-              <input required placeholder="Descripción (opcional)" value={pollDesc} onChange={e => setPollDesc(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-
-              <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
-              {pollOptions.map((opt, i) => {
-                return (
-                  <div key={i} style={{ display: 'flex', gap: '1rem' }}>
-                    <input required placeholder={`Nombre Opción ${i + 1}`} value={opt.title} onChange={e => {
-                      const newOpts = [...pollOptions];
-                      newOpts[i].title = e.target.value;
-                      setPollOptions(newOpts);
-                    }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                    <input required placeholder={`URL Imagen ${i + 1}`} value={opt.imageUrl} onChange={e => {
-                      const newOpts = [...pollOptions];
-                      newOpts[i].imageUrl = e.target.value;
-                      setPollOptions(newOpts);
-                    }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                  </div>
-                );
-              })}
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setPollOptions([...pollOptions, { title: '', imageUrl: '', id: undefined }])}>Añadir Opción</button>
-                <button type="submit" className="btn btn-primary">{editingPollId ? 'Guardar Cambios' : 'Publicar Votación'}</button>
-                {editingPollId && (
-                  <button type="button" className="btn btn-outline" onClick={() => {
-                    setEditingPollId(null);
-                    setPollTitle(''); setPollDesc(''); setPollExpiresAt(''); setPollOptions([{ title: '', imageUrl: '', id: undefined }, { title: '', imageUrl: '', id: undefined }]);
-                  }}>
-                    Cancelar Edición
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
       )}
     </div>
   );

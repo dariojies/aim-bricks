@@ -751,13 +751,12 @@ app.post('/api/support', async (req, res) => {
     
     await prisma.tickets_registrosoporte.create({
       data: {
-        user_id: userId,
+        user_id: userId && userId !== 'null' ? userId : undefined,
         subject,
         description,
-        app_label: "{Aim Brickslab}",
+        app_label: "Aim Brickslab",
         status: "open",
-        priority: "low",
-        created_at: new Date()
+        priority: "medium"
       }
     });
     
