@@ -68,8 +68,18 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect }) => {
               Reservar para montar en el local
             </button>
             <button 
-              className="btn btn-outline" 
-              style={{ width: '100%' }}
+              className="btn" 
+              style={{ 
+                width: '100%',
+                background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
+                color: '#000',
+                border: 'none',
+                fontWeight: 700,
+                boxShadow: '0 4px 15px rgba(212, 175, 55, 0.4)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               onClick={(e) => {
                 e.stopPropagation();
                 alert('Proximamente con la version Brickslab Pro');
