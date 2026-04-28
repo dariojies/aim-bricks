@@ -749,15 +749,20 @@ app.post('/api/support', async (req, res) => {
   try {
     const { userId, subject, description } = req.body;
     
+    const ticketData = {
+      subject: String(subject),
+      description: String(description),
+      app_label: "Aim Brickslab",
+      status: "open",
+      priority: "low"
+    };
+
+    if (userId && userId !== 'null' && userId !== '') {
+      ticketData.user_id = userId;
+    }
+
     await prisma.tickets_registrosoporte.create({
-      data: {
-        user_id: userId && userId !== 'null' ? userId : undefined,
-        subject,
-        description,
-        app_label: "Aim Brickslab",
-        status: "open",
-        priority: "medium"
-      }
+      data: ticketData
     });
     
     res.json({ success: true });
