@@ -562,33 +562,64 @@ function App() {
       {/* Floating Scroll to Top button */}
       {showScrollTop && (
         <button
-          className="btn btn-primary scroll-to-top"
+          className="btn"
           onClick={scrollToTop}
           style={{
-            position: 'fixed', bottom: '5.5rem', right: '1.5rem', zIndex: 90,
-            width: '50px', height: '50px', borderRadius: '50%', padding: 0,
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+            position: 'fixed', bottom: '6.5rem', right: '1.5rem', zIndex: 90,
+            width: '60px', height: '60px', borderRadius: '50%', padding: 0,
+            boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
+            background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+            color: 'white',
+            border: '2px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
+            e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
           }}
           aria-label="Volver arriba"
         >
-          <ArrowUp size={24} />
+          <ArrowUp size={28} color="white" />
         </button>
       )}
 
       {/* Floating Support Button */}
       <button 
-        className="btn btn-primary" 
+        className="btn" 
         onClick={() => setShowSupportModal(true)}
         style={{ 
           position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90, 
-          width: '50px', height: '50px', borderRadius: '50%', padding: 0, 
-          boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-          background: 'linear-gradient(135deg, var(--accent), var(--accent-hover))'
+          width: '60px', height: '60px', borderRadius: '50%', padding: 0, 
+          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
+          background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+          color: 'white',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+          cursor: 'pointer',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1) translateY(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
         }}
         aria-label="Soporte"
         title="Enviar ticket de soporte"
       >
-        <MessageCircle size={24} />
+        <MessageCircle size={28} color="white" />
       </button>
 
       {/* Support Modal */}
