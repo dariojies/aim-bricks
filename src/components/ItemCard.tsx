@@ -46,14 +46,39 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect }) => {
         <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1.5rem', flex: 1 }}>
           {item.description}
         </p>
-        <button 
-          className={isAvailable ? "btn btn-primary" : "btn btn-outline"} 
-          style={{ width: '100%' }}
-          onClick={() => isAvailable && onSelect(item)}
-          disabled={!isAvailable}
-        >
-          {isAvailable ? 'Reservar para leer/montar en el local' : 'Actualmente Reservado'}
-        </button>
+        {!isAvailable ? (
+          <button className="btn btn-outline" style={{ width: '100%' }} disabled>
+            Actualmente Reservado
+          </button>
+        ) : item.type === 'Libro' ? (
+          <button 
+            className="btn btn-primary" 
+            style={{ width: '100%' }}
+            onClick={() => onSelect(item)}
+          >
+            Reservar para leer en casa/local
+          </button>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%' }}
+              onClick={() => onSelect(item)}
+            >
+              Reservar para montar en el local
+            </button>
+            <button 
+              className="btn btn-outline" 
+              style={{ width: '100%' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                alert('Proximamente con la version Brickslab Pro');
+              }}
+            >
+              Reservar para montar en casa
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
