@@ -751,16 +751,16 @@ app.post('/api/support', async (req, res) => {
     
     const userUuid = (userId && userId !== 'null' && userId !== '') ? userId : null;
     
-    // Using raw query to bypass binary protocol confusion with app_label
+    // Confirmed: the database column app_label is an ARRAY, not a string.
     if (userUuid) {
       await prisma.$executeRaw`
         INSERT INTO "tickets_registrosoporte" ("user_id", "subject", "description", "app_label", "status", "priority", "created_at") 
-        VALUES (${userUuid}::uuid, ${String(subject)}, ${String(description)}, 'Aim Brickslab', 'open', 'low', NOW())
+        VALUES (${userUuid}::uuid, ${String(subject)}, ${String(description)}, ARRAY['Aim Brickslab'], 'open', 'low', NOW())
       `;
     } else {
       await prisma.$executeRaw`
         INSERT INTO "tickets_registrosoporte" ("subject", "description", "app_label", "status", "priority", "created_at") 
-        VALUES (${String(subject)}, ${String(description)}, 'Aim Brickslab', 'open', 'low', NOW())
+        VALUES (${String(subject)}, ${String(description)}, ARRAY['Aim Brickslab'], 'open', 'low', NOW())
       `;
     }
     
