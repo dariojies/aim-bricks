@@ -509,7 +509,8 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
         </div>
-      )}
+      </div>
+    )}
 
       {activeTab === 'users' && (
         <div className="glass-panel" style={{ padding: '2rem' }}>
