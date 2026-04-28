@@ -714,13 +714,32 @@ app.put('/api/admin/polls/:id', async (req, res) => {
   }
 });
 
+app.patch('/api/admin/polls/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+    await prisma.bricks_poll.update({
+      where: { id },
+      data: { isActive }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar estado de la votación' });
+  }
+});
+
 app.get('/api/admin/polls/active', async (req, res) => {
   try {
     const polls = await prisma.bricks_poll.findMany({
-      where: { isActive: true },
       include: {
         options: {
-          include: { _count: { select: { votes: true } } }
+          include: { 
+            votes: {
+              include: { user: { select: { name: true, surname: true, email: true } } }
+            },
+            _count: { select: { votes: true } } 
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -730,12 +749,18 @@ app.get('/api/admin/polls/active', async (req, res) => {
       id: poll.id,
       title: poll.title,
       description: poll.description,
+      isActive: poll.isActive,
       expiresAt: poll.expiresAt,
       options: poll.options.map(opt => ({
         id: opt.id,
         title: opt.title,
         imageUrl: opt.imageUrl,
-        votes: opt._count.votes
+        votes: opt._count.votes,
+        voters: opt.votes.map(v => ({
+          name: v.user.name,
+          surname: v.user.surname,
+          email: v.user.email
+        }))
       }))
     })));
   } catch (error) {

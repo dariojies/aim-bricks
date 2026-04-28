@@ -45,6 +45,7 @@ export const AdminDashboard: React.FC = () => {
   const [selectedUserForReservation, setSelectedUserForReservation] = useState('');
   const [selectedItemForReservation, setSelectedItemForReservation] = useState('');
   const [reservationSearchUserTerm, setReservationSearchUserTerm] = useState('');
+  const [reservationSearchItemTerm, setReservationSearchItemTerm] = useState('');
 
   // Edit form state
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -385,6 +386,13 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Artículo (Set o Libro)</label>
+                <input 
+                  type="text" 
+                  placeholder="Buscar artículo por título o referencia..." 
+                  value={reservationSearchItemTerm}
+                  onChange={e => setReservationSearchItemTerm(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', marginBottom: '0.5rem' }}
+                />
                 <select 
                   required
                   value={selectedItemForReservation} 
@@ -392,7 +400,11 @@ export const AdminDashboard: React.FC = () => {
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                 >
                   <option value="">-- Selecciona un artículo --</option>
-                  {items.filter(i => i.isAvailable).map(i => (
+                  {items.filter(i => 
+                    i.isAvailable && 
+                    (i.title.toLowerCase().includes(reservationSearchItemTerm.toLowerCase()) || 
+                     (i.legoReference && i.legoReference.toLowerCase().includes(reservationSearchItemTerm.toLowerCase())))
+                  ).map(i => (
                     <option key={i.id} value={i.id}>{i.type}: {i.title} {i.legoReference ? `(Ref: ${i.legoReference})` : ''}</option>
                   ))}
                 </select>
@@ -875,18 +887,43 @@ export const AdminDashboard: React.FC = () => {
                 const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
                 return (
                   <div key={poll.id} style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                       <div>
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h4 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           {poll.title}
+                          <span style={{
+                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '4px',
+                            background: poll.isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            color: poll.isActive ? '#10B981' : '#EF4444',
+                            border: poll.isActive ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+                          }}>
+                            {poll.isActive ? 'Activa' : 'Finalizada'}
+                          </span>
                           <button
                             className="btn btn-outline"
-                            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto' }}
+                            onClick={async () => {
+                              const newStatus = !poll.isActive;
+                              await fetch(`${API_URL}/api/admin/polls/${poll.id}/status`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ isActive: newStatus })
+                              });
+                              fetchActivePolls();
+                            }}
+                          >
+                            {poll.isActive ? 'Cerrar Votación' : 'Abrir Votación'}
+                          </button>
+                          <button
+                            className="btn btn-outline"
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto' }}
                             onClick={() => {
                               setEditingPollId(poll.id);
                               setPollTitle(poll.title);
                               setPollDesc(poll.description || '');
-                              setPollExpiresAt(poll.expiresAt ? new Date(poll.expiresAt).toISOString().slice(0, 16) : '');
+                              setPollExpiresAt(poll.expiresAt ? poll.expiresAt.substring(0, 16) : '');
                               setPollOptions(poll.options.map((o: any) => ({ title: o.title, imageUrl: o.imageUrl, id: o.id })));
                             }}
                           >
@@ -897,25 +934,43 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent)' }}>
-                          Finaliza el: {poll.expiresAt ? new Date(poll.expiresAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Indefinido'}
+                          {poll.expiresAt ? `Finaliza el: ${new Date(poll.expiresAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Sin fecha de fin'}
                         </div>
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Votos: {totalVotes}</div>
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
                       {poll.options.map((opt: any) => {
                         const percentage = totalVotes > 0 ? (opt.votes / totalVotes * 100).toFixed(1) : '0';
                         return (
-                          <div key={opt.id} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
-                            {opt.imageUrl && <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />}
-                            <div style={{ padding: '1rem' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ fontWeight: 600 }}>{opt.title}</span>
-                                <span style={{ color: 'var(--accent)' }}>{opt.votes} v ( {percentage}% )</span>
+                          <div key={opt.id} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--surface-border)', display: 'flex', flexDirection: 'column' }}>
+                            {opt.imageUrl && <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />}
+                            <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 600, fontSize: '1rem' }}>{opt.title}</span>
+                                <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{opt.votes} v ({percentage}%)</span>
                               </div>
                               <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent)' }}></div>
+                                <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)' }}></div>
+                              </div>
+                              
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Votantes:</div>
+                                <div style={{ maxHeight: '100px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', padding: '0.5rem' }}>
+                                  {opt.voters && opt.voters.length > 0 ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                      {opt.voters.map((v: any, idx: number) => (
+                                        <div key={idx} style={{ fontSize: '0.75rem', display: 'flex', flexDirection: 'column' }}>
+                                          <span style={{ color: 'var(--text)' }}>{v.name} {v.surname}</span>
+                                          <span style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>{v.email}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Sin votos aún</div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
