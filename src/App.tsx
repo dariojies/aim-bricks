@@ -39,26 +39,27 @@ function App() {
   const [supportDesc, setSupportDesc] = useState('');
   const [supportStatus, setSupportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
+  const syncUserSession = async () => {
+    const saved = localStorage.getItem('aim_bricks_user');
+    if (!saved) return;
+    try {
+      const u = JSON.parse(saved);
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: u.id })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        setUser(data);
+        localStorage.setItem('aim_bricks_user', JSON.stringify(data));
+      }
+    } catch (e) { console.error('Error syncing session:', e); }
+  };
+
   useEffect(() => {
     loadCatalog();
-
-    // Auto-sync session
-    const saved = localStorage.getItem('aim_bricks_user');
-    if (saved) {
-      try {
-        const u = JSON.parse(saved);
-        fetch(`${API_URL}/api/auth/me`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: u.id })
-        }).then(r => r.json()).then(data => {
-          if (!data.error) {
-            setUser(data);
-            localStorage.setItem('aim_bricks_user', JSON.stringify(data));
-          }
-        }).catch(console.error);
-      } catch (e) { console.error(e); }
-    }
+    syncUserSession();
 
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
@@ -76,6 +77,7 @@ function App() {
     const catalogInterval = setInterval(() => {
       loadCatalog();
       fetchPoll();
+      syncUserSession();
     }, 10000);
 
     return () => {
