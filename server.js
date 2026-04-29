@@ -170,7 +170,7 @@ async function migrateToDynamic() {
         data: missingUsers.map(u => ({
           email: u.email.toLowerCase(),
           clubId: u.club_id,
-          role: u.dev_role || 'member'
+          role: u.role || 'member'
         })),
         skipDuplicates: true
       });
