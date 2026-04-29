@@ -1451,13 +1451,6 @@ app.get('/api/ranking', async (req, res) => {
   }
 });
 
-// Serve frontend static files
-app.use(express.static(join(__dirname, 'dist')));
-
-app.get('/*path', (req, res) => {
-  res.sendFile(join(__dirname, 'dist', 'index.html'));
-});
-
 // Membership Management Endpoints
 app.get('/api/admin/memberships', async (req, res) => {
   try {
@@ -1532,6 +1525,13 @@ app.get('/api/admin/clubs', async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Error cargando clubes' });
   }
+});
+
+// Serve frontend static files
+app.use(express.static(join(__dirname, 'dist')));
+
+app.get('/*path', (req, res) => {
+  res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
