@@ -99,9 +99,10 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchMemberships = async () => {
     const user = JSON.parse(localStorage.getItem('aim_bricks_user') || '{}');
-    if (!user.club_id) return;
+    const clubId = user.clubId || user.club_id;
+    if (!clubId) return;
     try {
-      const res = await fetch(`${API_URL}/api/admin/memberships?clubId=${user.club_id}`);
+      const res = await fetch(`${API_URL}/api/admin/memberships?clubId=${clubId}`);
       if (res.ok) setMemberships(await res.json());
     } catch (err) { console.error(err); }
   };
@@ -352,12 +353,13 @@ export const AdminDashboard: React.FC = () => {
   const handleAddMembership = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = JSON.parse(localStorage.getItem('aim_bricks_user') || '{}');
-    if (!user.club_id) return;
+    const clubId = user.clubId || user.club_id;
+    if (!clubId) return;
     try {
       const res = await fetch(`${API_URL}/api/admin/memberships`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clubId: user.club_id, email: memberEmail, role: memberRole })
+        body: JSON.stringify({ clubId, email: memberEmail, role: memberRole })
       });
       if (res.ok) {
         setMemberEmail('');
