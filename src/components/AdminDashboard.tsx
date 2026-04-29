@@ -68,6 +68,10 @@ export const AdminDashboard: React.FC = () => {
   const [activePolls, setActivePolls] = useState<any[]>([]);
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
 
+  // Filter Active Reservations
+  const [reservationFilterSearchTerm, setReservationFilterSearchTerm] = useState('');
+  const [reservationStatusFilter, setReservationStatusFilter] = useState<'all' | 'reserved' | 'delivered'>('all');
+
   useEffect(() => {
     fetchReservations();
     fetchCatalog();
@@ -416,9 +420,62 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Reservas en curso</h3>
-          {reservations.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No hay reservas activas en este momento.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.5rem' }}>Reservas en curso</h3>
+              
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative' }}>
+                  <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
+                  <input 
+                    type="text"
+                    placeholder="Buscar alumno..."
+                    value={reservationFilterSearchTerm}
+                    onChange={e => setReservationFilterSearchTerm(e.target.value)}
+                    style={{ padding: '0.5rem 1rem 0.5rem 2.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.9rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--background)', padding: '0.25rem', borderRadius: '10px', border: '1px solid var(--surface-border)' }}>
+                  <button 
+                    className="btn"
+                    onClick={() => setReservationStatusFilter('all')}
+                    style={{ 
+                      padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none',
+                      background: reservationStatusFilter === 'all' ? 'var(--primary)' : 'transparent',
+                      color: reservationStatusFilter === 'all' ? '#fff' : 'var(--text-muted)'
+                    }}
+                  >Todas</button>
+                  <button 
+                    className="btn"
+                    onClick={() => setReservationStatusFilter('reserved')}
+                    style={{ 
+                      padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none',
+                      background: reservationStatusFilter === 'reserved' ? 'var(--primary)' : 'transparent',
+                      color: reservationStatusFilter === 'reserved' ? '#fff' : 'var(--text-muted)'
+                    }}
+                  >Pendientes</button>
+                  <button 
+                    className="btn"
+                    onClick={() => setReservationStatusFilter('delivered')}
+                    style={{ 
+                      padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none',
+                      background: reservationStatusFilter === 'delivered' ? 'var(--primary)' : 'transparent',
+                      color: reservationStatusFilter === 'delivered' ? '#fff' : 'var(--text-muted)'
+                    }}
+                  >Entregadas</button>
+                </div>
+              </div>
+            </div>
+
+          {reservations.filter(r => {
+            const matchesSearch = r.userName.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase()) || 
+                                 r.userEmail.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase());
+            const matchesStatus = reservationStatusFilter === 'all' || 
+                                 (reservationStatusFilter === 'reserved' && r.status === 'Reserved') ||
+                                 (reservationStatusFilter === 'delivered' && r.status === 'Delivered');
+            return matchesSearch && matchesStatus;
+          }).length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>No hay reservas que coincidan con los filtros.</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
@@ -433,7 +490,14 @@ export const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {reservations.map(r => (
+                  {reservations.filter(r => {
+                    const matchesSearch = r.userName.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase()) || 
+                                         r.userEmail.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase());
+                    const matchesStatus = reservationStatusFilter === 'all' || 
+                                         (reservationStatusFilter === 'reserved' && r.status === 'Reserved') ||
+                                         (reservationStatusFilter === 'delivered' && r.status === 'Delivered');
+                    return matchesSearch && matchesStatus;
+                  }).map(r => (
                     <tr key={r.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                       <td style={{ padding: '1rem 0.5rem' }}>
                         <div style={{ fontWeight: 500 }}>{r.userName}</div>
