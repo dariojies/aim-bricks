@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CatalogItem } from '../data/mockData';
 import { ItemCard } from './ItemCard';
+import { Search, Box } from 'lucide-react';
 
 interface Props {
   items: CatalogItem[];
@@ -26,31 +27,49 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) 
 
   return (
     <div>
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
-        <input 
-          type="text" 
-          placeholder="🔍 Buscar..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ 
-            width: '300px', 
-            padding: '0.85rem', 
-            borderRadius: '12px', 
-            border: '1px solid var(--surface-border)', 
-            background: 'var(--surface)', 
-            color: 'var(--text)', 
-            fontSize: '1rem', 
-            outline: 'none',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-          }}
-        />
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        gap: '2rem', 
+        marginBottom: '4rem', 
+        background: 'var(--surface)', 
+        padding: '1.5rem 2rem', 
+        borderRadius: '20px',
+        border: '1px solid var(--surface-border)',
+        flexWrap: 'wrap',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ position: 'relative', flex: '1', minWidth: '280px' }}>
+          <Search 
+            size={20} 
+            style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} 
+          />
+          <input 
+            type="text" 
+            placeholder="Buscar por nombre, descripción o referencia..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ 
+              width: '100%', 
+              padding: '0.85rem 1rem 0.85rem 3rem', 
+              borderRadius: '12px', 
+              border: '1px solid var(--surface-border)', 
+              background: 'rgba(0,0,0,0.2)', 
+              color: 'var(--text)', 
+              fontSize: '1rem', 
+              outline: 'none',
+              transition: 'all 0.2s'
+            }}
+          />
+        </div>
         
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {['Todos', 'Aim Brickslab', 'Biblioteca'].map(f => (
             <button
               key={f}
               className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'}`}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem', borderRadius: '12px' }}
               onClick={() => setFilter(f as any)}
             >
               {f}
@@ -59,13 +78,14 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) 
         </div>
       </div>
 
-      <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+      <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem' }}>
         {filteredItems.map(item => (
           <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} />
         ))}
         {filteredItems.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-            No se encontraron artículos que coincidan con tu búsqueda.
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '5rem', color: 'var(--text-muted)' }}>
+            <Box size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '1.2rem' }}>No se encontraron artículos en esta categoría.</p>
           </div>
         )}
       </div>

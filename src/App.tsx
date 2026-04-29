@@ -319,6 +319,25 @@ function App() {
     localStorage.removeItem('aim_bricks_token');
   };
 
+  const handleProfileClick = async () => {
+    if (!user) return setShowLoginModal(true);
+    setCurrentView('profile');
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
+      if (res.ok) {
+        const newData = await res.json();
+        setUser(newData);
+        localStorage.setItem('aim_bricks_user', JSON.stringify(newData));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="container">
       {(!user || !user.permissions?.brickslab) && (
@@ -361,16 +380,10 @@ function App() {
         userRole={user?.role}
         onLoginClick={() => setShowLoginModal(true)}
         onLogoutClick={handleLogout}
-        onProfileClick={() => setCurrentView('profile')}
+        onProfileClick={handleProfileClick}
         onAdminClick={() => setCurrentView('admin')}
         onRankingClick={() => setCurrentView('ranking')}
         onProClick={() => setShowProModal(true)}
-        categories={categories}
-        activeCategoryId={activeCategoryId}
-        onCategoryChange={(id) => {
-          setCurrentView('catalog');
-          setActiveCategoryId(id);
-        }}
         onTabChange={(tab) => setCurrentView(tab)}
         currentView={currentView}
       />

@@ -307,8 +307,12 @@ app.post('/api/auth/me', async (req, res) => {
     const user = await prisma.users.findUnique({
       where: { user_id: userId },
       include: {
-        reservations: { include: { brickslab: true, libraryBook: true } },
-        history: { include: { brickslab: true, libraryBook: true } },
+        reservations: { 
+          include: { brickslab: true, libraryBook: true, item: { include: { category: true } } } 
+        },
+        history: { 
+          include: { brickslab: true, libraryBook: true, item: { include: { category: true } } } 
+        },
         bricks_ranks: true
       }
     });
@@ -338,10 +342,27 @@ app.post('/api/auth/me', async (req, res) => {
       currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
         id: r.id,
         status: r.status === 'Active' ? 'Reserved' : r.status,
-        text: `${r.status}: ${r.brickslab?.title || r.libraryBook?.title || 'Artículo'}`,
+        text: `${r.status}: ${r.brickslab?.title || r.libraryBook?.title || r.item?.title || 'Artículo'}`,
         itemId: r.itemId || r.brickslabId || r.libraryBookId,
-        categoryId: r.categoryId
+        categoryId: r.categoryId || r.item?.categoryId,
+        isBrickslab: !!(r.brickslabId || (r.item && r.item.category.name === 'Aim Brickslab')),
+        brickslabId: r.brickslabId || (r.item?.category.name === 'Aim Brickslab' ? r.itemId : null)
       })),
+      readBooks: user.history
+        .filter(h => h.libraryBookId || (h.item && h.item.category.name === 'Biblioteca'))
+        .map(h => ({
+          id: h.id,
+          title: h.libraryBook?.title || h.item?.title || 'Libro',
+          imageUrl: h.libraryBook?.imageUrl || h.item?.imageUrl || ''
+        })),
+      builtBrickslabs: user.history
+        .filter(h => h.brickslabId || (h.item && h.item.category.name === 'Aim Brickslab'))
+        .map(h => ({
+          id: h.id,
+          title: h.brickslab?.title || h.item?.title || 'Brickslab',
+          imageUrl: h.brickslab?.imageUrl || h.item?.imageUrl || '',
+          brickslabId: h.brickslabId || (h.item?.category.name === 'Aim Brickslab' ? h.itemId : null)
+        })),
       permissions: dynamicPermissions.reduce((acc, p) => {
         acc[p.categoryId] = { standard: p.isStandard, pro: p.isPro };
         return acc;

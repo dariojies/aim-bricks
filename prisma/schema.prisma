@@ -91,6 +91,7 @@ model bricks_reservation {
   status          String
   brickslab       bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
   libraryBook     bricks_librarybook? @relation(fields: [libraryBookId], references: [id])
+  item            bricks_items?       @relation(fields: [itemId], references: [id])
   user            users               @relation(fields: [userId], references: [user_id])
 }
 
@@ -105,6 +106,7 @@ model bricks_userhistory {
   notes         String?
   brickslab     bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
   libraryBook   bricks_librarybook? @relation(fields: [libraryBookId], references: [id])
+  item          bricks_items?       @relation(fields: [itemId], references: [id])
   user          users               @relation(fields: [userId], references: [user_id])
 }
 
@@ -743,6 +745,8 @@ model bricks_items {
   category      bricks_categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   club          tul_clubs         @relation(fields: [clubId], references: [club_id], onDelete: Cascade)
   missing_pieces bricks_missing_pieces[]
+  reservations   bricks_reservation[]
+  history        bricks_userhistory[]
 }
 
 model bricks_user_permissions {

@@ -10,9 +10,6 @@ interface Props {
   onAdminClick: () => void;
   onRankingClick: () => void;
   onProClick: () => void;
-  categories: any[];
-  activeCategoryId: string | null;
-  onCategoryChange: (id: string | null) => void;
   onTabChange: (tab: 'catalog' | 'profile' | 'admin' | 'ranking') => void;
   currentView: string;
 }
@@ -20,7 +17,6 @@ interface Props {
 export const Header: React.FC<Props> = ({ 
   isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, 
   onAdminClick, onRankingClick, onProClick,
-  categories, activeCategoryId, onCategoryChange,
   onTabChange, currentView
 }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -44,7 +40,7 @@ export const Header: React.FC<Props> = ({
     <>
       <header className="glass-panel animate-slide-down" style={{ padding: '1.25rem 2rem', marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => { onTabChange('catalog'); onCategoryChange(null); }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => onTabChange('catalog')}>
             <div style={{ background: 'var(--secondary)', padding: '0.6rem', borderRadius: '10px' }}>
               <Box color="#fff" size={24} />
             </div>
@@ -84,33 +80,17 @@ export const Header: React.FC<Props> = ({
 
         <div style={{ width: '100%', display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
           <button 
-            onClick={() => { onTabChange('catalog'); onCategoryChange(null); }}
+            onClick={() => onTabChange('catalog')}
             style={{
               padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
-              background: currentView === 'catalog' && !activeCategoryId ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
-              color: currentView === 'catalog' && !activeCategoryId ? '#fff' : 'var(--text)',
+              background: currentView === 'catalog' ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+              color: currentView === 'catalog' ? '#fff' : 'var(--text)',
               fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
               display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
             }}
           >
             <LayoutGrid size={18} /> Inicio
           </button>
-          
-          {categories.map(cat => (
-            <button 
-              key={cat.id}
-              onClick={() => { onTabChange('catalog'); onCategoryChange(cat.id); }}
-              style={{
-                padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
-                background: activeCategoryId === cat.id ? 'var(--secondary)' : 'rgba(255,255,255,0.05)',
-                color: activeCategoryId === cat.id ? '#fff' : 'var(--text)',
-                fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
-              }}
-            >
-              {cat.name}
-            </button>
-          ))}
 
           <button 
             onClick={onRankingClick}
