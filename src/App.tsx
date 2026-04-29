@@ -774,6 +774,7 @@ function App() {
         <SupportManager 
           onClose={() => setShowSupportManager(false)} 
           userId={user.id}
+          apiUrl={API_URL}
         />
       )}
     </div>

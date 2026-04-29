@@ -27,9 +27,10 @@ interface Superadmin {
 interface SupportManagerProps {
   onClose: () => void;
   userId: string;
+  apiUrl: string;
 }
 
-export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId }) => {
+export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId, apiUrl }) => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [superadmins, setSuperadmins] = useState<Superadmin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,17 +78,20 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/support');
+      const res = await fetch(`${apiUrl}/api/support`);
       const data = await res.json();
       if (data.success) {
-        // Robust filter for 'Aim Brickslab'
+        // Even more robust filter: case-insensitive and includes check
         const brickslabTickets = data.tickets.filter((t: Ticket) => {
           const rawLabel = t.app_label;
+          const searchStr = "aim brickslab";
+          
           if (Array.isArray(rawLabel)) {
-            return rawLabel.some(l => String(l).includes('Aim Brickslab'));
+            return rawLabel.some(l => String(l).toLowerCase().includes(searchStr));
           }
-          const labelStr = String(rawLabel || '');
-          return labelStr.includes('Aim Brickslab') || labelStr.includes('{Aim Brickslab}');
+          
+          const labelStr = String(rawLabel || '').toLowerCase();
+          return labelStr.includes(searchStr);
         });
         setTickets(brickslabTickets);
       }
@@ -101,7 +105,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
 
   const fetchSuperadmins = async () => {
     try {
-      const res = await fetch('/api/admin/superadmins');
+      const res = await fetch(`${apiUrl}/api/admin/superadmins`);
       const data = await res.json();
       if (data.success) setSuperadmins(data.superadmins);
     } catch (error) {
@@ -127,7 +131,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
     if (!selectedTicket) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/support/${selectedTicket.id}`, {
+      const res = await fetch(`${apiUrl}/api/support/${selectedTicket.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,7 +164,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
     }
     setIsCreating(true);
     try {
-      const res = await fetch('/api/support', {
+      const res = await fetch(`${apiUrl}/api/support`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
