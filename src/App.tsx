@@ -363,10 +363,6 @@ function App() {
         onLogoutClick={handleLogout}
         onProfileClick={() => setCurrentView('profile')}
         onAdminClick={() => setCurrentView('admin')}
-        onHomeClick={() => {
-          setCurrentView('catalog');
-          setActiveCategoryId(null);
-        }}
         onRankingClick={() => setCurrentView('ranking')}
         onProClick={() => setShowProModal(true)}
         categories={categories}
@@ -375,7 +371,6 @@ function App() {
           setCurrentView('catalog');
           setActiveCategoryId(id);
         }}
-        clubName={user?.clubName}
         onTabChange={(tab) => setCurrentView(tab)}
         currentView={currentView}
       />

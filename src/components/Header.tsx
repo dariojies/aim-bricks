@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy, LayoutGrid, X, Menu } from 'lucide-react';
+import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy, LayoutGrid } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -8,21 +8,19 @@ interface Props {
   onLogoutClick: () => void;
   onProfileClick: () => void;
   onAdminClick: () => void;
-  onHomeClick: () => void;
   onRankingClick: () => void;
   onProClick: () => void;
   categories: any[];
   activeCategoryId: string | null;
   onCategoryChange: (id: string | null) => void;
-  clubName?: string;
   onTabChange: (tab: 'catalog' | 'profile' | 'admin' | 'ranking') => void;
   currentView: string;
 }
 
 export const Header: React.FC<Props> = ({ 
   isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, 
-  onAdminClick, onHomeClick, onRankingClick, onProClick,
-  categories, activeCategoryId, onCategoryChange, clubName,
+  onAdminClick, onRankingClick, onProClick,
+  categories, activeCategoryId, onCategoryChange,
   onTabChange, currentView
 }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
