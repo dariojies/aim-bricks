@@ -26,7 +26,7 @@ dist-ssr
 # Confidential
 infopriv/
 
-/src/generated/prisma
+/src/generated/
 scratch/
 .env
 .env.local
