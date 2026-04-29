@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { ArrowUp, MessageCircle, AlertCircle, CheckCircle2, X, Plus } from 'lucide-react';
 import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
@@ -19,7 +18,6 @@ function App() {
   });
   const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin' | 'ranking'>('catalog');
   const [categories, setCategories] = useState<any[]>([]);
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
 
@@ -139,7 +137,6 @@ function App() {
         setUser(data.profile);
         if (data.profile.categories) {
           setCategories(data.profile.categories);
-          if (data.profile.categories.length > 0) setActiveCategoryId(data.profile.categories[0].id);
         }
         localStorage.setItem('aim_bricks_token', data.token);
         localStorage.setItem('aim_bricks_user', JSON.stringify(data.profile));
