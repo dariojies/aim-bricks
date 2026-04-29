@@ -663,7 +663,7 @@ function App() {
       <button 
         className="btn" 
         onClick={() => {
-          if (user?.dev_role === 'superadmin') {
+          if (user?.role === 'superadmin') {
             setShowSupportManager(true);
           } else {
             setShowSupportModal(true);
@@ -770,10 +770,10 @@ function App() {
       )}
 
       {/* Admin Support Manager */}
-      {showSupportManager && user?.dev_role === 'superadmin' && (
+      {showSupportManager && user?.role === 'superadmin' && (
         <SupportManager 
           onClose={() => setShowSupportManager(false)} 
-          userId={user.user_id}
+          userId={user.id}
         />
       )}
     </div>
