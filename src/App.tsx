@@ -38,6 +38,7 @@ function App() {
   const [supportSubject, setSupportSubject] = useState('');
   const [supportDesc, setSupportDesc] = useState('');
   const [supportStatus, setSupportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [showProModal, setShowProModal] = useState(false);
 
   const syncUserSession = async () => {
     const saved = localStorage.getItem('aim_bricks_user');
@@ -396,6 +397,7 @@ function App() {
             <Catalog
               items={items}
               onReserveClick={handleReserveClick}
+              onProAlert={() => setShowProModal(true)}
             />
           </>
         ) : currentView === 'profile' && user ? (
@@ -419,6 +421,61 @@ function App() {
             setShowLoginModal(true);
           }}
         />
+      )}
+
+      {/* Modal de Anuncio Brickslab Pro */}
+      {showProModal && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, padding: '1rem'
+        }}>
+          <div className="glass-panel animate-fade-in" style={{ 
+            width: '100%', maxWidth: '450px', padding: '3rem 2rem', textAlign: 'center',
+            border: '2px solid #D4AF37', position: 'relative',
+            background: 'linear-gradient(180deg, rgba(30, 30, 30, 0.95), rgba(15, 15, 15, 0.98))'
+          }}>
+            <button 
+              className="btn-icon" 
+              onClick={() => setShowProModal(false)}
+              style={{ position: 'absolute', top: '1rem', right: '1rem' }}
+            >
+              <X size={20} />
+            </button>
+            
+            <div style={{ 
+              width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem',
+              boxShadow: '0 0 30px rgba(212, 175, 55, 0.4)'
+            }}>
+              <X size={40} color="#000" style={{ transform: 'rotate(45deg)' }} /> {/* Placeholder for a crown or similar if available, using X rotated as a star/sparkle for now or just a large icon */}
+            </div>
+
+            <h2 className="text-gradient" style={{ 
+              fontSize: '2rem', marginBottom: '1rem', 
+              background: 'linear-gradient(135deg, #D4AF37, #FFF, #FBBF24)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+            }}>
+              Brickslab Pro
+            </h2>
+            
+            <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+              La posibilidad de reservar sets para montar en casa llegará próximamente con la versión <strong>Brickslab Pro</strong>.
+            </p>
+
+            <button 
+              className="btn" 
+              onClick={() => setShowProModal(false)}
+              style={{ 
+                width: '100%', padding: '1rem', 
+                background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
+                color: '#000', fontWeight: 700, border: 'none', borderRadius: '12px',
+                fontSize: '1rem'
+              }}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Modal de Login Básico */}

@@ -5,9 +5,10 @@ import { ItemCard } from './ItemCard';
 interface Props {
   items: CatalogItem[];
   onReserveClick: (item: CatalogItem) => void;
+  onProAlert: () => void;
 }
 
-export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
+export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) => {
   const [filter, setFilter] = useState<'Todos' | 'Aim Brickslab' | 'Libro'>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -60,7 +61,7 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick }) => {
 
       <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
         {filteredItems.map(item => (
-          <ItemCard key={item.id} item={item} onSelect={onReserveClick} />
+          <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={onProAlert} />
         ))}
         {filteredItems.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>

@@ -4,9 +4,10 @@ import { Box, BookOpen, CheckCircle, Lock } from 'lucide-react';
 interface Props {
   item: CatalogItem;
   onSelect: (item: CatalogItem) => void;
+  onProAlert: () => void;
 }
 
-export const ItemCard: React.FC<Props> = ({ item, onSelect }) => {
+export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
   const isAvailable = item.status === 'Disponible';
 
   return (
@@ -82,7 +83,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect }) => {
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               onClick={(e) => {
                 e.stopPropagation();
-                alert('Proximamente con la version Brickslab Pro');
+                onProAlert();
               }}
             >
               Reservar para montar en casa
