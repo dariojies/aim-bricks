@@ -481,7 +481,7 @@ function App() {
             </h2>
 
             <p style={{ color: '#fff', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
-              ¡Lleva tu pasión por LEGO® al siguiente nivel con ventajas exclusivas!
+              ¡Lleva tu pasión por LEGO® al siguiente nivel! Conviértete en miembro <strong>Brickslab Pro</strong> y disfruta de ventajas exclusivas.
             </p>
 
             <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', marginBottom: '1.25rem', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
