@@ -85,7 +85,8 @@ app.post('/api/auth/login', async (req, res) => {
       })),
       permissions: {
         brickslab: user.bricks_ranks?.canReserveBrickslab || false,
-        library: user.bricks_ranks?.canReserveLibrary || false
+        library: user.bricks_ranks?.canReserveLibrary || false,
+        brickslabPro: user.bricks_ranks?.brickslabPro || false
       },
       requiresPasswordChange: user.requires_password_change || false
     };
@@ -448,7 +449,7 @@ app.post('/api/reservations', async (req, res) => {
       if (!canReserveBrickslab) {
         return res.status(403).json({ error: "No tienes el rango 'Brickslab' para reservar esta categoría." });
       }
-      if ((item as any).isProOnly && !ranks?.brickslabPro) {
+      if (item.isProOnly && !ranks?.brickslabPro) {
         return res.status(403).json({ error: "Este set es exclusivo para el rango 'Brickslab Pro'. No puedes llevarlo a casa." });
       }
     }
