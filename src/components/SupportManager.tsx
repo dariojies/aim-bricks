@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, Clock, Filter, ChevronRight, User, Plus, Search, Calendar, Copy, FileText } from 'lucide-react';
+import { X, AlertCircle, Clock, Filter, User, Search, Calendar, Copy, FileText } from 'lucide-react';
 
 interface Ticket {
   id: number;
@@ -64,6 +64,13 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
   const [newDescription, setNewDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   useEffect(() => {
     fetchTickets();
     fetchSuperadmins();
@@ -110,7 +117,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
       });
       const data = await res.json();
       if (data.success) {
-        alert('Ticket creado con éxito.');
+        showToast('Ticket creado con éxito.', 'success');
         setNewSubject('');
         setNewDescription('');
         setActiveTab('list');
@@ -118,6 +125,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
       }
     } catch (error) {
       console.error('Error creating ticket:', error);
+      showToast('Error al crear el ticket.', 'error');
     } finally {
       setIsCreating(false);
     }
@@ -227,7 +235,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
     });
 
     navigator.clipboard.writeText(text).then(() => {
-      alert('Listado copiado al portapapeles');
+      showToast('Listado copiado al portapapeles', 'info');
     });
   };
 
@@ -321,6 +329,19 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId 
           </button>
         </div>
       </div>
+
+      {/* Notifications */}
+      {notification && (
+        <div style={{
+          position: 'fixed', top: '2rem', left: '50%', transform: 'translateX(-50%)',
+          background: notification.type === 'success' ? '#10b981' : notification.type === 'error' ? '#ef4444' : '#3B82F6',
+          color: notification.type === 'success' ? '#000' : '#fff',
+          padding: '0.75rem 2rem', borderRadius: '12px', fontWeight: 700, zIndex: 4000,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)', animation: 'slideDown 0.3s ease-out'
+        }}>
+          {notification.message}
+        </div>
+      )}
 
       {activeTab === 'list' && (
         <>
