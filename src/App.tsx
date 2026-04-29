@@ -272,7 +272,7 @@ function App() {
   const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supportSubject || !supportDesc) return;
-    
+
     setSupportStatus('loading');
     try {
       const res = await fetch(`${API_URL}/api/support`, {
@@ -281,7 +281,7 @@ function App() {
         body: JSON.stringify({ userId: user?.id || null, subject: supportSubject, description: supportDesc })
       });
       if (!res.ok) throw new Error('Error al enviar la tarea');
-      
+
       setSupportStatus('success');
       setTimeout(() => {
         setSupportStatus('idle');
@@ -443,7 +443,7 @@ function App() {
           position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
           display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
         }}>
-          <div className="glass-panel animate-fade-in" style={{ 
+          <div className="glass-panel animate-fade-in" style={{
             width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem',
             textAlign: 'center',
             border: '1px solid rgba(212, 175, 55, 0.5)', position: 'relative',
@@ -451,9 +451,9 @@ function App() {
             boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.1)',
             borderRadius: '24px'
           }}>
-            <button 
+            <button
               onClick={() => setShowProModal(false)}
-              style={{ 
+              style={{
                 position: 'absolute', top: '1.25rem', right: '1.25rem',
                 background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
                 cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center',
@@ -464,8 +464,8 @@ function App() {
             >
               <X size={24} />
             </button>
-            
-            <div style={{ 
+
+            <div style={{
               width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem',
               boxShadow: '0 0 20px rgba(212, 175, 55, 0.4)'
@@ -473,13 +473,13 @@ function App() {
               <Plus size={32} color="#000" strokeWidth={3} />
             </div>
 
-            <h2 style={{ 
-              fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem', 
+            <h2 style={{
+              fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem',
               color: '#FBBF24', letterSpacing: '-0.02em'
             }}>
               Brickslab Pro
             </h2>
-            
+
             <p style={{ color: '#fff', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
               ¡Lleva tu pasión por LEGO® al siguiente nivel con ventajas exclusivas!
             </p>
@@ -488,15 +488,15 @@ function App() {
               <ul style={{ color: '#e5e7eb', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', listStyle: 'none', padding: 0, margin: 0 }}>
                 <li style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: '#FBBF24' }}>✓</div>
-                  <div><strong>Préstamo a casa:</strong> Móntalos tranquilamente en tu hogar.</div>
+                  <div><strong>Préstamo a casa:</strong> Llévate tus sets favoritos y móntalos tranquilamente en casa.</div>
                 </li>
                 <li style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: '#FBBF24' }}>✓</div>
-                  <div><strong>Sets Exclusivos:</strong> Modelos grandes y ediciones especiales.</div>
+                  <div><strong>Sets Exclusivos:</strong> Acceso a modelos de gran tamaño y ediciones especiales solo para miembros Pro.</div>
                 </li>
                 <li style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: '#FBBF24' }}>✓</div>
-                  <div><strong>Sin esperas:</strong> Prioridad en la reserva de novedades.</div>
+                  <div><strong>Sin esperas:</strong> Prioridad en la reserva de novedades del catalogo.</div>
                 </li>
               </ul>
             </div>
@@ -507,11 +507,11 @@ function App() {
               </p>
             </div>
 
-            <button 
-              className="btn" 
+            <button
+              className="btn"
               onClick={() => setShowProModal(false)}
-              style={{ 
-                width: '100%', padding: '0.85rem', 
+              style={{
+                width: '100%', padding: '0.85rem',
                 background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
                 color: '#000', fontWeight: 800, border: 'none', borderRadius: '12px',
                 fontSize: '0.9rem', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
@@ -697,8 +697,8 @@ function App() {
       )}
 
       {/* Floating Support Button */}
-      <button 
-        className="btn" 
+      <button
+        className="btn"
         onClick={() => {
           if (user?.role === 'superadmin') {
             setShowSupportManager(true);
@@ -706,9 +706,9 @@ function App() {
             setShowSupportModal(true);
           }
         }}
-        style={{ 
-          position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90, 
-          width: '60px', height: '60px', borderRadius: '50%', padding: 0, 
+        style={{
+          position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90,
+          width: '60px', height: '60px', borderRadius: '50%', padding: 0,
           boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
           background: 'linear-gradient(135deg, #10B981, #3B82F6)',
           color: 'white',
@@ -740,8 +740,8 @@ function App() {
           display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
         }}>
           <div className="glass-panel animate-fade-in responsive-modal" style={{ width: '100%', maxWidth: '500px', padding: '2rem', position: 'relative' }}>
-            <button 
-              className="btn-icon" 
+            <button
+              className="btn-icon"
               onClick={() => setShowSupportModal(false)}
               style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}
             >
@@ -773,8 +773,8 @@ function App() {
             <form onSubmit={handleSupportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Asunto *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   placeholder="Ej: Problema con una reserva"
                   value={supportSubject}
@@ -784,7 +784,7 @@ function App() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Descripción *</label>
-                <textarea 
+                <textarea
                   required
                   rows={4}
                   placeholder="Explica el problema que has encontrado..."
@@ -793,9 +793,9 @@ function App() {
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', resize: 'none' }}
                 />
               </div>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
+              <button
+                type="submit"
+                className="btn btn-primary"
                 disabled={supportStatus === 'loading'}
                 style={{ marginTop: '0.5rem' }}
               >
@@ -808,8 +808,8 @@ function App() {
 
       {/* Admin Support Manager */}
       {showSupportManager && user?.role === 'superadmin' && (
-        <SupportManager 
-          onClose={() => setShowSupportManager(false)} 
+        <SupportManager
+          onClose={() => setShowSupportManager(false)}
           userId={user.id}
           apiUrl={API_URL}
         />
