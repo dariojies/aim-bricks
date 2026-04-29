@@ -1320,13 +1320,14 @@ export const AdminDashboard: React.FC = () => {
                   <tr style={{ borderBottom: '1px solid var(--surface-border)', textAlign: 'left' }}>
                     <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Email</th>
                     <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Rol</th>
+                    <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Estado</th>
                     <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Fecha Alta</th>
                     <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {memberships.length === 0 ? (
-                    <tr><td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No hay miembros autorizados aún.</td></tr>
+                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No hay miembros autorizados aún.</td></tr>
                   ) : (
                     memberships.map(m => (
                       <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -1340,6 +1341,17 @@ export const AdminDashboard: React.FC = () => {
                             color: m.role === 'owner' ? '#A78BFA' : 'var(--text)'
                           }}>
                             {m.role === 'owner' ? 'Dueño' : m.role === 'admin' ? 'Admin' : 'Miembro'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem' }}>
+                          <span style={{ 
+                            padding: '0.2rem 0.5rem', 
+                            borderRadius: '4px', 
+                            fontSize: '0.75rem', 
+                            background: m.isRegistered ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                            color: m.isRegistered ? '#10B981' : 'var(--text-muted)'
+                          }}>
+                            {m.isRegistered ? 'Registrado' : 'Pendiente'}
                           </span>
                         </td>
                         <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>

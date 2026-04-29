@@ -147,6 +147,39 @@ async function migrateToDynamic() {
       where: { itemId: { not: { in: (await prisma.bricks_items.findMany({ select: { id: true } })).map(i => i.id) } } }
     });
     
+    // Always sync existing users to memberships list (Safely)
+    const allUsers = await prisma.users.findMany({
+      where: { club_id: { not: null } },
+      select: { email: true, club_id: true, dev_role: true }
+    });
+
+    if (allUsers.length > 0) {
+    // Optimized Sync: Fetch existing and create missing in bulk
+    const existingMemberships = await prisma.bricks_club_memberships.findMany({
+      where: { clubId: { in: allUsers.map(u => u.club_id) } },
+      select: { email: true, clubId: true }
+    });
+    
+    const existingSet = new Set(existingMemberships.map(m => `${m.email.toLowerCase()}-${m.clubId}`));
+    
+    const missingUsers = allUsers.filter(u => !existingSet.has(`${u.email.toLowerCase()}-${u.club_id}`));
+
+    if (missingUsers.length > 0) {
+      console.log(`Syncing ${missingUsers.length} missing users to membership list...`);
+      await prisma.bricks_club_memberships.createMany({
+        data: missingUsers.map(u => ({
+          email: u.email.toLowerCase(),
+          clubId: u.club_id,
+          role: u.dev_role || 'member'
+        })),
+        skipDuplicates: true
+      });
+      console.log('Bulk sync completed.');
+    } else {
+      console.log('Membership list already up to date.');
+    }
+    }
+
     if (itemCount > 0) {
       if (legacyReports.length > 0) {
         console.log('Items already synced, migrating orphan reports...');
@@ -272,7 +305,7 @@ async function migrateToDynamic() {
       }
     }
 
-    console.log('Migration completed successfully!');
+    console.log('Migration and sync completed successfully!');
 
   } catch (e) {
     console.error('Migration error:', e);
@@ -1435,7 +1468,18 @@ app.get('/api/admin/memberships', async (req, res) => {
       where: { clubId },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(memberships);
+
+    // Check who is already registered
+    const registeredUsers = await prisma.users.findMany({
+      where: { club_id: clubId },
+      select: { email: true }
+    });
+    const registeredEmails = new Set(registeredUsers.map(u => u.email.toLowerCase()));
+
+    res.json(memberships.map(m => ({
+      ...m,
+      isRegistered: registeredEmails.has(m.email.toLowerCase())
+    })));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error cargando membresías' });

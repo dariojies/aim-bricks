@@ -704,6 +704,16 @@ model bricks_poll_option {
   poll        bricks_poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
 }
 
+model bricks_club_memberships {
+  id          String   @id @default(uuid()) @db.Uuid
+  email       String
+  clubId      String   @db.Uuid
+  role        String   @default("member")
+  createdAt   DateTime @default(now())
+
+  @@unique([email, clubId])
+}
+
 model bricks_poll_vote {
   id          String   @id @default(uuid())
   optionId    String
