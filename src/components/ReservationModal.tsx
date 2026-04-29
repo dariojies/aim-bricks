@@ -1,3 +1,4 @@
+import React from 'react';
 import type { CatalogItem } from '../data/mockData';
 import { Crown, X } from 'lucide-react';
 

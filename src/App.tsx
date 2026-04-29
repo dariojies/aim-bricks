@@ -28,7 +28,7 @@ function App() {
   const [forcePasswordNew1, setForcePasswordNew1] = useState('');
   const [forcePasswordNew2, setForcePasswordNew2] = useState('');
 
-  const [showRankAlert, setShowRankAlert] = useState<{ show: boolean, type: 'Brickslab' | 'Biblioteca' | null }>({ show: false, type: null });
+  const [showRankAlert, setShowRankAlert] = useState<{ show: boolean, type: 'Brickslab' | 'Biblioteca' | 'Brickslab Pro' | null }>({ show: false, type: null });
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
