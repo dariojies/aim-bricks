@@ -717,10 +717,6 @@ model bricks_poll_vote {
 model bricks_clubs {
   id          String   @id @default(uuid()) @db.Uuid
   name        String
-  subdomain   String?  @unique
-  description String?
-  logo        String?
-  plan        String   @default("free")
   createdAt   DateTime @default(now())
   
   users       users[]

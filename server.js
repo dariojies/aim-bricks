@@ -19,21 +19,14 @@ const PORT = process.env.PORT || 3000;
 // Auto-sync schema and migrate data safely
 async function syncSchema() {
   try {
-    // 0. Ensure bricks_clubs exists
+    // 0. Ensure bricks_clubs exists (Simplified)
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "bricks_clubs" (
         "id" UUID NOT NULL DEFAULT gen_random_uuid(),
         "name" TEXT NOT NULL,
-        "subdomain" TEXT,
-        "description" TEXT,
-        "logo" TEXT,
-        "plan" TEXT NOT NULL DEFAULT 'free',
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "bricks_clubs_pkey" PRIMARY KEY ("id")
       );
-    `);
-    await prisma.$executeRawUnsafe(`
-      CREATE UNIQUE INDEX IF NOT EXISTS "bricks_clubs_subdomain_key" ON "bricks_clubs"("subdomain");
     `);
 
     // 1. Create tables if they don't exist
@@ -88,6 +81,25 @@ async function syncSchema() {
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "clubId" UUID`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_brickslab" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_librarybook" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
+
+    // 3. Bricks Club Memberships (Authorization List)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "bricks_club_memberships" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "email" TEXT NOT NULL,
+        "clubId" UUID NOT NULL,
+        "role" TEXT NOT NULL DEFAULT 'member',
+        "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE("email", "clubId")
+      );
+    `);
+
+    // Ensure bricks_missing_pieces structure
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "itemId" UUID;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "userId" UUID;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "description" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'Pending';`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "reportedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
     
     console.log('Database structure verified.');
 
@@ -101,22 +113,25 @@ async function syncSchema() {
 
 async function migrateToDynamic() {
   try {
-    // 1. Ensure main club exists in bricks_clubs (Safely for shared DB)
+    // 1. Ensure main club exists in bricks_clubs (Simplified)
     let club = await prisma.bricks_clubs.findFirst({ where: { name: 'Aim Education' } });
     if (!club) {
-      const legacyClub = await prisma.tul_clubs.findFirst({ where: { name: 'Aim Education' } });
-      if (legacyClub) {
-        club = await prisma.bricks_clubs.create({
-          data: {
-            id: legacyClub.club_id,
-            name: legacyClub.name,
-            logo: legacyClub.logo,
-            plan: legacyClub.plan || 'pro'
-          }
-        });
-      } else {
-        club = await prisma.bricks_clubs.create({ data: { name: 'Aim Education', plan: 'pro' } });
-      }
+      club = await prisma.bricks_clubs.create({
+        data: {
+          id: 'b68ca873-5086-474f-a296-fe60b149b8a2', // Preserve existing ID
+          name: 'Aim Education'
+        }
+      });
+    }
+
+    let demoClub = await prisma.bricks_clubs.findFirst({ where: { name: 'Club Demo' } });
+    if (!demoClub) {
+      await prisma.bricks_clubs.create({
+        data: {
+          id: '00000000-0000-0000-0000-000000000000',
+          name: 'Club Demo'
+        }
+      });
     }
 
     // 2. Check if we have legacy data that hasn't been migrated yet
@@ -126,8 +141,30 @@ async function migrateToDynamic() {
     if (legacyBrickslabsCount === 0 && legacyBooksCount === 0) return; 
 
     const itemCount = await prisma.bricks_items.count();
+    
+    // Always try to migrate missing pieces if they haven't been linked to UUIDs yet
+    const legacyReports = await prisma.bricks_missing_pieces.findMany({
+      where: { itemId: { not: { in: (await prisma.bricks_items.findMany({ select: { id: true } })).map(i => i.id) } } }
+    });
+    
     if (itemCount > 0) {
-      console.log('Schema already synced, skipping migration.');
+      if (legacyReports.length > 0) {
+        console.log('Items already synced, migrating orphan reports...');
+        const items = await prisma.bricks_items.findMany();
+        const brickslabs = await prisma.bricks_brickslab.findMany();
+        for (const b of brickslabs) {
+          const matchingItem = items.find(i => i.title === b.title);
+          if (matchingItem) {
+            await prisma.bricks_missing_pieces.updateMany({
+              where: { itemId: b.id }, // Legacy ID
+              data: { itemId: matchingItem.id }
+            });
+          }
+        }
+        console.log('Orphan reports migration completed.');
+      } else {
+        console.log('Schema and reports already synced, skipping migration.');
+      }
       return;
     }
 
@@ -183,12 +220,10 @@ async function migrateToDynamic() {
         where: { brickslabId: b.id },
         data: { itemId: newItem.id, categoryId: legoCat.id }
       });
-      /*
       await prisma.bricks_missing_pieces.updateMany({
-        where: { itemId: b.id }, // Legacy brickslabId
+        where: { itemId: b.id }, // Legacy ID
         data: { itemId: newItem.id }
       });
-      */
     }
 
     // Migrate Books
@@ -290,6 +325,22 @@ app.post('/api/auth/login', async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Auto-link to club if not assigned
+    if (!user.club_id) {
+      const membership = await prisma.bricks_club_memberships.findFirst({
+        where: { email: user.email.toLowerCase() }
+      });
+      if (membership) {
+        await prisma.users.update({
+          where: { user_id: user.user_id },
+          data: { club_id: membership.clubId, dev_role: membership.role }
+        });
+        // Re-fetch user with new club info
+        user.club_id = membership.clubId;
+        user.dev_role = membership.role;
+      }
     }
 
     const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
@@ -1372,6 +1423,51 @@ app.use(express.static(join(__dirname, 'dist')));
 
 app.get('/*path', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
+});
+
+// Membership Management Endpoints
+app.get('/api/admin/memberships', async (req, res) => {
+  try {
+    const { clubId } = req.query;
+    if (!clubId) return res.status(400).json({ error: 'Falta clubId' });
+    
+    const memberships = await prisma.bricks_club_memberships.findMany({
+      where: { clubId },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(memberships);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error cargando membresías' });
+  }
+});
+
+app.post('/api/admin/memberships', async (req, res) => {
+  try {
+    const { clubId, email, role } = req.body;
+    if (!clubId || !email) return res.status(400).json({ error: 'Faltan datos' });
+    
+    await prisma.bricks_club_memberships.upsert({
+      where: { email_clubId: { email: email.toLowerCase(), clubId } },
+      update: { role: role || 'member' },
+      create: { email: email.toLowerCase(), clubId, role: role || 'member' }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error guardando membresía' });
+  }
+});
+
+app.delete('/api/admin/memberships/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.bricks_club_memberships.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error eliminando membresía' });
+  }
 });
 
 app.listen(PORT, () => {

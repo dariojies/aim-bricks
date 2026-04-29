@@ -17,12 +17,13 @@ interface AdminReservation {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls' | 'categories'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls' | 'categories' | 'memberships'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [memberships, setMemberships] = useState<any[]>([]);
 
   // Add item form state
   const [newItemCategoryId, setNewItemCategoryId] = useState('');
@@ -82,6 +83,9 @@ export const AdminDashboard: React.FC = () => {
 
   const [isProOnly, setIsProOnly] = useState(false);
   const [editIsProOnly, setEditIsProOnly] = useState(false);
+  
+  const [memberEmail, setMemberEmail] = useState('');
+  const [memberRole, setMemberRole] = useState<'member' | 'admin' | 'owner'>('member');
 
   useEffect(() => {
     fetchReservations();
@@ -90,7 +94,17 @@ export const AdminDashboard: React.FC = () => {
     fetchReports();
     fetchActivePolls();
     fetchCategories();
+    fetchMemberships();
   }, []);
+
+  const fetchMemberships = async () => {
+    const user = JSON.parse(localStorage.getItem('aim_bricks_user') || '{}');
+    if (!user.club_id) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/memberships?clubId=${user.club_id}`);
+      if (res.ok) setMemberships(await res.json());
+    } catch (err) { console.error(err); }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -335,6 +349,31 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleAddMembership = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('aim_bricks_user') || '{}');
+    if (!user.club_id) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/memberships`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clubId: user.club_id, email: memberEmail, role: memberRole })
+      });
+      if (res.ok) {
+        setMemberEmail('');
+        fetchMemberships();
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteMembership = async (id: string) => {
+    if (!confirm('¿Seguro que quieres eliminar esta autorización?')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/memberships/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchMemberships();
+    } catch (err) { console.error(err); }
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>
@@ -383,6 +422,12 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('categories')}
         >
           Categorías
+        </button>
+        <button
+          className={`btn ${activeTab === 'memberships' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('memberships')}
+        >
+          Miembros
         </button>
       </div>
 
@@ -1228,6 +1273,92 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'memberships' && (
+        <div style={{ display: 'grid', gap: '2rem' }}>
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={24} className="text-accent" /> Autorizar Nuevo Miembro
+            </h3>
+            <form onSubmit={handleAddMembership} style={{ display: 'flex', gap: '1rem', alignItems: 'end' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Correo Electrónico</label>
+                <input 
+                  type="email" 
+                  required
+                  placeholder="alumno@ejemplo.com"
+                  value={memberEmail}
+                  onChange={e => setMemberEmail(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                />
+              </div>
+              <div style={{ width: '150px' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Rol</label>
+                <select 
+                  value={memberRole}
+                  onChange={e => setMemberRole(e.target.value as any)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                >
+                  <option value="member">Miembro</option>
+                  <option value="admin">Admin</option>
+                  <option value="owner">Dueño</option>
+                </select>
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ height: '45px' }}>Añadir</button>
+            </form>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Miembros Autorizados</h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--surface-border)', textAlign: 'left' }}>
+                    <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Email</th>
+                    <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Rol</th>
+                    <th style={{ padding: '1rem', color: 'var(--text-muted)' }}>Fecha Alta</th>
+                    <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {memberships.length === 0 ? (
+                    <tr><td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No hay miembros autorizados aún.</td></tr>
+                  ) : (
+                    memberships.map(m => (
+                      <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '1rem', fontWeight: 500 }}>{m.email}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <span style={{ 
+                            padding: '0.2rem 0.5rem', 
+                            borderRadius: '4px', 
+                            fontSize: '0.75rem', 
+                            background: m.role === 'owner' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(255,255,255,0.1)',
+                            color: m.role === 'owner' ? '#A78BFA' : 'var(--text)'
+                          }}>
+                            {m.role === 'owner' ? 'Dueño' : m.role === 'admin' ? 'Admin' : 'Miembro'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                          {new Date(m.createdAt).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                          <button 
+                            onClick={() => handleDeleteMembership(m.id)}
+                            className="text-error"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
