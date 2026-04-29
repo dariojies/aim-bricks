@@ -4,7 +4,7 @@ import { Box, BookOpen, CheckCircle, Lock } from 'lucide-react';
 interface Props {
   item: CatalogItem;
   onSelect: (item: CatalogItem) => void;
-  onProAlert: () => void;
+  onProAlert: (item: CatalogItem) => void;
 }
 
 export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
@@ -31,6 +31,15 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
                 {item.author && item.author !== 'Desconocido' && <span>{item.author}</span>}
                 {item.author && item.author !== 'Desconocido' && item.isbn && <span>•</span>}
                 {item.isbn && <span>ISBN: {item.isbn}</span>}
+              </div>
+            )}
+            {item.isProOnly && (
+              <div style={{ 
+                display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FBBF24', 
+                fontSize: '0.75rem', fontWeight: 700, marginTop: '0.5rem',
+                textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}>
+                <Lock size={12} /> Exclusivo Pro
               </div>
             )}
           </div>
@@ -77,16 +86,20 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
                 border: 'none',
                 fontWeight: 700,
                 boxShadow: '0 4px 15px rgba(212, 175, 55, 0.4)',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               onClick={(e) => {
                 e.stopPropagation();
-                onProAlert();
+                onProAlert(item);
               }}
             >
-              Reservar para montar en casa
+              <Box size={16} /> Reservar para montar en casa
             </button>
           </div>
         )}

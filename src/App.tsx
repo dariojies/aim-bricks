@@ -176,6 +176,10 @@ function App() {
       setShowRankAlert({ show: true, type: 'Brickslab' });
       return;
     }
+    if (item.type === 'Aim Brickslab' && item.isProOnly && !user.permissions?.brickslabPro) {
+      setShowRankAlert({ show: true, type: 'Brickslab Pro' });
+      return;
+    }
     if (item.type === 'Libro' && !user.permissions?.library) {
       setShowRankAlert({ show: true, type: 'Biblioteca' });
       return;
@@ -344,6 +348,7 @@ function App() {
         onAdminClick={() => setCurrentView('admin')}
         onHomeClick={() => setCurrentView('catalog')}
         onRankingClick={() => setCurrentView('ranking')}
+        onProClick={() => setShowProModal(true)}
       />
 
       <main className="animate-fade-in">
@@ -399,7 +404,13 @@ function App() {
             <Catalog
               items={items}
               onReserveClick={handleReserveClick}
-              onProAlert={() => setShowProModal(true)}
+              onProAlert={(item) => {
+                if (user?.permissions?.brickslabPro) {
+                  setSelectedItem(item);
+                } else {
+                  setShowProModal(true);
+                }
+              }}
             />
           </>
         ) : currentView === 'profile' && user ? (
@@ -418,6 +429,7 @@ function App() {
           onClose={() => setSelectedItem(null)}
           onConfirm={handleConfirmReservation}
           isLoggedIn={!!user}
+          isPro={user?.permissions?.brickslabPro || false}
           onLoginRequest={() => {
             setSelectedItem(null);
             setShowLoginModal(true);
@@ -466,9 +478,32 @@ function App() {
               Brickslab Pro
             </h2>
             
-            <p style={{ color: '#fff', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '2rem' }}>
-              La posibilidad de reservar sets para montar en casa llegará próximamente con la versión <strong>Brickslab Pro</strong>.
+            <p style={{ color: '#fff', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+              ¡Lleva tu pasión por LEGO® al siguiente nivel! Conviértete en miembro <strong>Brickslab Pro</strong> y disfruta de ventajas exclusivas:
             </p>
+
+            <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+              <ul style={{ color: '#e5e7eb', fontSize: '0.95rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ color: '#FBBF24' }}>✓</div>
+                  <div><strong>Préstamo a casa:</strong> Llévate tus sets favoritos y móntalos tranquilamente en tu hogar.</div>
+                </li>
+                <li style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ color: '#FBBF24' }}>✓</div>
+                  <div><strong>Sets Exclusivos:</strong> Acceso a modelos de gran tamaño y ediciones especiales solo para miembros Pro.</div>
+                </li>
+                <li style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ color: '#FBBF24' }}>✓</div>
+                  <div><strong>Sin esperas:</strong> Prioridad en la reserva de novedades del catálogo.</div>
+                </li>
+              </ul>
+            </div>
+
+            <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', border: '1px dotted #FBBF24' }}>
+              <p style={{ color: '#FBBF24', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>
+                📍 Para apuntarte, dirígete a la Secretaría de Aim Education e infórmate sobre la suscripción Brickslab Pro.
+              </p>
+            </div>
 
             <button 
               className="btn" 

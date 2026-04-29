@@ -72,6 +72,9 @@ export const AdminDashboard: React.FC = () => {
   const [reservationFilterSearchTerm, setReservationFilterSearchTerm] = useState('');
   const [reservationStatusFilter, setReservationStatusFilter] = useState<'all' | 'reserved' | 'delivered'>('all');
 
+  const [isProOnly, setIsProOnly] = useState(false);
+  const [editIsProOnly, setEditIsProOnly] = useState(false);
+
   useEffect(() => {
     fetchReservations();
     fetchCatalog();
@@ -101,17 +104,17 @@ export const AdminDashboard: React.FC = () => {
     } catch (e) { console.error(e); }
   };
 
-  const handleRankToggle = async (userId: string, currentPerms: any, field: 'brickslab' | 'library') => {
-    const newPerms = {
-      brickslab: currentPerms?.brickslab || false,
-      library: currentPerms?.library || false,
-      [field]: !currentPerms?.[field]
-    };
+  const handleRankToggle = async (userId: string, currentPerms: any, field: 'brickslab' | 'library' | 'brickslabPro') => {
     try {
       const res = await fetch(`${API_URL}/api/admin/users/permissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, brickslab: newPerms.brickslab, library: newPerms.library })
+        body: JSON.stringify({
+          userId,
+          brickslab: field === 'brickslab' ? !currentPerms.brickslab : currentPerms.brickslab,
+          library: field === 'library' ? !currentPerms.library : currentPerms.library,
+          brickslabPro: field === 'brickslabPro' ? !currentPerms.brickslabPro : currentPerms.brickslabPro
+        })
       });
       if (res.ok) fetchUsers();
     } catch (e) { console.error(e); }
@@ -242,7 +245,8 @@ export const AdminDashboard: React.FC = () => {
           isLego,
           legoReferenceInput,
           author,
-          isbn
+          isbn,
+          isProOnly
         })
       });
       if (res.ok) {
@@ -266,6 +270,7 @@ export const AdminDashboard: React.FC = () => {
     setEditDesc(item.description);
     setEditStock(item.stock?.toString() || '1');
     setEditImage(item.imageUrl || '');
+    setEditIsProOnly(item.isProOnly || false);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -280,7 +285,8 @@ export const AdminDashboard: React.FC = () => {
           title: editTitle,
           description: editDesc,
           stock: editStock,
-          imageUrl: editImage
+          imageUrl: editImage,
+          isProOnly: editIsProOnly
         })
       });
       if (res.ok) {
@@ -635,6 +641,7 @@ export const AdminDashboard: React.FC = () => {
                   <th style={{ padding: '1rem 0.5rem' }}>Email</th>
                   <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Rango Brickslab</th>
                   <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Rango Biblioteca</th>
+                  <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Brickslab Pro</th>
                 </tr>
               </thead>
               <tbody>
@@ -661,6 +668,14 @@ export const AdminDashboard: React.FC = () => {
                         type="checkbox"
                         checked={u.permissions?.library || false}
                         onChange={() => handleRankToggle(u.id, u.permissions, 'library')}
+                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                      />
+                    </td>
+                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={u.permissions?.brickslabPro || false}
+                        onChange={() => handleRankToggle(u.id, u.permissions, 'brickslabPro')}
                         style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
                       />
                     </td>
@@ -744,6 +759,10 @@ export const AdminDashboard: React.FC = () => {
                   <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input type="checkbox" id="isLego" checked={isLego} onChange={e => setIsLego(e.target.checked)} />
                     <label htmlFor="isLego" style={{ color: 'var(--text)' }}>Es un set de LEGO®</label>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
+                    <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Exclusivo Brickslab Pro (Se puede llevar a casa)</label>
                   </div>
                   {isLego && (
                     <div style={{ gridColumn: '1 / -1' }}>
@@ -885,6 +904,12 @@ export const AdminDashboard: React.FC = () => {
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
                 <textarea required value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '100px' }} />
               </div>
+              {editingItem.type === 'Aim Brickslab' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <input type="checkbox" id="edit-pro-check" checked={editIsProOnly} onChange={e => setEditIsProOnly(e.target.checked)} />
+                  <label htmlFor="edit-pro-check" style={{ fontWeight: 600, color: 'var(--accent)' }}>Exclusivo para Brickslab Pro</label>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setEditingItem(null)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Guardar Cambios</button>

@@ -14,6 +14,7 @@ export interface CatalogItem {
   legoReference?: string;
   isbn?: string;
   author?: string;
+  isProOnly?: boolean;
 }
 
 export const mockItems: CatalogItem[] = [
@@ -62,6 +63,7 @@ export interface UserProfile {
   permissions?: {
     brickslab: boolean;
     library: boolean;
+    brickslabPro: boolean;
   };
 }
 

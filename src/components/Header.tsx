@@ -10,9 +10,10 @@ interface Props {
   onAdminClick: () => void;
   onHomeClick: () => void;
   onRankingClick: () => void;
+  onProClick: () => void;
 }
 
-export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, onAdminClick, onHomeClick, onRankingClick }) => {
+export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, onAdminClick, onHomeClick, onRankingClick, onProClick }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
@@ -40,16 +41,22 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
           <div className="responsive-header-buttons" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             
-            <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#F59E0B', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onRankingClick}>
-              <Trophy size={18} /> Ranking
-            </button>
-
             {userRole !== 'admin' && userRole !== 'superadmin' && (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FCD34D' }}>
+                <button 
+                  onClick={onProClick}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', 
+                    padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', 
+                    color: '#FCD34D', cursor: 'pointer', transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
                   <Crown size={20} />
                   <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
-                </div>
+                </button>
 
                 <button
                   className="btn btn-outline"
@@ -60,6 +67,10 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
                 </button>
               </>
             )}
+
+            <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#F59E0B', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onRankingClick}>
+              <Trophy size={18} /> Ranking
+            </button>
 
             {isLoggedIn ? (
               <>

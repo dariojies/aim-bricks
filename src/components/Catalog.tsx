@@ -5,7 +5,7 @@ import { ItemCard } from './ItemCard';
 interface Props {
   items: CatalogItem[];
   onReserveClick: (item: CatalogItem) => void;
-  onProAlert: () => void;
+  onProAlert: (item: CatalogItem) => void;
 }
 
 export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) => {
@@ -61,7 +61,7 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) 
 
       <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
         {filteredItems.map(item => (
-          <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={onProAlert} />
+          <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} />
         ))}
         {filteredItems.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>

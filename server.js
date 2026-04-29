@@ -129,7 +129,8 @@ app.post('/api/auth/me', async (req, res) => {
       })),
       permissions: {
         brickslab: user.bricks_ranks?.canReserveBrickslab || false,
-        library: user.bricks_ranks?.canReserveLibrary || false
+        library: user.bricks_ranks?.canReserveLibrary || false,
+        brickslabPro: user.bricks_ranks?.brickslabPro || false
       },
       requiresPasswordChange: user.requires_password_change || false
     };
@@ -174,7 +175,8 @@ app.get('/api/admin/users/permissions', async (req, res) => {
       role: u.dev_role || 'student',
       permissions: {
         brickslab: u.bricks_ranks?.canReserveBrickslab || false,
-        library: u.bricks_ranks?.canReserveLibrary || false
+        library: u.bricks_ranks?.canReserveLibrary || false,
+        brickslabPro: u.bricks_ranks?.brickslabPro || false
       }
     })));
   } catch (error) {
@@ -185,18 +187,18 @@ app.get('/api/admin/users/permissions', async (req, res) => {
 
 app.post('/api/admin/users/permissions', async (req, res) => {
   try {
-    const { userId, brickslab, library } = req.body;
+    const { userId, brickslab, library, brickslabPro } = req.body;
 
     // Upsert equivalent since we might not have a record yet
     const existing = await prisma.bricks_ranks.findUnique({ where: { userId } });
     if (existing) {
       await prisma.bricks_ranks.update({
         where: { userId },
-        data: { canReserveBrickslab: brickslab, canReserveLibrary: library }
+        data: { canReserveBrickslab: brickslab, canReserveLibrary: library, brickslabPro: brickslabPro }
       });
     } else {
       await prisma.bricks_ranks.create({
-        data: { userId, canReserveBrickslab: brickslab, canReserveLibrary: library }
+        data: { userId, canReserveBrickslab: brickslab, canReserveLibrary: library, brickslabPro: brickslabPro }
       });
     }
 
@@ -299,7 +301,7 @@ app.post('/api/admin/return', async (req, res) => {
 
 app.post('/api/admin/items', async (req, res) => {
   try {
-    const { type, title, description, imageUrl, difficulty, minimumRank, tagsString, stock, isLego, legoReferenceInput, isbn, author } = req.body;
+    const { type, title, description, imageUrl, difficulty, minimumRank, tagsString, stock, isLego, legoReferenceInput, isbn, author, isProOnly } = req.body;
     const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
     const parsedStock = parseInt(stock || '1', 10);
 
@@ -318,7 +320,16 @@ app.post('/api/admin/items', async (req, res) => {
       }
 
       await prisma.bricks_brickslab.create({
-        data: { title: finalTitle, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', difficulty: difficulty || 'Media', tags, stock: parsedStock, legoReference: finalLegoRef }
+        data: { 
+          title: finalTitle, 
+          description, 
+          imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', 
+          difficulty: difficulty || 'Media', 
+          tags, 
+          stock: parsedStock, 
+          legoReference: finalLegoRef,
+          isProOnly: !!isProOnly
+        }
       });
     } else {
       await prisma.bricks_librarybook.create({
@@ -357,13 +368,13 @@ app.delete('/api/admin/items/:id', async (req, res) => {
 app.put('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, title, description, stock, imageUrl } = req.body;
+    const { type, title, description, stock, imageUrl, isProOnly } = req.body;
     const parsedStock = parseInt(stock || '1', 10);
 
     if (type === 'Aim Brickslab') {
       await prisma.bricks_brickslab.update({
         where: { id },
-        data: { title, description, stock: parsedStock, imageUrl }
+        data: { title, description, stock: parsedStock, imageUrl, isProOnly: !!isProOnly }
       });
     } else {
       await prisma.bricks_librarybook.update({
@@ -398,7 +409,8 @@ app.get('/api/catalog', async (req, res) => {
         return {
           id: b.id, title: b.title, description: b.description, imageUrl: b.imageUrl,
           difficulty: b.difficulty, tags: b.tags, type: 'Aim Brickslab',
-          isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1, legoReference: b.legoReference
+          isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1, legoReference: b.legoReference,
+          isProOnly: b.isProOnly
         };
       }),
       ...libraryBooks.map(b => {
@@ -426,8 +438,19 @@ app.post('/api/reservations', async (req, res) => {
     const canReserveBrickslab = ranks?.canReserveBrickslab || false;
     const canReserveLibrary = ranks?.canReserveLibrary || false;
 
-    if (type === 'Aim Brickslab' && !canReserveBrickslab) {
-      return res.status(403).json({ error: "No tienes el rango 'Brickslab' para reservar esta categoría." });
+    const item = type === 'Aim Brickslab' 
+      ? await prisma.bricks_brickslab.findUnique({ where: { id: itemId } })
+      : await prisma.bricks_librarybook.findUnique({ where: { id: itemId } });
+
+    if (!item) return res.status(404).json({ error: 'Artículo no encontrado' });
+
+    if (type === 'Aim Brickslab') {
+      if (!canReserveBrickslab) {
+        return res.status(403).json({ error: "No tienes el rango 'Brickslab' para reservar esta categoría." });
+      }
+      if ((item as any).isProOnly && !ranks?.brickslabPro) {
+        return res.status(403).json({ error: "Este set es exclusivo para el rango 'Brickslab Pro'. No puedes llevarlo a casa." });
+      }
     }
     if (type === 'Libro' && !canReserveLibrary) {
       return res.status(403).json({ error: "No tienes el rango 'Biblioteca' para reservar esta categoría." });

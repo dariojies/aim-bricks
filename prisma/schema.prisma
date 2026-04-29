@@ -56,6 +56,7 @@ model bricks_brickslab {
   isAvailable   Boolean              @default(true)
   stock         Int?                 @default(1)
   legoReference String?
+  isProOnly     Boolean              @default(false)
   reservations  bricks_reservation[]
   history       bricks_userhistory[]
   missing_pieces bricks_missing_pieces[]
@@ -106,6 +107,7 @@ model bricks_ranks {
   userId              String  @unique @db.Uuid
   canReserveBrickslab Boolean @default(false)
   canReserveLibrary   Boolean @default(false)
+  brickslabPro        Boolean @default(false)
   user                users   @relation(fields: [userId], references: [user_id], onDelete: Cascade)
 }
 
