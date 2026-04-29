@@ -86,6 +86,7 @@ export const AdminDashboard: React.FC = () => {
   
   const [memberEmail, setMemberEmail] = useState('');
   const [memberRole, setMemberRole] = useState<'member' | 'admin' | 'owner'>('member');
+  const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
 
   useEffect(() => {
     fetchReservations();
@@ -1330,7 +1331,19 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Miembros Autorizados</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '2rem' }}>
+              <h3 style={{ fontSize: '1.5rem' }}>Miembros Autorizados</h3>
+              <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+                <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input 
+                  type="text"
+                  placeholder="Buscar por email..."
+                  value={membershipSearchTerm}
+                  onChange={e => setMembershipSearchTerm(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                />
+              </div>
+            </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -1343,10 +1356,12 @@ export const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {memberships.length === 0 ? (
-                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No hay miembros autorizados aún.</td></tr>
+                  {memberships.filter(m => m.email.toLowerCase().includes(membershipSearchTerm.toLowerCase())).length === 0 ? (
+                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron miembros con ese filtro.</td></tr>
                   ) : (
-                    memberships.map(m => (
+                    memberships
+                      .filter(m => m.email.toLowerCase().includes(membershipSearchTerm.toLowerCase()))
+                      .map(m => (
                       <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td style={{ padding: '1rem', fontWeight: 500 }}>{m.email}</td>
                         <td style={{ padding: '1rem' }}>
