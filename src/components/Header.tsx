@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy } from 'lucide-react';
+import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy, LayoutGrid } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -11,9 +11,17 @@ interface Props {
   onHomeClick: () => void;
   onRankingClick: () => void;
   onProClick: () => void;
+  categories: any[];
+  activeCategoryId: string | null;
+  onCategoryChange: (id: string) => void;
+  clubName?: string;
 }
 
-export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, onAdminClick, onHomeClick, onRankingClick, onProClick }) => {
+export const Header: React.FC<Props> = ({ 
+  isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, 
+  onAdminClick, onHomeClick, onRankingClick, onProClick,
+  categories, activeCategoryId, onCategoryChange, clubName
+}) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
@@ -33,69 +41,102 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
 
   return (
     <>
-      <header className="glass-panel responsive-header" style={{ padding: '1rem 2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', justifySelf: 'center' }} onClick={onHomeClick}>
-          <Box className="text-accent" size={32} />
-          <h1 className="text-gradient header-title">Aim Brickslab y Libros</h1>
-        </div>
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <div className="responsive-header-buttons" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            
-            {userRole !== 'admin' && userRole !== 'superadmin' && (
-              <>
-                <button 
-                  onClick={onProClick}
-                  style={{ 
-                    display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', 
-                    padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)', 
-                    color: '#FCD34D', cursor: 'pointer', transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  <Crown size={20} />
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Premium: ¡Llévalo a casa!</span>
-                </button>
+      <header className="glass-panel responsive-header" style={{ padding: '1rem 2rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={onHomeClick}>
+            <div style={{ background: 'var(--accent)', padding: '0.5rem', borderRadius: '10px' }}>
+              <Box color="#fff" size={24} />
+            </div>
+            <h1 className="text-gradient header-title" style={{ fontSize: '1.5rem', margin: 0 }}>{clubName || 'Aim Bricks'}</h1>
+          </div>
 
-                <button
-                  className="btn btn-outline"
-                  style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                  onClick={() => setShowDonationModal(true)}
-                >
-                  <Heart size={18} fill="#EF4444" /> Dona un set LEGO®
-                </button>
-              </>
-            )}
-
-            <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#F59E0B', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onRankingClick}>
-              <Trophy size={18} /> Ranking
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <button
+              className="btn btn-outline"
+              style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              onClick={() => setShowDonationModal(true)}
+            >
+              <Heart size={18} fill="#EF4444" /> Donar
             </button>
 
             {isLoggedIn ? (
-              <>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {(userRole === 'admin' || userRole === 'superadmin') && (
                   <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#8B5CF6', color: '#8B5CF6' }} onClick={onAdminClick}>
-                    Panel Admin
+                    Admin
                   </button>
                 )}
                 <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
-                  <User size={18} /> Mi Perfil
+                  <User size={18} /> Perfil
                 </button>
                 <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }} onClick={onLogoutClick}>
-                  Cerrar Sesión
+                  Salir
                 </button>
-              </>
+              </div>
             ) : (
               <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onLoginClick}>
-                <LogIn size={18} /> Iniciar Sesión
+                <LogIn size={18} /> Entrar
               </button>
             )}
           </div>
-        </nav>
+        </div>
+
+        <div style={{ width: '100%', display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
+          <button 
+            onClick={onHomeClick}
+            style={{
+              padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
+              background: !activeCategoryId ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+              color: !activeCategoryId ? '#fff' : 'var(--text)',
+              fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
+            }}
+          >
+            <LayoutGrid size={18} /> Inicio
+          </button>
+          
+          {categories.map(cat => (
+            <button 
+              key={cat.id}
+              onClick={() => onCategoryChange(cat.id)}
+              style={{
+                padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
+                background: activeCategoryId === cat.id ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+                color: activeCategoryId === cat.id ? '#fff' : 'var(--text)',
+                fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
+              }}
+            >
+              {cat.name}
+            </button>
+          ))}
+
+          <button
+            onClick={onRankingClick}
+            style={{
+              padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
+              background: 'rgba(255,255,255,0.05)', color: '#F59E0B',
+              fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
+            }}
+          >
+            <Trophy size={18} /> Ranking
+          </button>
+
+          <button 
+            onClick={onProClick}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: '0.5rem', 
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', 
+              padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)', 
+              color: '#FCD34D', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 600, whiteSpace: 'nowrap'
+            }}
+          >
+            <Crown size={20} /> Brickslab Pro
+          </button>
+        </div>
       </header>
 
-      {/* Botón flotante para Alternar Tema */}
       <button
         onClick={toggleTheme}
         style={{
@@ -120,7 +161,6 @@ export const Header: React.FC<Props> = ({ isLoggedIn, userRole, onLoginClick, on
         {theme === 'dark' ? <Sun size={28} /> : <Moon size={28} />}
       </button>
 
-      {/* Modal de Donación */}
       {showDonationModal && (
         <div style={{
           position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',

@@ -22,9 +22,10 @@ export const AdminDashboard: React.FC = () => {
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   // Add item form state
-  const [newItemType, setNewItemType] = useState('Aim Brickslab');
+  const [newItemCategoryId, setNewItemCategoryId] = useState('');
   const [newItemTitle, setNewItemTitle] = useState('');
   const [newItemDesc, setNewItemDesc] = useState('');
   const [newItemImage, setNewItemImage] = useState('');
@@ -67,6 +68,13 @@ export const AdminDashboard: React.FC = () => {
   const [catalogSearchTerm, setCatalogSearchTerm] = useState('');
   const [activePolls, setActivePolls] = useState<any[]>([]);
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
+  
+  // Category Form State
+  const [catName, setCatName] = useState('');
+  const [catDescription, setCatDescription] = useState('');
+  const [catIcon, setCatIcon] = useState('');
+  const [catHome, setCatHome] = useState(true);
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
 
   // Filter Active Reservations
   const [reservationFilterSearchTerm, setReservationFilterSearchTerm] = useState('');
@@ -81,7 +89,19 @@ export const AdminDashboard: React.FC = () => {
     fetchUsers();
     fetchReports();
     fetchActivePolls();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/categories`);
+      if (res.ok) {
+        const cats = await res.json();
+        setCategories(cats);
+        if (cats.length > 0 && !newItemCategoryId) setNewItemCategoryId(cats[0].id);
+      }
+    } catch (e) { console.error(e); }
+  };
 
   const fetchActivePolls = async () => {
     try {
@@ -104,17 +124,12 @@ export const AdminDashboard: React.FC = () => {
     } catch (e) { console.error(e); }
   };
 
-  const handleRankToggle = async (userId: string, currentPerms: any, field: 'brickslab' | 'library' | 'brickslabPro') => {
+  const handleRankToggle = async (userId: string, categoryId: string, isStandard: boolean, isPro: boolean) => {
     try {
       const res = await fetch(`${API_URL}/api/admin/users/permissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          brickslab: field === 'brickslab' ? !currentPerms.brickslab : currentPerms.brickslab,
-          library: field === 'library' ? !currentPerms.library : currentPerms.library,
-          brickslabPro: field === 'brickslabPro' ? !currentPerms.brickslabPro : currentPerms.brickslabPro
-        })
+        body: JSON.stringify({ userId, categoryId, isStandard, isPro })
       });
       if (res.ok) fetchUsers();
     } catch (e) { console.error(e); }
@@ -237,16 +252,18 @@ export const AdminDashboard: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: newItemType,
+          categoryId: newItemCategoryId,
           title: newItemTitle,
           description: newItemDesc,
           imageUrl: newItemImage,
           stock: newItemStock,
-          isLego,
-          legoReferenceInput,
-          author,
-          isbn,
-          isProOnly
+          isProOnly,
+          metadata: {
+            isLego,
+            legoReference: legoReferenceInput,
+            author,
+            isbn
+          }
         })
       });
       if (res.ok) {
@@ -360,6 +377,12 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('polls')}
         >
           Votaciones
+        </button>
+        <button
+          className={`btn ${activeTab === 'categories' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('categories' as any)}
+        >
+          Categorías
         </button>
       </div>
 
@@ -639,9 +662,11 @@ export const AdminDashboard: React.FC = () => {
                 <tr style={{ borderBottom: '1px solid var(--surface-border)' }}>
                   <th style={{ padding: '1rem 0.5rem' }}>Usuario</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Email</th>
-                  <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Rango Brickslab</th>
-                  <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Rango Biblioteca</th>
-                  <th style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>Brickslab Pro</th>
+                  {categories.map(cat => (
+                    <th key={cat.id} style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                      {cat.name}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -655,30 +680,33 @@ export const AdminDashboard: React.FC = () => {
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                     <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{u.name}</td>
                     <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>{u.email}</td>
-                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={u.permissions?.brickslab || false}
-                        onChange={() => handleRankToggle(u.id, u.permissions, 'brickslab')}
-                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
-                      />
-                    </td>
-                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={u.permissions?.library || false}
-                        onChange={() => handleRankToggle(u.id, u.permissions, 'library')}
-                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
-                      />
-                    </td>
-                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={u.permissions?.brickslabPro || false}
-                        onChange={() => handleRankToggle(u.id, u.permissions, 'brickslabPro')}
-                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
-                      />
-                    </td>
+                    {categories.map(cat => {
+                      const p = u.permissions?.[cat.id] || { standard: false, pro: false };
+                      return (
+                        <td key={cat.id} style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'center' }}>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>S</label>
+                            <input
+                              type="checkbox"
+                              checked={p.standard}
+                              onChange={() => handleRankToggle(u.id, cat.id, !p.standard, p.pro)}
+                              style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
+                            />
+                            {cat.name.toLowerCase().includes('bricks') && (
+                              <>
+                                <label style={{ fontSize: '0.7rem', color: '#FCD34D' }}>P</label>
+                                <input
+                                  type="checkbox"
+                                  checked={p.pro}
+                                  onChange={() => handleRankToggle(u.id, cat.id, p.standard, !p.pro)}
+                                  style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
+                                />
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -743,14 +771,15 @@ export const AdminDashboard: React.FC = () => {
             </h3>
             <form onSubmit={handleAddItem} className="responsive-dashboard-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Tipo de elemento</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Categoría</label>
                 <select
-                  value={newItemType}
-                  onChange={e => setNewItemType(e.target.value)}
+                  value={newItemCategoryId}
+                  onChange={e => setNewItemCategoryId(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', appearance: 'none', WebkitAppearance: 'none', fontSize: '1rem', minHeight: '48px' }}
                 >
-                  <option value="Aim Brickslab">Aim Brickslab</option>
-                  <option value="Libro">Libro</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
 
@@ -1136,6 +1165,70 @@ export const AdminDashboard: React.FC = () => {
                 )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {activeTab === ('categories' as any) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+              {editingCatId ? 'Editar Categoría' : 'Añadir Nueva Categoría'}
+            </h3>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const url = editingCatId ? `${API_URL}/api/admin/categories/${editingCatId}` : `${API_URL}/api/admin/categories`;
+              const method = editingCatId ? 'PUT' : 'POST';
+              const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: catName, description: catDescription, icon: catIcon, isHomeAllowed: catHome })
+              });
+              if (res.ok) {
+                setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true); setEditingCatId(null);
+                fetchCategories();
+              }
+            }} style={{ display: 'grid', gap: '1rem' }}>
+              <input required placeholder="Nombre (Ej: LEGO® Sets)" value={catName} onChange={e => setCatName(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              <input placeholder="Icono (opcional)" value={catIcon} onChange={e => setCatIcon(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              <textarea placeholder="Descripción" value={catDescription} onChange={e => setCatDescription(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '80px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="checkbox" checked={catHome} onChange={e => setCatHome(e.target.checked)} />
+                <label>Mostrar en Inicio</label>
+              </div>
+              <button type="submit" className="btn btn-primary">{editingCatId ? 'Guardar Cambios' : 'Añadir Categoría'}</button>
+            </form>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Categorías Existentes</h3>
+            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
+              {categories.map(cat => (
+                <div key={cat.id} className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '1.1rem' }}>{cat.name}</h4>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button onClick={() => {
+                        setEditingCatId(cat.id);
+                        setCatName(cat.name);
+                        setCatDescription(cat.description || '');
+                        setCatIcon(cat.icon || '');
+                        setCatHome(cat.isHomeAllowed);
+                      }} className="text-accent" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Pencil size={18} /></button>
+                      <button onClick={async () => {
+                        if (confirm(`¿Borrar categoría ${cat.name}? Los artículos se borrarán.`)) {
+                          await fetch(`${API_URL}/api/admin/categories/${cat.id}`, { method: 'DELETE' });
+                          fetchCategories();
+                        }
+                      }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}><Trash2 size={18} /></button>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{cat.description || 'Sin descripción'}</p>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)' }}>
+                    {cat._count?.items || 0} artículos
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

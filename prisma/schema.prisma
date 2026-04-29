@@ -43,6 +43,7 @@ model users {
   requires_password_change                                           Boolean?                  @default(false)
   bricks_missing_pieces                                              bricks_missing_pieces[]
   bricks_poll_vote                                                   bricks_poll_vote[]
+  bricks_user_permissions                                            bricks_user_permissions[]
   clubs                                                              tul_clubs?                @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
 }
 
@@ -59,7 +60,7 @@ model bricks_brickslab {
   isProOnly     Boolean              @default(false)
   reservations  bricks_reservation[]
   history       bricks_userhistory[]
-  missing_pieces bricks_missing_pieces[]
+  club_id       String?              @db.Uuid // Added for migration reference
 }
 
 model bricks_librarybook {
@@ -75,6 +76,7 @@ model bricks_librarybook {
   stock        Int?                 @default(1)
   reservations bricks_reservation[]
   history      bricks_userhistory[]
+  club_id      String?              @db.Uuid // Added for migration reference
 }
 
 model bricks_reservation {
@@ -82,6 +84,8 @@ model bricks_reservation {
   userId          String              @db.Uuid
   brickslabId     String?
   libraryBookId   String?
+  itemId          String?             @db.Uuid
+  categoryId      String?             @db.Uuid
   reservationDate DateTime            @default(now())
   returnDate      DateTime?
   status          String
@@ -95,6 +99,8 @@ model bricks_userhistory {
   userId        String              @db.Uuid
   brickslabId   String?
   libraryBookId String?
+  itemId        String?             @db.Uuid
+  categoryId    String?             @db.Uuid
   completedAt   DateTime            @default(now())
   notes         String?
   brickslab     bricks_brickslab?   @relation(fields: [brickslabId], references: [id])
@@ -500,6 +506,8 @@ model tul_clans {
 model tul_clubs {
   club_id          String             @id(map: "clubs_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String             @db.VarChar(255)
+  subdomain        String?            @unique @db.VarChar(255)
+  description      String?            @db.Text
   logo             String?            @db.VarChar(1024)
   plan             String?            @default("free") @db.VarChar(50)
   created_at       DateTime?          @default(now()) @db.Timestamp(6)
@@ -510,6 +518,8 @@ model tul_clubs {
   tul_market_items tul_market_items[]
   tul_vocabulary   tul_vocabulary[]
   users            users[]
+  bricks_categories bricks_categories[]
+  bricks_items     bricks_items[]
 }
 
 model tul_evaluation_movements {
@@ -667,12 +677,12 @@ model tul_vocabulary {
 
 model bricks_missing_pieces {
   id          String   @id @default(uuid())
-  brickslabId String
+  itemId      String   @db.Uuid
   userId      String   @db.Uuid
   description String
   reportedAt  DateTime @default(now())
   status      String   @default("Pending")
-  brickslab   bricks_brickslab @relation(fields: [brickslabId], references: [id], onDelete: Cascade)
+  item        bricks_items @relation(fields: [itemId], references: [id], onDelete: Cascade)
   user        users            @relation(fields: [userId], references: [user_id], onDelete: Cascade)
 }
 
@@ -703,4 +713,46 @@ model bricks_poll_vote {
   user        users              @relation(fields: [userId], references: [user_id], onDelete: Cascade)
   
   @@unique([optionId, userId])
+}
+
+model bricks_categories {
+  id             String   @id @default(uuid()) @db.Uuid
+  clubId         String   @db.Uuid
+  name           String
+  icon           String   @default("Package")
+  isHomeAllowed  Boolean  @default(false)
+  description    String?
+  createdAt      DateTime @default(now())
+  items          bricks_items[]
+  user_permissions bricks_user_permissions[]
+  club           tul_clubs @relation(fields: [clubId], references: [club_id], onDelete: Cascade)
+}
+
+model bricks_items {
+  id            String   @id @default(uuid()) @db.Uuid
+  clubId        String   @db.Uuid
+  categoryId    String   @db.Uuid
+  title         String
+  description   String
+  imageUrl      String
+  stock         Int      @default(1)
+  isProOnly     Boolean  @default(false)
+  metadata      Json?    // Stores specific data like legoReference, author, isbn
+  createdAt     DateTime @default(now())
+  isAvailable   Boolean  @default(true)
+  category      bricks_categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  club          tul_clubs         @relation(fields: [clubId], references: [club_id], onDelete: Cascade)
+  missing_pieces bricks_missing_pieces[]
+}
+
+model bricks_user_permissions {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  categoryId    String   @db.Uuid
+  isStandard    Boolean  @default(false)
+  isPro         Boolean  @default(false)
+  user          users    @relation(fields: [userId], references: [user_id], onDelete: Cascade)
+  category      bricks_categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
 }

@@ -18,6 +18,8 @@ function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin' | 'ranking'>('catalog');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
 
@@ -55,6 +57,7 @@ function App() {
       const data = await res.json();
       if (!data.error) {
         setUser(data);
+        if (data.categories) setCategories(data.categories);
         localStorage.setItem('aim_bricks_user', JSON.stringify(data));
       }
     } catch (e) { console.error('Error syncing session:', e); }
@@ -100,11 +103,24 @@ function App() {
   const loadCatalog = async () => {
     try {
       const res = await fetch(`${API_URL}/api/catalog`);
-      const data = await res.json();
-      setItems(data);
-    } catch (error) {
-      console.error(error);
-    }
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data);
+        
+        // Extract unique categories from items
+        const cats: any[] = [];
+        data.forEach((item: any) => {
+          if (item.categoryId && !cats.find(c => c.id === item.categoryId)) {
+            cats.push({ id: item.categoryId, name: item.type });
+          }
+        });
+        
+        if (cats.length > 0) {
+          setCategories(cats);
+          if (!activeCategoryId) setActiveCategoryId(cats[0].id);
+        }
+      }
+    } catch (e) { console.error('Error loading catalog:', e); }
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -115,18 +131,21 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: loginPassword })
       });
-      const parsed = await res.json();
+      const data = await res.json();
       if (res.ok) {
-        const userProfile = parsed.profile || parsed;
-        setUser(userProfile);
-        localStorage.setItem('aim_bricks_user', JSON.stringify(userProfile));
-        if (parsed.token) localStorage.setItem('aim_bricks_token', parsed.token);
-
+        setUser(data.profile);
+        if (data.profile.categories) {
+          setCategories(data.profile.categories);
+          if (data.profile.categories.length > 0) setActiveCategoryId(data.profile.categories[0].id);
+        }
+        localStorage.setItem('aim_bricks_token', data.token);
+        localStorage.setItem('aim_bricks_user', JSON.stringify(data.profile));
         setShowLoginModal(false);
         setLoginEmail('');
         setLoginPassword('');
+        loadCatalog();
       } else {
-        alert(parsed.error || 'Autenticación fallida');
+        alert(data.error || 'Autenticación fallida');
       }
     } catch (err) {
       console.error(err);
@@ -172,16 +191,14 @@ function App() {
       return;
     }
 
-    if (item.type === 'Aim Brickslab' && !user.permissions?.brickslab) {
-      setShowRankAlert({ show: true, type: 'Brickslab' });
+    const perm = user.permissions?.[item.categoryId];
+    if (!perm || !perm.standard) {
+      const cat = categories.find(c => c.id === item.categoryId);
+      setShowRankAlert({ show: true, type: cat?.name || 'esta categoría' } as any);
       return;
     }
-    if (item.type === 'Aim Brickslab' && item.isProOnly && !user.permissions?.brickslabPro) {
-      setShowRankAlert({ show: true, type: 'Brickslab Pro' });
-      return;
-    }
-    if (item.type === 'Libro' && !user.permissions?.library) {
-      setShowRankAlert({ show: true, type: 'Biblioteca' });
+    if (item.isProOnly && !perm.pro) {
+      setShowRankAlert({ show: true, type: 'Brickslab Pro' }); // Maintain premium name for alert
       return;
     }
 
@@ -194,7 +211,7 @@ function App() {
         const res = await fetch(`${API_URL}/api/reservations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, itemId: selectedItem.id, type: selectedItem.type })
+          body: JSON.stringify({ userId: user.id, itemId: selectedItem.id, categoryId: selectedItem.categoryId })
         });
 
         const data = await res.json();
@@ -346,18 +363,34 @@ function App() {
         onLogoutClick={handleLogout}
         onProfileClick={() => setCurrentView('profile')}
         onAdminClick={() => setCurrentView('admin')}
-        onHomeClick={() => setCurrentView('catalog')}
+        onHomeClick={() => {
+          setCurrentView('catalog');
+          setActiveCategoryId(null);
+        }}
         onRankingClick={() => setCurrentView('ranking')}
         onProClick={() => setShowProModal(true)}
+        categories={categories}
+        activeCategoryId={activeCategoryId}
+        onCategoryChange={(id) => {
+          setCurrentView('catalog');
+          setActiveCategoryId(id);
+        }}
+        clubName={user?.clubName}
       />
 
       <main className="animate-fade-in">
         {currentView === 'catalog' ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-              <h2 className="text-gradient hero-title">Catálogo Local</h2>
+              <h2 className="text-gradient hero-title">
+                {activeCategoryId 
+                  ? categories.find(c => c.id === activeCategoryId)?.name 
+                  : 'Explorar Catálogo'}
+              </h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto' }}>
-                Explora y reserva tus Aim Brickslabs y Libros favoritos para disfrutar en nuestro local.
+                {activeCategoryId 
+                  ? `Reserva tus ${categories.find(c => c.id === activeCategoryId)?.name} favoritos.`
+                  : 'Descubre todas las categorías disponibles para reservar en nuestro local.'}
               </p>
             </div>
             {activePoll && (
@@ -401,9 +434,9 @@ function App() {
               </div>
             )}
 
-            <Catalog
-              items={items}
-              onReserveClick={handleReserveClick}
+            <Catalog 
+              items={activeCategoryId ? items.filter(i => i.categoryId === activeCategoryId) : items} 
+              onReserveClick={handleReserveClick} 
               onProAlert={(item) => {
                 if (user?.permissions?.brickslabPro) {
                   setSelectedItem(item);
@@ -477,7 +510,7 @@ function App() {
               fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem',
               color: '#FBBF24', letterSpacing: '-0.02em'
             }}>
-              Brickslab Pro
+              <strong>Brickslab Pro</strong>
             </h2>
 
             <p style={{ color: '#fff', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>

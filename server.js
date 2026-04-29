@@ -16,38 +16,208 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-// Auto-sync schema safely
+// Auto-sync schema and migrate data safely
 async function syncSchema() {
   try {
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_brickslab" ADD COLUMN IF NOT EXISTS "isProOnly" BOOLEAN NOT NULL DEFAULT false;`);
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_ranks" ADD COLUMN IF NOT EXISTS "brickslabPro" BOOLEAN NOT NULL DEFAULT false;`);
-    console.log('Database schema verified and updated.');
+    // 1. Create tables if they don't exist (using IF NOT EXISTS where possible)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "bricks_categories" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "clubId" UUID NOT NULL,
+        "name" TEXT NOT NULL,
+        "icon" TEXT NOT NULL DEFAULT 'Package',
+        "isHomeAllowed" BOOLEAN NOT NULL DEFAULT false,
+        "description" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "bricks_items" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "clubId" UUID NOT NULL,
+        "categoryId" UUID NOT NULL,
+        "title" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "imageUrl" TEXT NOT NULL,
+        "stock" INTEGER NOT NULL DEFAULT 1,
+        "isProOnly" BOOLEAN NOT NULL DEFAULT false,
+        "metadata" JSONB,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "isAvailable" BOOLEAN NOT NULL DEFAULT true
+      );
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "bricks_user_permissions" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "userId" UUID NOT NULL,
+        "categoryId" UUID NOT NULL,
+        "isStandard" BOOLEAN NOT NULL DEFAULT false,
+        "isPro" BOOLEAN NOT NULL DEFAULT false,
+        UNIQUE("userId", "categoryId")
+      );
+    `);
+
+    // 2. Add columns to existing tables for migration tracking
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_reservation" ADD COLUMN IF NOT EXISTS "itemId" UUID;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_reservation" ADD COLUMN IF NOT EXISTS "categoryId" UUID;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_userhistory" ADD COLUMN IF NOT EXISTS "itemId" UUID;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_userhistory" ADD COLUMN IF NOT EXISTS "categoryId" UUID;`);
+
+    // Update tul_clubs for multi-tenancy
+    await prisma.$executeRawUnsafe(`ALTER TABLE "tul_clubs" ADD COLUMN IF NOT EXISTS "subdomain" VARCHAR(255)`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "tul_clubs" ADD COLUMN IF NOT EXISTS "description" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "clubId" UUID`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_brickslab" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_librarybook" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
+    
+    console.log('Database structure verified.');
+
+    // 3. Perform Data Migration
+    await migrateToDynamic();
+
   } catch (e) {
     console.warn('Schema sync warning:', e.message);
   }
 }
+
+async function migrateToDynamic() {
+  try {
+    // Check if we have already migrated by checking if categories exist
+    const catCount = await prisma.bricks_categories.count();
+    if (catCount > 0) return; // Already migrated or categories manually added
+
+    console.log('Starting data migration to dynamic categories...');
+
+    // Get the first club as the default "Master" club
+    let club = await prisma.tul_clubs.findFirst();
+    if (!club) {
+      club = await prisma.tul_clubs.create({ data: { name: 'Aim Education', plan: 'pro' } });
+    }
+
+    // Create default categories
+    const legoCat = await prisma.bricks_categories.create({
+      data: {
+        clubId: club.club_id,
+        name: 'Aim Brickslab',
+        icon: 'Box',
+        isHomeAllowed: true,
+        description: 'Colección de sets LEGO para montar'
+      }
+    });
+
+    const libraryCat = await prisma.bricks_categories.create({
+      data: {
+        clubId: club.club_id,
+        name: 'Biblioteca',
+        icon: 'Book',
+        isHomeAllowed: false,
+        description: 'Libros y manuales'
+      }
+    });
+
+    // Migrate Brickslabs
+    const brickslabs = await prisma.bricks_brickslab.findMany();
+    for (const b of brickslabs) {
+      const newItem = await prisma.bricks_items.create({
+        data: {
+          clubId: club.club_id,
+          categoryId: legoCat.id,
+          title: b.title,
+          description: b.description,
+          imageUrl: b.imageUrl,
+          stock: b.stock || 1,
+          isProOnly: b.isProOnly,
+          isAvailable: b.isAvailable,
+          metadata: { legoReference: b.legoReference }
+        }
+      });
+      // Update reservations, history and missing pieces for this item
+      await prisma.bricks_reservation.updateMany({
+        where: { brickslabId: b.id },
+        data: { itemId: newItem.id, categoryId: legoCat.id }
+      });
+      await prisma.bricks_userhistory.updateMany({
+        where: { brickslabId: b.id },
+        data: { itemId: newItem.id, categoryId: legoCat.id }
+      });
+      await prisma.bricks_missing_pieces.updateMany({
+        where: { itemId: b.id }, // Legacy brickslabId
+        data: { itemId: newItem.id }
+      });
+    }
+
+    // Migrate Books
+    const books = await prisma.bricks_librarybook.findMany();
+    for (const b of books) {
+      const newItem = await prisma.bricks_items.create({
+        data: {
+          clubId: club.club_id,
+          categoryId: libraryCat.id,
+          title: b.title,
+          description: b.description,
+          imageUrl: b.imageUrl,
+          stock: b.stock || 1,
+          isProOnly: false,
+          isAvailable: b.isAvailable,
+          metadata: { author: b.author, isbn: b.isbn, minimumRank: b.minimumRank }
+        }
+      });
+      // Update reservations and history for this item
+      await prisma.bricks_reservation.updateMany({
+        where: { libraryBookId: b.id },
+        data: { itemId: newItem.id, categoryId: libraryCat.id }
+      });
+      await prisma.bricks_userhistory.updateMany({
+        where: { libraryBookId: b.id },
+        data: { itemId: newItem.id, categoryId: libraryCat.id }
+      });
+    }
+
+    // Migrate Permissions
+    const ranks = await prisma.bricks_ranks.findMany();
+    for (const r of ranks) {
+      if (r.canReserveBrickslab || r.brickslabPro) {
+        await prisma.bricks_user_permissions.upsert({
+          where: { userId_categoryId: { userId: r.userId, categoryId: legoCat.id } },
+          update: { isStandard: r.canReserveBrickslab, isPro: r.brickslabPro },
+          create: { userId: r.userId, categoryId: legoCat.id, isStandard: r.canReserveBrickslab, isPro: r.brickslabPro }
+        });
+      }
+      if (r.canReserveLibrary) {
+        await prisma.bricks_user_permissions.upsert({
+          where: { userId_categoryId: { userId: r.userId, categoryId: libraryCat.id } },
+          update: { isStandard: r.canReserveLibrary },
+          create: { userId: r.userId, categoryId: libraryCat.id, isStandard: r.canReserveLibrary }
+        });
+      }
+    }
+
+    console.log('Migration completed successfully!');
+
+  } catch (e) {
+    console.error('Migration error:', e);
+  }
+}
+
 syncSchema();
 
 app.use(cors());
 app.use(express.json());
 
 // Helper to map DB item to Frontend CatalogItem
-const mapBrickslab = (b) => ({
-  id: b.id,
-  title: b.title,
-  type: 'Aim Brickslab',
-  description: b.description,
-  status: b.isAvailable ? 'Disponible' : 'Reservado',
-  imageUrl: b.imageUrl
-});
-
-const mapBook = (b) => ({
-  id: b.id,
-  title: b.title,
-  type: 'Libro',
-  description: b.description,
-  status: b.isAvailable ? 'Disponible' : 'Reservado',
-  imageUrl: b.imageUrl
+const mapItem = (item, category) => ({
+  id: item.id,
+  title: item.title,
+  type: category?.name || 'Artículo',
+  categoryId: item.categoryId,
+  description: item.description,
+  status: item.isAvailable ? 'Disponible' : 'Reservado',
+  imageUrl: item.imageUrl,
+  stock: item.stock || 1,
+  isProOnly: item.isProOnly,
+  metadata: item.metadata || {}
 });
 
 // API Routes
@@ -81,21 +251,38 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
 
+    const categories = await prisma.bricks_categories.findMany({
+      where: { clubId: user.club_id }
+    });
+
+    const dynamicPermissions = await prisma.bricks_user_permissions.findMany({
+      where: { userId: user.user_id }
+    });
+
     const profile = {
       id: user.user_id,
+      clubId: user.club_id,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
       role: user.dev_role || 'student',
-      readBooks: user.history.filter(h => h.libraryBook).map(h => mapBook(h.libraryBook)),
-      builtBrickslabs: user.history.filter(h => h.brickslab).map(h => mapBrickslab(h.brickslab)),
+      categories: categories.map(c => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        isHomeAllowed: c.isHomeAllowed
+      })),
       currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
         id: r.id,
         status: r.status === 'Active' ? 'Reserved' : r.status,
-        text: r.brickslab ? `Aim Brickslab: ${r.brickslab.title}` : (r.libraryBook ? `Libro: ${r.libraryBook.title}` : 'Reserva'),
-        isBrickslab: !!r.brickslab,
-        brickslabId: r.brickslabId
+        text: `${r.status}: ${r.brickslab?.title || r.libraryBook?.title || 'Artículo'}`,
+        itemId: r.itemId || r.brickslabId || r.libraryBookId,
+        categoryId: r.categoryId
       })),
-      permissions: {
+      permissions: dynamicPermissions.reduce((acc, p) => {
+        acc[p.categoryId] = { standard: p.isStandard, pro: p.isPro };
+        return acc;
+      }, {}),
+      legacyPermissions: {
         brickslab: user.bricks_ranks?.canReserveBrickslab || false,
         library: user.bricks_ranks?.canReserveLibrary || false,
         brickslabPro: user.bricks_ranks?.brickslabPro || false
@@ -126,21 +313,38 @@ app.post('/api/auth/me', async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
+    const categories = await prisma.bricks_categories.findMany({
+      where: { clubId: user.club_id }
+    });
+
+    const dynamicPermissions = await prisma.bricks_user_permissions.findMany({
+      where: { userId: user.user_id }
+    });
+
     const profile = {
       id: user.user_id,
+      clubId: user.club_id,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
       role: user.dev_role || 'student',
-      readBooks: user.history.filter(h => h.libraryBook).map(h => mapBook(h.libraryBook)),
-      builtBrickslabs: user.history.filter(h => h.brickslab).map(h => mapBrickslab(h.brickslab)),
+      categories: categories.map(c => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        isHomeAllowed: c.isHomeAllowed
+      })),
       currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
         id: r.id,
         status: r.status === 'Active' ? 'Reserved' : r.status,
-        text: r.brickslab ? `Aim Brickslab: ${r.brickslab.title}` : (r.libraryBook ? `Libro: ${r.libraryBook.title}` : 'Reserva'),
-        isBrickslab: !!r.brickslab,
-        brickslabId: r.brickslabId
+        text: `${r.status}: ${r.brickslab?.title || r.libraryBook?.title || 'Artículo'}`,
+        itemId: r.itemId || r.brickslabId || r.libraryBookId,
+        categoryId: r.categoryId
       })),
-      permissions: {
+      permissions: dynamicPermissions.reduce((acc, p) => {
+        acc[p.categoryId] = { standard: p.isStandard, pro: p.isPro };
+        return acc;
+      }, {}),
+      legacyPermissions: {
         brickslab: user.bricks_ranks?.canReserveBrickslab || false,
         library: user.bricks_ranks?.canReserveLibrary || false,
         brickslabPro: user.bricks_ranks?.brickslabPro || false
@@ -177,21 +381,46 @@ app.post('/api/auth/force-password-change', async (req, res) => {
 // Admin Endpoints
 app.get('/api/admin/users/permissions', async (req, res) => {
   try {
-    const usersList = await prisma.users.findMany({
-      include: { bricks_ranks: true },
-      orderBy: { name: 'asc' }
-    });
-    res.json(usersList.map(u => ({
-      id: u.user_id,
-      name: `${u.name} ${u.surname || ''}`.trim(),
-      email: u.email,
-      role: u.dev_role || 'student',
-      permissions: {
-        brickslab: u.bricks_ranks?.canReserveBrickslab || false,
-        library: u.bricks_ranks?.canReserveLibrary || false,
-        brickslabPro: u.bricks_ranks?.brickslabPro || false
-      }
-    })));
+    const { clubId } = req.query;
+    let club;
+    if (clubId) {
+      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+    } else {
+      club = await prisma.tul_clubs.findFirst();
+    }
+
+    if (!club) return res.json([]);
+
+    const [usersList, categories] = await Promise.all([
+      prisma.users.findMany({
+        where: { club_id: club.club_id },
+        include: { bricks_user_permissions: true, bricks_ranks: true },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.bricks_categories.findMany({ where: { clubId: club.club_id } })
+    ]);
+
+    res.json(usersList.map(u => {
+      const perms = {};
+      categories.forEach(cat => {
+        const p = u.bricks_user_permissions.find(bp => bp.categoryId === cat.id);
+        perms[cat.id] = { standard: p?.isStandard || false, pro: p?.isPro || false };
+      });
+
+      return {
+        id: u.user_id,
+        name: `${u.name} ${u.surname || ''}`.trim(),
+        email: u.email,
+        role: u.dev_role || 'student',
+        permissions: perms,
+        // Legacy support
+        legacyPermissions: {
+          brickslab: u.bricks_ranks?.canReserveBrickslab || false,
+          library: u.bricks_ranks?.canReserveLibrary || false,
+          brickslabPro: u.bricks_ranks?.brickslabPro || false
+        }
+      };
+    }));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
@@ -200,20 +429,13 @@ app.get('/api/admin/users/permissions', async (req, res) => {
 
 app.post('/api/admin/users/permissions', async (req, res) => {
   try {
-    const { userId, brickslab, library, brickslabPro } = req.body;
+    const { userId, categoryId, isStandard, isPro } = req.body;
 
-    // Upsert equivalent since we might not have a record yet
-    const existing = await prisma.bricks_ranks.findUnique({ where: { userId } });
-    if (existing) {
-      await prisma.bricks_ranks.update({
-        where: { userId },
-        data: { canReserveBrickslab: brickslab, canReserveLibrary: library, brickslabPro: brickslabPro }
-      });
-    } else {
-      await prisma.bricks_ranks.create({
-        data: { userId, canReserveBrickslab: brickslab, canReserveLibrary: library, brickslabPro: brickslabPro }
-      });
-    }
+    await prisma.bricks_user_permissions.upsert({
+      where: { userId_categoryId: { userId, categoryId } },
+      update: { isStandard, isPro },
+      create: { userId, categoryId, isStandard, isPro }
+    });
 
     res.json({ success: true });
   } catch (error) {
@@ -245,22 +467,43 @@ app.post('/api/admin/users/password', async (req, res) => {
 
 app.get('/api/admin/reservations', async (req, res) => {
   try {
+    const { clubId } = req.query;
+    let club;
+    if (clubId) {
+      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+    } else {
+      club = await prisma.tul_clubs.findFirst();
+    }
+
+    if (!club) return res.json([]);
+
     const reservations = await prisma.bricks_reservation.findMany({
-      where: { status: { in: ['Active', 'Reserved', 'Delivered'] } },
+      where: { 
+        status: { in: ['Active', 'Reserved', 'Delivered'] },
+        user: { club_id: club.club_id }
+      },
       include: { user: true, brickslab: true, libraryBook: true }
     });
 
-    res.json(reservations.map(r => ({
-      id: r.id,
-      userId: r.userId,
-      itemId: r.brickslab ? r.brickslabId : r.libraryBookId,
-      userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
-      userEmail: r.user.email,
-      itemTitle: r.brickslab ? r.brickslab.title : (r.libraryBook ? r.libraryBook.title : ''),
-      itemType: r.brickslab ? 'Aim Brickslab' : 'Libro',
-      reservationDate: r.reservationDate,
-      status: r.status === 'Active' ? 'Reserved' : r.status // Map legacy Active to Reserved
-    })));
+    const items = await prisma.bricks_items.findMany({
+      where: { id: { in: reservations.map(r => r.itemId).filter(Boolean) } },
+      include: { category: true }
+    });
+
+    res.json(reservations.map(r => {
+      const item = items.find(i => i.id === r.itemId);
+      return {
+        id: r.id,
+        userId: r.userId,
+        itemId: r.itemId || r.brickslabId || r.libraryBookId,
+        userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
+        userEmail: r.user.email,
+        itemTitle: item?.title || r.brickslab?.title || r.libraryBook?.title || 'Artículo',
+        itemType: item?.category?.name || (r.brickslab ? 'Aim Brickslab' : 'Libro'),
+        reservationDate: r.reservationDate,
+        status: r.status === 'Active' ? 'Reserved' : r.status
+      };
+    }));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
@@ -300,6 +543,8 @@ app.post('/api/admin/return', async (req, res) => {
     await prisma.bricks_userhistory.create({
       data: {
         userId: reservation.userId,
+        itemId: reservation.itemId,
+        categoryId: reservation.categoryId,
         brickslabId: reservation.brickslabId,
         libraryBookId: reservation.libraryBookId,
       }
@@ -312,43 +557,86 @@ app.post('/api/admin/return', async (req, res) => {
   }
 });
 
+// Categories Management
+app.get('/api/admin/categories', async (req, res) => {
+  try {
+    const { clubId } = req.query;
+    let club;
+    if (clubId) {
+      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+    } else {
+      club = await prisma.tul_clubs.findFirst();
+    }
+    if (!club) return res.json([]);
+
+    const categories = await prisma.bricks_categories.findMany({
+      where: { clubId: club.club_id },
+      include: { _count: { select: { items: true } } }
+    });
+    res.json(categories);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/categories', async (req, res) => {
+  try {
+    const { clubId, name, icon, isHomeAllowed, description } = req.body;
+    await prisma.bricks_categories.create({
+      data: { clubId, name, icon, isHomeAllowed: !!isHomeAllowed, description }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.put('/api/admin/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, icon, isHomeAllowed, description } = req.body;
+    await prisma.bricks_categories.update({
+      where: { id },
+      data: { name, icon, isHomeAllowed: !!isHomeAllowed, description }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.delete('/api/admin/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.bricks_categories.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor al eliminar categoría' });
+  }
+});
+
+// Generic Items Management
 app.post('/api/admin/items', async (req, res) => {
   try {
-    const { type, title, description, imageUrl, difficulty, minimumRank, tagsString, stock, isLego, legoReferenceInput, isbn, author, isProOnly } = req.body;
-    const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
+    const { clubId, categoryId, title, description, imageUrl, stock, isProOnly, metadata } = req.body;
     const parsedStock = parseInt(stock || '1', 10);
 
-    if (type === 'Aim Brickslab') {
-      let finalTitle = title;
-      let finalLegoRef = null;
-
-      if (isLego && legoReferenceInput) {
-        const parts = legoReferenceInput.trim().split(' ');
-        const number = parts.pop();
-        const theme = parts.join(' ').trim();
-        finalTitle = theme ? `LEGO® ${theme} - ${title}` : `LEGO® ${title}`;
-        finalLegoRef = number;
-      } else if (isLego) {
-        finalTitle = `LEGO® ${title}`;
+    await prisma.bricks_items.create({
+      data: {
+        clubId,
+        categoryId,
+        title,
+        description,
+        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b',
+        stock: parsedStock,
+        isProOnly: !!isProOnly,
+        metadata: metadata || {}
       }
-
-      await prisma.bricks_brickslab.create({
-        data: { 
-          title: finalTitle, 
-          description, 
-          imageUrl: imageUrl || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b', 
-          difficulty: difficulty || 'Media', 
-          tags, 
-          stock: parsedStock, 
-          legoReference: finalLegoRef,
-          isProOnly: !!isProOnly
-        }
-      });
-    } else {
-      await prisma.bricks_librarybook.create({
-        data: { title, author: author || 'Desconocido', isbn: isbn || null, description, imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f', minimumRank: minimumRank || 'Blanco', tags, stock: parsedStock }
-      });
-    }
+    });
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -359,18 +647,9 @@ app.post('/api/admin/items', async (req, res) => {
 app.delete('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const type = req.query.type;
-
-    if (type === 'Aim Brickslab') {
-      // Usamos deleteMany manual para limpiar relaciones por la compatibilidad DDL
-      await prisma.bricks_reservation.deleteMany({ where: { brickslabId: id } });
-      await prisma.bricks_userhistory.deleteMany({ where: { brickslabId: id } });
-      await prisma.bricks_brickslab.delete({ where: { id } });
-    } else {
-      await prisma.bricks_reservation.deleteMany({ where: { libraryBookId: id } });
-      await prisma.bricks_userhistory.deleteMany({ where: { libraryBookId: id } });
-      await prisma.bricks_librarybook.delete({ where: { id } });
-    }
+    // We clean up reservations/history via Cascade if configured in DB, 
+    // but Prisma relation onDelete: Cascade handles it if we use prisma.model.delete
+    await prisma.bricks_items.delete({ where: { id } });
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -381,20 +660,13 @@ app.delete('/api/admin/items/:id', async (req, res) => {
 app.put('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, title, description, stock, imageUrl, isProOnly } = req.body;
+    const { title, description, stock, imageUrl, isProOnly, metadata } = req.body;
     const parsedStock = parseInt(stock || '1', 10);
 
-    if (type === 'Aim Brickslab') {
-      await prisma.bricks_brickslab.update({
-        where: { id },
-        data: { title, description, stock: parsedStock, imageUrl, isProOnly: !!isProOnly }
-      });
-    } else {
-      await prisma.bricks_librarybook.update({
-        where: { id },
-        data: { title, description, stock: parsedStock, imageUrl }
-      });
-    }
+    await prisma.bricks_items.update({
+      where: { id },
+      data: { title, description, stock: parsedStock, imageUrl, isProOnly: !!isProOnly, metadata }
+    });
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -404,38 +676,41 @@ app.put('/api/admin/items/:id', async (req, res) => {
 
 app.get('/api/catalog', async (req, res) => {
   try {
-    const [brickslabs, libraryBooks, activeReservations] = await Promise.all([
-      prisma.bricks_brickslab.findMany(),
-      prisma.bricks_librarybook.findMany(),
+    const { clubId } = req.query;
+    
+    // Find club or default to first
+    let club;
+    if (clubId) {
+      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+    } else {
+      club = await prisma.tul_clubs.findFirst();
+    }
+
+    if (!club) return res.json([]);
+
+    const [categories, items, activeReservations] = await Promise.all([
+      prisma.bricks_categories.findMany({ where: { clubId: club.club_id } }),
+      prisma.bricks_items.findMany({ where: { clubId: club.club_id } }),
       prisma.bricks_reservation.findMany({ where: { status: { in: ['Reserved', 'Delivered'] } } })
     ]);
 
     const activeCounts = activeReservations.reduce((acc, r) => {
-      if (r.brickslabId) acc[r.brickslabId] = (acc[r.brickslabId] || 0) + 1;
-      if (r.libraryBookId) acc[r.libraryBookId] = (acc[r.libraryBookId] || 0) + 1;
+      const id = r.itemId || r.brickslabId || r.libraryBookId;
+      if (id) acc[id] = (acc[id] || 0) + 1;
       return acc;
     }, {});
 
-    const items = [
-      ...brickslabs.map(b => {
-        const available = (b.stock || 1) - (activeCounts[b.id] || 0);
-        return {
-          id: b.id, title: b.title, description: b.description, imageUrl: b.imageUrl,
-          difficulty: b.difficulty, tags: b.tags, type: 'Aim Brickslab',
-          isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1, legoReference: b.legoReference,
-          isProOnly: b.isProOnly
-        };
-      }),
-      ...libraryBooks.map(b => {
-        const available = (b.stock || 1) - (activeCounts[b.id] || 0);
-        return {
-          id: b.id, title: b.title, author: b.author, isbn: b.isbn, description: b.description, imageUrl: b.imageUrl,
-          minimumRank: b.minimumRank, tags: b.tags, type: 'Libro',
-          isAvailable: available > 0, status: available > 0 ? 'Disponible' : 'Reservado', stock: b.stock || 1
-        };
-      })
-    ];
-    res.json(items);
+    const mappedItems = items.map(item => {
+      const cat = categories.find(c => c.id === item.categoryId);
+      const available = (item.stock || 1) - (activeCounts[item.id] || 0);
+      return {
+        ...mapItem(item, cat),
+        isAvailable: available > 0,
+        status: available > 0 ? 'Disponible' : 'Reservado'
+      };
+    });
+
+    res.json(mappedItems);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
@@ -444,69 +719,57 @@ app.get('/api/catalog', async (req, res) => {
 
 app.post('/api/reservations', async (req, res) => {
   try {
-    const { userId, type, itemId } = req.body;
+    const { userId, itemId, categoryId } = req.body;
 
-    // Permissions check
-    const ranks = await prisma.bricks_ranks.findUnique({ where: { userId } });
-    const canReserveBrickslab = ranks?.canReserveBrickslab || false;
-    const canReserveLibrary = ranks?.canReserveLibrary || false;
-
-    const item = type === 'Aim Brickslab' 
-      ? await prisma.bricks_brickslab.findUnique({ where: { id: itemId } })
-      : await prisma.bricks_librarybook.findUnique({ where: { id: itemId } });
-
+    const item = await prisma.bricks_items.findUnique({ where: { id: itemId } });
     if (!item) return res.status(404).json({ error: 'Artículo no encontrado' });
 
-    if (type === 'Aim Brickslab') {
-      if (!canReserveBrickslab && !ranks?.brickslabPro) {
-        return res.status(403).json({ error: "No tienes el rango necesario para reservar esta categoría." });
-      }
-      if (item.isProOnly && !ranks?.brickslabPro) {
-        return res.status(403).json({ error: "Este set es exclusivo para el rango 'Brickslab Pro'. No puedes llevarlo a casa." });
-      }
-    }
-    if (type === 'Libro' && !canReserveLibrary) {
-      return res.status(403).json({ error: "No tienes el rango 'Biblioteca' para reservar esta categoría." });
+    const finalCategoryId = categoryId || item.categoryId;
+
+    // Permissions check
+    const permission = await prisma.bricks_user_permissions.findUnique({
+      where: { userId_categoryId: { userId, categoryId: finalCategoryId } }
+    });
+
+    if (!permission || !permission.isStandard) {
+      return res.status(403).json({ error: "No tienes el rango necesario para reservar en esta categoría." });
     }
 
+    if (item.isProOnly && !permission.isPro) {
+      return res.status(403).json({ error: "Este artículo es exclusivo para miembros Pro." });
+    }
+
+    // Limit check (usually 1 active per category, but we can make it configurable)
     const userActiveInCategory = await prisma.bricks_reservation.count({
       where: {
         userId,
         status: { in: ['Reserved', 'Delivered'] },
-        ...(type === 'Aim Brickslab' ? { brickslabId: { not: null } } : { libraryBookId: { not: null } })
+        categoryId: finalCategoryId
       }
     });
 
     if (userActiveInCategory > 0) {
-      return res.status(400).json({ error: `Ya tienes un ${type === 'Libro' ? 'Libro' : 'Aim Brickslab'} reservado. Debes terminar y entregarlo antes de poder reservar otro de la misma categoría.` });
+      return res.status(400).json({ error: `Ya tienes un artículo de esta categoría reservado. Debes entregarlo primero.` });
     }
 
+    // Stock check
     const activeCurrent = await prisma.bricks_reservation.count({
       where: {
         status: { in: ['Reserved', 'Delivered'] },
-        ...(type === 'Aim Brickslab' ? { brickslabId: itemId } : { libraryBookId: itemId })
+        itemId
       }
     });
 
-    let maxStock = 1;
-    if (type === 'Aim Brickslab') {
-      const item = await prisma.bricks_brickslab.findUnique({ where: { id: itemId } });
-      maxStock = item ? item.stock || 1 : 1;
-    } else {
-      const item = await prisma.bricks_librarybook.findUnique({ where: { id: itemId } });
-      maxStock = item ? item.stock || 1 : 1;
-    }
-
-    if (activeCurrent >= maxStock) {
+    if (activeCurrent >= (item.stock || 1)) {
       return res.status(400).json({ error: 'No quedan unidades disponibles de este artículo.' });
     }
 
     await prisma.bricks_reservation.create({
       data: {
         userId,
-        status: 'Reserved',
-        brickslabId: type === 'Aim Brickslab' ? itemId : null,
-        libraryBookId: type === 'Libro' ? itemId : null,
+        itemId,
+        categoryId: finalCategoryId,
+        status: 'Reserved'
       }
     });
 
@@ -541,13 +804,13 @@ app.delete('/api/reservations/:id', async (req, res) => {
 // Missing pieces endpoints
 app.post('/api/pieces/report', async (req, res) => {
   try {
-    const { userId, brickslabId, description } = req.body;
-    if (!userId || !brickslabId || !description) return res.status(400).json({ error: 'Faltan datos' });
+    const { userId, itemId, description } = req.body;
+    if (!userId || !itemId || !description) return res.status(400).json({ error: 'Faltan datos' });
 
     await prisma.bricks_missing_pieces.create({
       data: {
         userId,
-        brickslabId,
+        itemId,
         description,
         status: 'Pending'
       }
@@ -562,10 +825,19 @@ app.post('/api/pieces/report', async (req, res) => {
 
 app.get('/api/admin/pieces', async (req, res) => {
   try {
+    const { clubId } = req.query;
+    let club;
+    if (clubId) {
+      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+    } else {
+      club = await prisma.tul_clubs.findFirst();
+    }
+
     const reports = await prisma.bricks_missing_pieces.findMany({
+      where: { user: { club_id: club.club_id } },
       include: {
         user: true,
-        brickslab: true
+        item: true
       },
       orderBy: { reportedAt: 'desc' }
     });
@@ -574,7 +846,7 @@ app.get('/api/admin/pieces', async (req, res) => {
       id: r.id,
       userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
       userEmail: r.user.email,
-      itemName: r.brickslab.title,
+      itemName: r.item?.title || 'Artículo',
       description: r.description,
       reportedAt: r.reportedAt,
       status: r.status
