@@ -191,7 +191,7 @@ function App() {
       return;
     }
 
-    const perm = user.permissions?.[item.categoryId];
+    const perm = user.permissions?.[item.categoryId || ''];
     if (!perm || !perm.standard) {
       const cat = categories.find(c => c.id === item.categoryId);
       setShowRankAlert({ show: true, type: cat?.name || 'esta categoría' } as any);
