@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { ArrowUp, MessageCircle, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { ArrowUp, MessageCircle, AlertCircle, CheckCircle2, X, Plus } from 'lucide-react';
 import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
