@@ -1462,12 +1462,15 @@ app.get('/*path', (req, res) => {
 app.get('/api/admin/memberships', async (req, res) => {
   try {
     const { clubId } = req.query;
+    console.log(`[Memberships] Fetching for clubId: ${clubId}`);
     if (!clubId) return res.status(400).json({ error: 'Falta clubId' });
     
     const memberships = await prisma.bricks_club_memberships.findMany({
       where: { clubId },
       orderBy: { createdAt: 'desc' }
     });
+
+    console.log(`[Memberships] Found ${memberships.length} records.`);
 
     // Check who is already registered
     const registeredUsers = await prisma.users.findMany({
