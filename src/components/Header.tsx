@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy, LayoutGrid } from 'lucide-react';
+import { Box, LogIn, User, Moon, Sun, Heart } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;

@@ -391,18 +391,7 @@ function App() {
       <main className="animate-fade-in">
         {currentView === 'catalog' ? (
           <>
-            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-              <h2 className="text-gradient hero-title">
-                {activeCategoryId 
-                  ? categories.find(c => c.id === activeCategoryId)?.name 
-                  : 'Explorar Catálogo'}
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto' }}>
-                {activeCategoryId 
-                  ? `Reserva tus ${categories.find(c => c.id === activeCategoryId)?.name} favoritos.`
-                  : 'Descubre todas las categorías disponibles para reservar en nuestro local.'}
-              </p>
-            </div>
+            <div style={{ height: '1rem' }}></div>
             {activePoll && (
               <div className="glass-panel animate-fade-in" style={{ marginBottom: '3rem', padding: '2rem', border: '2px solid var(--accent)' }}>
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)', textAlign: 'center' }}>📊 Cuestionario Activo: {activePoll.title}</h3>
