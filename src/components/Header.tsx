@@ -37,19 +37,20 @@ export const Header: React.FC<Props> = ({
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
   const btnStyle = {
-    padding: '0.5rem 1rem',
+    padding: '0.4rem 0.75rem',
     borderRadius: '10px',
     border: '1px solid var(--surface-border)',
     background: 'rgba(255,255,255,0.03)',
     color: 'var(--text)',
     fontWeight: 600,
-    fontSize: '0.85rem',
+    fontSize: '0.8rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.4rem',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    minHeight: '38px'
+    minHeight: '34px',
+    whiteSpace: 'nowrap' as const
   };
 
   const activeBtnStyle = {
@@ -59,56 +60,50 @@ export const Header: React.FC<Props> = ({
     color: 'var(--primary)'
   };
 
-  const proBtnStyle = {
-    ...btnStyle,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.1))',
-    color: '#F59E0B'
-  };
-
-  const donateBtnStyle = {
-    ...btnStyle,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-    background: 'rgba(239, 68, 68, 0.05)',
-    color: '#EF4444'
-  };
-
   return (
     <>
       <header className="glass-panel animate-slide-down" style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between', 
-        padding: '0.6rem 2rem', 
+        padding: '0.6rem 1.5rem', 
         marginBottom: '2rem',
-        gap: '2rem'
+        gap: '1rem',
+        overflowX: 'auto',
+        scrollbarWidth: 'none'
       }}>
         {/* Left: Logo */}
         <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flexShrink: 0 }} 
+          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', flexShrink: 0 }} 
           onClick={() => onTabChange('catalog')}
         >
-          <div style={{ background: 'var(--primary)', padding: '0.4rem', borderRadius: '8px' }}>
-            <Box color="#fff" size={20} />
+          <div style={{ background: 'var(--primary)', padding: '0.35rem', borderRadius: '8px' }}>
+            <Box color="#fff" size={18} />
           </div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Aim Brickslab</h1>
+          <h1 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Aim Brickslab</h1>
         </div>
 
-        {/* Right: All Buttons */}
-        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <button style={proBtnStyle} onClick={onProClick}>
-            <Crown size={16} /> Premium: ¡Llévalo a casa!
+        {/* Right: All Buttons in ONE line */}
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
+          <button 
+            style={{ ...btnStyle, borderColor: 'rgba(245, 158, 11, 0.3)', color: '#F59E0B' }} 
+            onClick={onProClick}
+          >
+            <Crown size={14} color="#F59E0B" /> Premium: ¡Llévalo a casa!
           </button>
 
-          <button style={donateBtnStyle} onClick={() => setShowDonationModal(true)}>
-            <Heart size={16} fill="#EF4444" /> Dona un set LEGO®
+          <button 
+            style={{ ...btnStyle, borderColor: 'rgba(239, 68, 68, 0.3)', color: '#EF4444' }} 
+            onClick={() => setShowDonationModal(true)}
+          >
+            <Heart size={14} fill="#EF4444" /> Dona un set LEGO®
           </button>
 
           <button 
             style={currentView === 'ranking' ? activeBtnStyle : btnStyle} 
             onClick={onRankingClick}
           >
-            <Trophy size={16} /> Ranking
+            <Trophy size={14} color="#F59E0B" /> Ranking
           </button>
 
           {isLoggedIn ? (
@@ -125,10 +120,10 @@ export const Header: React.FC<Props> = ({
                 style={currentView === 'profile' ? activeBtnStyle : btnStyle} 
                 onClick={onProfileClick}
               >
-                <User size={16} /> Mi Perfil
+                <User size={14} /> Mi Perfil
               </button>
               <button 
-                style={{ ...btnStyle, color: '#F87171' }} 
+                style={{ ...btnStyle, color: '#F87171', borderColor: 'rgba(239, 68, 68, 0.2)' }} 
                 onClick={onLogoutClick}
               >
                 Cerrar Sesión
@@ -136,7 +131,7 @@ export const Header: React.FC<Props> = ({
             </>
           ) : (
             <button style={{ ...btnStyle, background: 'var(--primary)', color: '#fff', border: 'none' }} onClick={onLoginClick}>
-              <LogIn size={16} /> Iniciar Sesión
+              <LogIn size={14} /> Iniciar Sesión
             </button>
           )}
         </div>
@@ -147,13 +142,13 @@ export const Header: React.FC<Props> = ({
         style={{
           position: 'fixed', bottom: '2rem', left: '2rem', zIndex: 9999,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: '45px', height: '45px', borderRadius: '50%', cursor: 'pointer',
+          width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer',
           background: 'var(--accent)', border: 'none', color: 'white',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
         }}
         aria-label="Alternar tema"
       >
-        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
       {showDonationModal && (
