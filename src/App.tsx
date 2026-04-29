@@ -56,7 +56,16 @@ function App() {
       const data = await res.json();
       if (!data.error) {
         setUser(data);
-        if (data.categories) setCategories(data.categories);
+        if (data.categories) {
+          const sortedCats = [...data.categories].sort((a: any, b: any) => {
+            if (a.name === 'Aim Brickslab') return -1;
+            if (b.name === 'Aim Brickslab') return 1;
+            if (a.name === 'Biblioteca') return -1;
+            if (b.name === 'Biblioteca') return 1;
+            return a.name.localeCompare(b.name);
+          });
+          setCategories(sortedCats);
+        }
         localStorage.setItem('aim_bricks_user', JSON.stringify(data));
       }
     } catch (e) { console.error('Error syncing session:', e); }
@@ -101,15 +110,15 @@ function App() {
 
   const loadCatalog = async () => {
     try {
-      const url = user?.clubId 
-        ? `${API_URL}/api/catalog?clubId=${user.clubId}` 
+      const url = user?.clubId
+        ? `${API_URL}/api/catalog?clubId=${user.clubId}`
         : `${API_URL}/api/catalog`;
-        
+
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setItems(data);
-        
+
         // Extract unique categories from items if we don't have them yet
         if (categories.length === 0) {
           const catsMap: Record<string, any> = {};
@@ -118,7 +127,13 @@ function App() {
               catsMap[item.categoryId] = { id: item.categoryId, name: item.type };
             }
           });
-          const cats = Object.values(catsMap);
+          const cats = Object.values(catsMap).sort((a: any, b: any) => {
+            if (a.name === 'Aim Brickslab') return -1;
+            if (b.name === 'Aim Brickslab') return 1;
+            if (a.name === 'Biblioteca') return -1;
+            if (b.name === 'Biblioteca') return 1;
+            return a.name.localeCompare(b.name);
+          });
           if (cats.length > 0) setCategories(cats);
         }
       }
@@ -137,7 +152,14 @@ function App() {
       if (res.ok) {
         setUser(data.profile);
         if (data.profile.categories) {
-          setCategories(data.profile.categories);
+          const sortedCats = [...data.profile.categories].sort((a: any, b: any) => {
+            if (a.name === 'Aim Brickslab') return -1;
+            if (b.name === 'Aim Brickslab') return 1;
+            if (a.name === 'Biblioteca') return -1;
+            if (b.name === 'Biblioteca') return 1;
+            return a.name.localeCompare(b.name);
+          });
+          setCategories(sortedCats);
         }
         localStorage.setItem('aim_bricks_token', data.token);
         localStorage.setItem('aim_bricks_user', JSON.stringify(data.profile));
@@ -332,6 +354,16 @@ function App() {
       if (res.ok) {
         const newData = await res.json();
         setUser(newData);
+        if (newData.categories) {
+          const sortedCats = [...newData.categories].sort((a: any, b: any) => {
+            if (a.name === 'Aim Brickslab') return -1;
+            if (b.name === 'Aim Brickslab') return 1;
+            if (a.name === 'Biblioteca') return -1;
+            if (b.name === 'Biblioteca') return 1;
+            return a.name.localeCompare(b.name);
+          });
+          setCategories(sortedCats);
+        }
         localStorage.setItem('aim_bricks_user', JSON.stringify(newData));
       }
     } catch (err) {
@@ -392,7 +424,11 @@ function App() {
       <main className="animate-fade-in">
         {currentView === 'catalog' ? (
           <>
-            <div style={{ height: '1rem' }}></div>
+            <div style={{ padding: '0 2rem', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-1px' }}>Catálogo</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>Explora y reserva tus articulos favoritos del catálogo.</p>
+            </div>
+
             {activePoll && (
               <div className="glass-panel animate-fade-in" style={{ marginBottom: '3rem', padding: '2rem', border: '2px solid var(--accent)' }}>
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)', textAlign: 'center' }}>📊 Cuestionario Activo: {activePoll.title}</h3>
@@ -434,10 +470,10 @@ function App() {
               </div>
             )}
 
-            <Catalog 
-              items={items} 
+            <Catalog
+              items={items}
               categories={categories}
-              onReserveClick={handleReserveClick} 
+              onReserveClick={handleReserveClick}
               onProAlert={(item) => {
                 const perm = user?.permissions?.[item.categoryId || ''];
                 if (perm?.pro) {

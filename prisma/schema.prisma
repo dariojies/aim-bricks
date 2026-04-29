@@ -44,7 +44,7 @@ model users {
   bricks_missing_pieces                                              bricks_missing_pieces[]
   bricks_poll_vote                                                   bricks_poll_vote[]
   bricks_user_permissions                                            bricks_user_permissions[]
-  clubs                                                              tul_clubs?                @relation(fields: [club_id], references: [club_id], onUpdate: NoAction)
+  clubs                                                              bricks_clubs?             @relation(fields: [club_id], references: [id], onUpdate: NoAction)
 }
 
 model bricks_brickslab {
@@ -519,9 +519,6 @@ model tul_clubs {
   tul_loot_chests  tul_loot_chests[]
   tul_market_items tul_market_items[]
   tul_vocabulary   tul_vocabulary[]
-  users            users[]
-  bricks_categories bricks_categories[]
-  bricks_items     bricks_items[]
 }
 
 model tul_evaluation_movements {
@@ -717,6 +714,20 @@ model bricks_poll_vote {
   @@unique([optionId, userId])
 }
 
+model bricks_clubs {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  subdomain   String?  @unique
+  description String?
+  logo        String?
+  plan        String   @default("free")
+  createdAt   DateTime @default(now())
+  
+  users       users[]
+  categories  bricks_categories[]
+  items       bricks_items[]
+}
+
 model bricks_categories {
   id             String   @id @default(uuid()) @db.Uuid
   clubId         String   @db.Uuid
@@ -727,7 +738,7 @@ model bricks_categories {
   createdAt      DateTime @default(now())
   items          bricks_items[]
   user_permissions bricks_user_permissions[]
-  club           tul_clubs @relation(fields: [clubId], references: [club_id], onDelete: Cascade)
+  club           bricks_clubs @relation(fields: [clubId], references: [id], onDelete: Cascade)
 }
 
 model bricks_items {
@@ -743,7 +754,7 @@ model bricks_items {
   createdAt     DateTime @default(now())
   isAvailable   Boolean  @default(true)
   category      bricks_categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  club          tul_clubs         @relation(fields: [clubId], references: [club_id], onDelete: Cascade)
+  club          bricks_clubs      @relation(fields: [clubId], references: [id], onDelete: Cascade)
   missing_pieces bricks_missing_pieces[]
   reservations   bricks_reservation[]
   history        bricks_userhistory[]

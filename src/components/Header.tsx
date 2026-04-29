@@ -85,19 +85,23 @@ export const Header: React.FC<Props> = ({
 
         {/* Right: All Buttons in ONE line */}
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
-          <button 
-            style={{ ...btnStyle, borderColor: 'rgba(245, 158, 11, 0.3)', color: '#F59E0B' }} 
-            onClick={onProClick}
-          >
-            <Crown size={14} color="#F59E0B" /> Premium: ¡Llévalo a casa!
-          </button>
+          {userRole !== 'superadmin' && (
+            <>
+              <button 
+                style={{ ...btnStyle, borderColor: 'rgba(245, 158, 11, 0.3)', color: '#F59E0B' }} 
+                onClick={onProClick}
+              >
+                <Crown size={14} color="#F59E0B" /> Premium: ¡Llévalo a casa!
+              </button>
 
-          <button 
-            style={{ ...btnStyle, borderColor: 'rgba(239, 68, 68, 0.3)', color: '#EF4444' }} 
-            onClick={() => setShowDonationModal(true)}
-          >
-            <Heart size={14} fill="#EF4444" /> Dona un set LEGO®
-          </button>
+              <button 
+                style={{ ...btnStyle, borderColor: 'rgba(239, 68, 68, 0.3)', color: '#EF4444' }} 
+                onClick={() => setShowDonationModal(true)}
+              >
+                <Heart size={14} fill="#EF4444" /> Dona un set LEGO®
+              </button>
+            </>
+          )}
 
           <button 
             style={currentView === 'ranking' ? activeBtnStyle : btnStyle} 

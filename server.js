@@ -19,7 +19,24 @@ const PORT = process.env.PORT || 3000;
 // Auto-sync schema and migrate data safely
 async function syncSchema() {
   try {
-    // 1. Create tables if they don't exist (using IF NOT EXISTS where possible)
+    // 0. Ensure bricks_clubs exists
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "bricks_clubs" (
+        "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+        "name" TEXT NOT NULL,
+        "subdomain" TEXT,
+        "description" TEXT,
+        "logo" TEXT,
+        "plan" TEXT NOT NULL DEFAULT 'free',
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "bricks_clubs_pkey" PRIMARY KEY ("id")
+      );
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "bricks_clubs_subdomain_key" ON "bricks_clubs"("subdomain");
+    `);
+
+    // 1. Create tables if they don't exist
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "bricks_categories" (
         "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -84,13 +101,29 @@ async function syncSchema() {
 
 async function migrateToDynamic() {
   try {
-    // Check if we have legacy data that hasn't been migrated yet
+    // 1. Ensure main club exists in bricks_clubs (Safely for shared DB)
+    let club = await prisma.bricks_clubs.findFirst({ where: { name: 'Aim Education' } });
+    if (!club) {
+      const legacyClub = await prisma.tul_clubs.findFirst({ where: { name: 'Aim Education' } });
+      if (legacyClub) {
+        club = await prisma.bricks_clubs.create({
+          data: {
+            id: legacyClub.club_id,
+            name: legacyClub.name,
+            logo: legacyClub.logo,
+            plan: legacyClub.plan || 'pro'
+          }
+        });
+      } else {
+        club = await prisma.bricks_clubs.create({ data: { name: 'Aim Education', plan: 'pro' } });
+      }
+    }
+
+    // 2. Check if we have legacy data that hasn't been migrated yet
     const legacyBrickslabsCount = await prisma.bricks_brickslab.count();
     const legacyBooksCount = await prisma.bricks_librarybook.count();
     
     if (legacyBrickslabsCount === 0 && legacyBooksCount === 0) return; 
-
-    console.log(`Starting data migration to dynamic categories (${legacyBrickslabsCount} sets, ${legacyBooksCount} books)...`);
 
     const itemCount = await prisma.bricks_items.count();
     if (itemCount > 0) {
@@ -98,18 +131,13 @@ async function migrateToDynamic() {
       return;
     }
 
-    // Find main club
-    let club = await prisma.tul_clubs.findFirst({ where: { name: 'Aim Education' } });
-    if (!club) club = await prisma.tul_clubs.findFirst();
-    if (!club) return console.log('No clubs found, cannot migrate.');
-
     // Create default categories using UPSERT to be safe
     const legoCat = await prisma.bricks_categories.upsert({
       where: { id: '00000000-0000-0000-0000-000000000001' }, // Fixed ID for main Lego cat
       update: {},
       create: {
         id: '00000000-0000-0000-0000-000000000001',
-        clubId: club.club_id,
+        clubId: club.id,
         name: 'Aim Brickslab',
         icon: 'Box',
         isHomeAllowed: true,
@@ -122,7 +150,7 @@ async function migrateToDynamic() {
       update: {},
       create: {
         id: '00000000-0000-0000-0000-000000000002',
-        clubId: club.club_id,
+        clubId: club.id,
         name: 'Biblioteca',
         icon: 'Book',
         isHomeAllowed: false,
@@ -135,7 +163,7 @@ async function migrateToDynamic() {
     for (const b of brickslabs) {
       const newItem = await prisma.bricks_items.create({
         data: {
-          clubId: club.club_id,
+          clubId: club.id,
           categoryId: legoCat.id,
           title: b.title,
           description: b.description,
@@ -168,7 +196,7 @@ async function migrateToDynamic() {
     for (const b of books) {
       const newItem = await prisma.bricks_items.create({
         data: {
-          clubId: club.club_id,
+          clubId: club.id,
           categoryId: libraryCat.id,
           title: b.title,
           description: b.description,
@@ -420,9 +448,9 @@ app.get('/api/admin/users/permissions', async (req, res) => {
     const { clubId } = req.query;
     let club;
     if (clubId) {
-      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
     } else {
-      club = await prisma.tul_clubs.findFirst();
+      club = await prisma.bricks_clubs.findFirst();
     }
 
     if (!club) return res.json([]);
@@ -506,9 +534,9 @@ app.get('/api/admin/reservations', async (req, res) => {
     const { clubId } = req.query;
     let club;
     if (clubId) {
-      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
     } else {
-      club = await prisma.tul_clubs.findFirst();
+      club = await prisma.bricks_clubs.findFirst();
     }
 
     if (!club) return res.json([]);
@@ -607,7 +635,7 @@ app.get('/api/catalog', async (req, res) => {
     if (!club) return res.json([]);
 
     const items = await prisma.bricks_items.findMany({
-      where: { clubId: club.club_id },
+      where: { clubId: club.id },
       include: { category: true },
       orderBy: { createdAt: 'desc' }
     });
@@ -646,14 +674,14 @@ app.get('/api/admin/categories', async (req, res) => {
     const { clubId } = req.query;
     let club;
     if (clubId) {
-      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
     } else {
-      club = await prisma.tul_clubs.findFirst();
+      club = await prisma.bricks_clubs.findFirst();
     }
     if (!club) return res.json([]);
 
     const categories = await prisma.bricks_categories.findMany({
-      where: { clubId: club.club_id },
+      where: { clubId: club.id },
       include: { _count: { select: { items: true } } }
     });
     res.json(categories);
@@ -764,9 +792,9 @@ app.get('/api/catalog', async (req, res) => {
     // Find club or default to first
     let club;
     if (clubId) {
-      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
     } else {
-      club = await prisma.tul_clubs.findFirst();
+      club = await prisma.bricks_clubs.findFirst();
     }
 
     if (!club) return res.json([]);
@@ -911,13 +939,13 @@ app.get('/api/admin/pieces', async (req, res) => {
     const { clubId } = req.query;
     let club;
     if (clubId) {
-      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
     } else {
-      club = await prisma.tul_clubs.findFirst();
+      club = await prisma.bricks_clubs.findFirst();
     }
 
     const reports = await prisma.bricks_missing_pieces.findMany({
-      where: { user: { club_id: club.club_id } },
+      where: { user: { club_id: club.id } },
       include: {
         user: true,
         item: true
@@ -991,13 +1019,18 @@ app.post('/api/polls/vote', async (req, res) => {
   try {
     const { userId, optionId } = req.body;
 
-    // Ensure user has brickslab rank
+    // Ensure user has brickslab rank (standard or pro)
     const user = await prisma.users.findUnique({
       where: { user_id: userId },
-      include: { bricks_ranks: true }
+      include: { bricks_ranks: true, bricks_user_permissions: { include: { category: true } } }
     });
 
-    if (!user || !user.bricks_ranks || !user.bricks_ranks.canReserveBrickslab) {
+    const hasLegacyPerm = user?.bricks_ranks && (user.bricks_ranks.canReserveBrickslab || user.bricks_ranks.brickslabPro);
+    const hasDynamicPerm = user?.bricks_user_permissions?.some(p => 
+      p.category.name === 'Aim Brickslab' && (p.isStandard || p.isPro)
+    );
+
+    if (!user || (!hasLegacyPerm && !hasDynamicPerm)) {
       return res.status(403).json({ error: 'Necesitas el rango Aim Brickslab para votar.' });
     }
 
