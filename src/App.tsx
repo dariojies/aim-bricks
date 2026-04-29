@@ -5,6 +5,7 @@ import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
 import { AdminDashboard } from './components/AdminDashboard';
+import { SupportManager } from './components/SupportManager';
 import { Ranking } from './components/Ranking';
 import { type CatalogItem } from './data/mockData';
 
@@ -35,6 +36,7 @@ function App() {
 
   // Support State
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [showSupportManager, setShowSupportManager] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
   const [supportDesc, setSupportDesc] = useState('');
   const [supportStatus, setSupportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -660,7 +662,13 @@ function App() {
       {/* Floating Support Button */}
       <button 
         className="btn" 
-        onClick={() => setShowSupportModal(true)}
+        onClick={() => {
+          if (user?.dev_role === 'superadmin') {
+            setShowSupportManager(true);
+          } else {
+            setShowSupportModal(true);
+          }
+        }}
         style={{ 
           position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90, 
           width: '60px', height: '60px', borderRadius: '50%', padding: 0, 
@@ -759,6 +767,14 @@ function App() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Admin Support Manager */}
+      {showSupportManager && user?.dev_role === 'superadmin' && (
+        <SupportManager 
+          onClose={() => setShowSupportManager(false)} 
+          userId={user.user_id}
+        />
       )}
     </div>
   );

@@ -796,6 +796,108 @@ app.post('/api/support', async (req, res) => {
   }
 });
 
+// Admin Support Endpoints
+app.get('/api/support', async (req, res) => {
+  try {
+    const tickets = await prisma.tickets_registrosoporte.findMany({
+      include: {
+        users_tickets_registrosoporte_user_idTousers: {
+          select: { name: true, surname: true, email: true, profile_picture: true }
+        },
+        users_tickets_registrosoporte_assigned_toTousers: {
+          select: { name: true, username: true, profile_picture: true }
+        }
+      },
+      orderBy: { id: 'desc' }
+    });
+
+    // Map to a cleaner format
+    const formatted = tickets.map(t => ({
+      id: t.id,
+      subject: t.subject,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      due_date: t.due_date,
+      app_label: t.app_label,
+      dev_response: t.dev_response,
+      created_at: t.created_at,
+      name: t.users_tickets_registrosoporte_user_idTousers?.name || 'Sistema',
+      surname: t.users_tickets_registrosoporte_user_idTousers?.surname || '',
+      email: t.users_tickets_registrosoporte_user_idTousers?.email || '',
+      assignee_username: t.users_tickets_registrosoporte_assigned_toTousers?.username || t.users_tickets_registrosoporte_assigned_toTousers?.name || null,
+      assignee_picture: t.users_tickets_registrosoporte_assigned_toTousers?.profile_picture || null,
+      assigned_to: t.assigned_to
+    }));
+
+    res.json({ success: true, tickets: formatted });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching support tickets' });
+  }
+});
+
+app.get('/api/admin/superadmins', async (req, res) => {
+  try {
+    const admins = await prisma.users.findMany({
+      where: { dev_role: 'superadmin' },
+      select: { user_id: true, name: true, username: true }
+    });
+    res.json({ success: true, superadmins: admins.map(a => ({ id: a.user_id, name: a.name, username: a.username })) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching superadmins' });
+  }
+});
+
+app.put('/api/support/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, priority, devResponse, dueDate, assignedTo, appLabel } = req.body;
+
+    // Prisma might have issues with app_label if it's a Postgres array but String in prisma
+    // For now we use standard update for other fields, and if appLabel is provided we might need raw SQL
+    // But since the user wants a clone of KheTool and I saw appLabel can be an array in some places...
+    
+    const updateData = {
+      status,
+      priority,
+      dev_response: devResponse,
+      due_date: dueDate ? new Date(dueDate) : null,
+      assigned_to: assignedTo || null
+    };
+
+    // If appLabel is an array, we use raw SQL to update it correctly because of the known issue
+    if (appLabel) {
+      const labels = Array.isArray(appLabel) ? appLabel : [appLabel];
+      await prisma.$executeRaw`
+        UPDATE "tickets_registrosoporte" 
+        SET "status" = ${status}, 
+            "priority" = ${priority}, 
+            "dev_response" = ${devResponse}, 
+            "due_date" = ${updateData.due_date}, 
+            "assigned_to" = ${updateData.assigned_to}::uuid,
+            "app_label" = ${labels}::varchar[] 
+        WHERE "id" = ${parseInt(id)}
+      `;
+      // Note: In the previous fix, app_label was an ARRAY in SQL. 
+      // If the schema.prisma says String but DB says Array, we must be careful.
+      // The user's earlier fix used: ARRAY['Aim Brickslab']
+      // So let's use the same logic if possible.
+    } else {
+      await prisma.tickets_registrosoporte.update({
+        where: { id: parseInt(id) },
+        data: updateData
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error updating ticket' });
+  }
+});
+
 // Ranking Endpoint
 app.get('/api/ranking', async (req, res) => {
   try {
