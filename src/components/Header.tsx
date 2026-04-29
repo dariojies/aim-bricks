@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, LogIn, User, Moon, Sun, Heart } from 'lucide-react';
+import { Box, LogIn, User, Moon, Sun, Heart, Trophy, Crown } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -46,41 +46,42 @@ export const Header: React.FC<Props> = ({
         marginBottom: '2rem',
         gap: '2rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => onTabChange('catalog')}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+          {/* Logo - Clicks to home */}
+          <div 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} 
+            onClick={() => onTabChange('catalog')}
+          >
             <div style={{ background: 'var(--primary)', padding: '0.5rem', borderRadius: '8px' }}>
               <Box color="#fff" size={20} />
             </div>
             <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Aim Brickslab</h1>
           </div>
 
-          <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <button 
-              onClick={() => onTabChange('catalog')}
-              style={{ 
-                background: 'none', border: 'none', color: currentView === 'catalog' ? 'var(--primary)' : 'var(--text-muted)', 
-                fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem', textTransform: 'uppercase' 
-              }}
-            >
-              Inicio
-            </button>
+          <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <button 
               onClick={onRankingClick}
-              style={{ 
-                background: 'none', border: 'none', color: currentView === 'ranking' ? 'var(--primary)' : 'var(--text-muted)', 
-                fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem', textTransform: 'uppercase' 
+              style={{
+                padding: '0.5rem 1rem', borderRadius: '10px', border: '1px solid transparent',
+                background: currentView === 'ranking' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.03)',
+                color: currentView === 'ranking' ? '#F59E0B' : 'var(--text-muted)',
+                fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem'
               }}
             >
-              Ranking
+              <Trophy size={18} /> Ranking
             </button>
+
             <button 
               onClick={onProClick}
               style={{ 
-                background: 'none', border: 'none', color: '#F59E0B', 
-                fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', textTransform: 'uppercase' 
+                display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', 
+                padding: '0.5rem 1.2rem', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)', 
+                color: '#FCD34D', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 700, fontSize: '0.95rem'
               }}
             >
-              Brickslab Pro
+              <Crown size={20} /> Brickslab Pro
             </button>
           </nav>
         </div>
