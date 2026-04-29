@@ -1465,26 +1465,33 @@ app.get('/api/admin/memberships', async (req, res) => {
     console.log(`[Memberships] Fetching for clubId: ${clubId}`);
     if (!clubId) return res.status(400).json({ error: 'Falta clubId' });
     
-    const memberships = await prisma.bricks_club_memberships.findMany({
-      where: { clubId },
-      orderBy: { createdAt: 'desc' }
-    });
+    // Query both memberships and registered users in parallel
+    const [memberships, registeredUsers] = await Promise.all([
+      prisma.bricks_club_memberships.findMany({
+        where: { clubId: clubId },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.users.findMany({
+        where: { club_id: clubId },
+        select: { email: true }
+      })
+    ]);
 
-    console.log(`[Memberships] Found ${memberships.length} records.`);
+    console.log(`[Memberships] Found ${memberships.length} authorized and ${registeredUsers.length} registered.`);
 
-    // Check who is already registered
-    const registeredUsers = await prisma.users.findMany({
-      where: { club_id: clubId },
-      select: { email: true }
-    });
     const registeredEmails = new Set(registeredUsers.map(u => u.email.toLowerCase()));
 
-    res.json(memberships.map(m => ({
-      ...m,
+    const result = memberships.map(m => ({
+      id: m.id,
+      email: m.email,
+      role: m.role,
+      createdAt: m.createdAt,
       isRegistered: registeredEmails.has(m.email.toLowerCase())
-    })));
+    }));
+
+    res.json(result);
   } catch (error) {
-    console.error(error);
+    console.error('[Memberships] Error:', error);
     res.status(500).json({ error: 'Error cargando membresías' });
   }
 });
