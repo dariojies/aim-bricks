@@ -282,7 +282,7 @@ model tickets_registrosoporte {
   priority                                         String?   @default("low") @db.VarChar(20)
   due_date                                         DateTime? @db.Timestamp(6)
   assigned_to                                      String?   @db.Uuid
-  app_label                                        String?   @default("Learning Dungeon") @db.VarChar(50)
+  app_label                                        String[]  @default(["Learning Dungeon"])
   dev_response                                     String?
   email_sent                                       Boolean?  @default(false)
   created_at                                       DateTime? @default(now()) @db.Timestamp(6)
