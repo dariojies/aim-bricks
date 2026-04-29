@@ -1517,6 +1517,16 @@ app.delete('/api/admin/memberships/:id', async (req, res) => {
   }
 });
 
+app.get('/api/admin/clubs', async (req, res) => {
+  try {
+    const clubs = await prisma.bricks_clubs.findMany({ select: { id: true, name: true } });
+    res.json(clubs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error cargando clubes' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -97,16 +97,6 @@ export const AdminDashboard: React.FC = () => {
     fetchMemberships();
   }, []);
 
-  const fetchMemberships = async () => {
-    const user = JSON.parse(localStorage.getItem('aim_bricks_user') || '{}');
-    const clubId = user.clubId || user.club_id;
-    if (!clubId) return;
-    try {
-      const res = await fetch(`${API_URL}/api/admin/memberships?clubId=${clubId}`);
-      if (res.ok) setMemberships(await res.json());
-    } catch (err) { console.error(err); }
-  };
-
   const fetchCategories = async () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/categories`);
@@ -350,16 +340,41 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const [detectedClubId, setDetectedClubId] = useState<string | null>(null);
+
+  const fetchMemberships = async () => {
+    const userStr = localStorage.getItem('aim_bricks_user') || localStorage.getItem('brickslab_user') || localStorage.getItem('user');
+    const user = JSON.parse(userStr || '{}');
+    let clubId = user.clubId || user.club_id;
+    
+    // Si es superadmin y no tiene club, intentamos pillar el primero
+    if (!clubId && user.role === 'superadmin') {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/clubs`);
+        if (res.ok) {
+          const clubs = await res.json();
+          if (clubs.length > 0) clubId = clubs[0].id;
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    setDetectedClubId(clubId);
+    if (!clubId) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/admin/memberships?clubId=${clubId}`);
+      if (res.ok) setMemberships(await res.json());
+    } catch (err) { console.error(err); }
+  };
+
   const handleAddMembership = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = JSON.parse(localStorage.getItem('aim_bricks_user') || '{}');
-    const clubId = user.clubId || user.club_id;
-    if (!clubId) return;
+    if (!detectedClubId) return;
     try {
       const res = await fetch(`${API_URL}/api/admin/memberships`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clubId, email: memberEmail, role: memberRole })
+        body: JSON.stringify({ clubId: detectedClubId, email: memberEmail, role: memberRole })
       });
       if (res.ok) {
         setMemberEmail('');
@@ -378,6 +393,16 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      {detectedClubId && (
+        <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '0.5rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.75rem', textAlign: 'center' }}>
+          🛠️ Debug: Club Detectado [{detectedClubId}]
+        </div>
+      )}
+      {!detectedClubId && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', padding: '0.5rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.75rem', textAlign: 'center' }}>
+          ⚠️ Debug: No se detectó Club ID en la sesión.
+        </div>
+      )}
       <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>
         Panel de Administración
       </h2>
