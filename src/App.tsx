@@ -426,39 +426,45 @@ function App() {
       {/* Modal de Anuncio Brickslab Pro */}
       {showProModal && (
         <div style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, padding: '1rem'
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
         }}>
           <div className="glass-panel animate-fade-in" style={{ 
-            width: '100%', maxWidth: '450px', padding: '3rem 2rem', textAlign: 'center',
-            border: '2px solid #D4AF37', position: 'relative',
-            background: 'linear-gradient(180deg, rgba(30, 30, 30, 0.95), rgba(15, 15, 15, 0.98))'
+            width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center',
+            border: '1px solid rgba(212, 175, 55, 0.5)', position: 'relative',
+            background: 'linear-gradient(180deg, #1a1a1a, #0a0a0a)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.1)'
           }}>
             <button 
-              className="btn-icon" 
               onClick={() => setShowProModal(false)}
-              style={{ position: 'absolute', top: '1rem', right: '1rem' }}
+              style={{ 
+                position: 'absolute', top: '1.25rem', right: '1.25rem',
+                background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+                cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
             >
-              <X size={20} />
+              <X size={24} />
             </button>
             
             <div style={{ 
-              width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
+              width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem',
-              boxShadow: '0 0 30px rgba(212, 175, 55, 0.4)'
+              boxShadow: '0 0 25px rgba(212, 175, 55, 0.4)'
             }}>
-              <X size={40} color="#000" style={{ transform: 'rotate(45deg)' }} /> {/* Placeholder for a crown or similar if available, using X rotated as a star/sparkle for now or just a large icon */}
+              <Plus size={36} color="#000" strokeWidth={3} />
             </div>
 
-            <h2 className="text-gradient" style={{ 
-              fontSize: '2rem', marginBottom: '1rem', 
-              background: 'linear-gradient(135deg, #D4AF37, #FFF, #FBBF24)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+            <h2 style={{ 
+              fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem', 
+              color: '#FBBF24', letterSpacing: '-0.02em'
             }}>
               Brickslab Pro
             </h2>
             
-            <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+            <p style={{ color: '#fff', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '2rem' }}>
               La posibilidad de reservar sets para montar en casa llegará próximamente con la versión <strong>Brickslab Pro</strong>.
             </p>
 
@@ -468,8 +474,9 @@ function App() {
               style={{ 
                 width: '100%', padding: '1rem', 
                 background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
-                color: '#000', fontWeight: 700, border: 'none', borderRadius: '12px',
-                fontSize: '1rem'
+                color: '#000', fontWeight: 800, border: 'none', borderRadius: '12px',
+                fontSize: '1rem', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
+                textTransform: 'uppercase', letterSpacing: '0.05em'
               }}
             >
               Entendido
