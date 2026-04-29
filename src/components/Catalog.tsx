@@ -5,16 +5,17 @@ import { Search, Box } from 'lucide-react';
 
 interface Props {
   items: CatalogItem[];
+  categories: { id: string, name: string }[];
   onReserveClick: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
 }
 
-export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) => {
-  const [filter, setFilter] = useState<'Todos' | 'Aim Brickslab' | 'Biblioteca'>('Todos');
+export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert }) => {
+  const [filterId, setFilterId] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredItems = items.filter(item => {
-    const matchesFilter = filter === 'Todos' || item.type === filter;
+    const matchesFilter = filterId === 'Todos' || item.categoryId === filterId;
     const matchesSearch = 
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -65,14 +66,21 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) 
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {['Todos', 'Aim Brickslab', 'Biblioteca'].map(f => (
+          <button
+            className={`btn ${filterId === 'Todos' ? 'btn-primary' : 'btn-outline'}`}
+            style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem', borderRadius: '12px' }}
+            onClick={() => setFilterId('Todos')}
+          >
+            Todos
+          </button>
+          {categories.map(cat => (
             <button
-              key={f}
-              className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'}`}
+              key={cat.id}
+              className={`btn ${filterId === cat.id ? 'btn-primary' : 'btn-outline'}`}
               style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem', borderRadius: '12px' }}
-              onClick={() => setFilter(f as any)}
+              onClick={() => setFilterId(cat.id)}
             >
-              {f}
+              {cat.name}
             </button>
           ))}
         </div>

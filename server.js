@@ -92,15 +92,23 @@ async function migrateToDynamic() {
 
     console.log(`Starting data migration to dynamic categories (${legacyBrickslabsCount} sets, ${legacyBooksCount} books)...`);
 
-    // Get the first club as the default "Master" club
-    let club = await prisma.tul_clubs.findFirst();
-    if (!club) {
-      club = await prisma.tul_clubs.create({ data: { name: 'Aim Education', plan: 'pro' } });
+    const itemCount = await prisma.bricks_items.count();
+    if (itemCount > 0) {
+      console.log('Schema already synced, skipping migration.');
+      return;
     }
 
-    // Create default categories
-    const legoCat = await prisma.bricks_categories.create({
-      data: {
+    // Find main club
+    let club = await prisma.tul_clubs.findFirst({ where: { name: 'Aim Education' } });
+    if (!club) club = await prisma.tul_clubs.findFirst();
+    if (!club) return console.log('No clubs found, cannot migrate.');
+
+    // Create default categories using UPSERT to be safe
+    const legoCat = await prisma.bricks_categories.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000001' }, // Fixed ID for main Lego cat
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000001',
         clubId: club.club_id,
         name: 'Aim Brickslab',
         icon: 'Box',
@@ -109,8 +117,11 @@ async function migrateToDynamic() {
       }
     });
 
-    const libraryCat = await prisma.bricks_categories.create({
-      data: {
+    const libraryCat = await prisma.bricks_categories.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000002' }, // Fixed ID for main Library cat
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000002',
         clubId: club.club_id,
         name: 'Biblioteca',
         icon: 'Book',
@@ -144,10 +155,12 @@ async function migrateToDynamic() {
         where: { brickslabId: b.id },
         data: { itemId: newItem.id, categoryId: legoCat.id }
       });
+      /*
       await prisma.bricks_missing_pieces.updateMany({
         where: { itemId: b.id }, // Legacy brickslabId
         data: { itemId: newItem.id }
       });
+      */
     }
 
     // Migrate Books

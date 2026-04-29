@@ -102,22 +102,25 @@ function App() {
 
   const loadCatalog = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/catalog`);
+      const url = user?.clubId 
+        ? `${API_URL}/api/catalog?clubId=${user.clubId}` 
+        : `${API_URL}/api/catalog`;
+        
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setItems(data);
         
-        // Extract unique categories from items
-        const cats: any[] = [];
-        data.forEach((item: any) => {
-          if (item.categoryId && !cats.find(c => c.id === item.categoryId)) {
-            cats.push({ id: item.categoryId, name: item.type });
-          }
-        });
-        
-        if (cats.length > 0) {
-          setCategories(cats);
-          if (!activeCategoryId) setActiveCategoryId(cats[0].id);
+        // Extract unique categories from items if we don't have them yet
+        if (categories.length === 0) {
+          const catsMap: Record<string, any> = {};
+          data.forEach((item: any) => {
+            if (item.categoryId && !catsMap[item.categoryId]) {
+              catsMap[item.categoryId] = { id: item.categoryId, name: item.type };
+            }
+          });
+          const cats = Object.values(catsMap);
+          if (cats.length > 0) setCategories(cats);
         }
       }
     } catch (e) { console.error('Error loading catalog:', e); }
@@ -434,7 +437,8 @@ function App() {
             )}
 
             <Catalog 
-              items={activeCategoryId ? items.filter(i => i.categoryId === activeCategoryId) : items} 
+              items={items} 
+              categories={categories}
               onReserveClick={handleReserveClick} 
               onProAlert={(item) => {
                 const perm = user?.permissions?.[item.categoryId || ''];
