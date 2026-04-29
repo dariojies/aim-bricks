@@ -444,10 +444,12 @@ function App() {
           display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
         }}>
           <div className="glass-panel animate-fade-in" style={{ 
-            width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center',
+            width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem',
+            textAlign: 'center',
             border: '1px solid rgba(212, 175, 55, 0.5)', position: 'relative',
             background: 'linear-gradient(180deg, #1a1a1a, #0a0a0a)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.1)'
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.1)',
+            borderRadius: '24px'
           }}>
             <button 
               onClick={() => setShowProModal(false)}

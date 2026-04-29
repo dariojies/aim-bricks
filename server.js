@@ -458,8 +458,8 @@ app.post('/api/reservations', async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Artículo no encontrado' });
 
     if (type === 'Aim Brickslab') {
-      if (!canReserveBrickslab) {
-        return res.status(403).json({ error: "No tienes el rango 'Brickslab' para reservar esta categoría." });
+      if (!canReserveBrickslab && !ranks?.brickslabPro) {
+        return res.status(403).json({ error: "No tienes el rango necesario para reservar esta categoría." });
       }
       if (item.isProOnly && !ranks?.brickslabPro) {
         return res.status(403).json({ error: "Este set es exclusivo para el rango 'Brickslab Pro'. No puedes llevarlo a casa." });
