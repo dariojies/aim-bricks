@@ -15,6 +15,7 @@ export interface CatalogItem {
   isbn?: string;
   author?: string;
   isProOnly?: boolean;
+  categoryId?: string;
 }
 
 export const mockItems: CatalogItem[] = [
@@ -60,11 +61,7 @@ export interface UserProfile {
   readBooks: CatalogItem[];
   builtBrickslabs: CatalogItem[];
   currentReservations: { id: string, status: string, text: string, isBrickslab?: boolean, brickslabId?: string }[];
-  permissions?: {
-    brickslab: boolean;
-    library: boolean;
-    brickslabPro: boolean;
-  };
+  permissions?: Record<string, { standard: boolean; pro: boolean }>;
 }
 
 export const mockUser: UserProfile = {

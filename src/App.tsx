@@ -438,7 +438,8 @@ function App() {
               items={activeCategoryId ? items.filter(i => i.categoryId === activeCategoryId) : items} 
               onReserveClick={handleReserveClick} 
               onProAlert={(item) => {
-                if (user?.permissions?.brickslabPro) {
+                const perm = user?.permissions?.[item.categoryId || ''];
+                if (perm?.pro) {
                   setSelectedItem(item);
                 } else {
                   setShowProModal(true);

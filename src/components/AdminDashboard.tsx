@@ -17,7 +17,7 @@ interface AdminReservation {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls' | 'categories'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -380,7 +380,7 @@ export const AdminDashboard: React.FC = () => {
         </button>
         <button
           className={`btn ${activeTab === 'categories' ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setActiveTab('categories' as any)}
+          onClick={() => setActiveTab('categories')}
         >
           Categorías
         </button>
@@ -783,7 +783,7 @@ export const AdminDashboard: React.FC = () => {
                 </select>
               </div>
 
-              {newItemType === 'Aim Brickslab' && (
+              {categories.find(c => c.id === newItemCategoryId)?.name.toLowerCase().includes('bricks') && (
                 <>
                   <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input type="checkbox" id="isLego" checked={isLego} onChange={e => setIsLego(e.target.checked)} />
@@ -802,7 +802,7 @@ export const AdminDashboard: React.FC = () => {
                 </>
               )}
 
-              {newItemType === 'Libro' && (
+              {categories.find(c => c.id === newItemCategoryId)?.name.toLowerCase().includes('libro') && (
                 <>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Autor(es)</label>
@@ -1168,7 +1168,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
-      {activeTab === ('categories' as any) && (
+      {activeTab === 'categories' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
