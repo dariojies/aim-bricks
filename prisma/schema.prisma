@@ -676,13 +676,13 @@ model tul_vocabulary {
 
 model bricks_missing_pieces {
   id          String   @id @default(uuid())
-  itemId      String   @db.Uuid
-  userId      String   @db.Uuid
-  description String
+  itemId      String?  @db.Uuid
+  userId      String?  @db.Uuid
+  description String?
   reportedAt  DateTime @default(now())
   status      String   @default("Pending")
-  item        bricks_items @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  user        users            @relation(fields: [userId], references: [user_id], onDelete: Cascade)
+  item        bricks_items? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user        users?            @relation(fields: [userId], references: [user_id], onDelete: Cascade)
 }
 
 model bricks_poll {
