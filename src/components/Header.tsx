@@ -36,98 +36,107 @@ export const Header: React.FC<Props> = ({
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
+  const btnStyle = {
+    padding: '0.5rem 1rem',
+    borderRadius: '10px',
+    border: '1px solid var(--surface-border)',
+    background: 'rgba(255,255,255,0.03)',
+    color: 'var(--text)',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    minHeight: '38px'
+  };
+
+  const activeBtnStyle = {
+    ...btnStyle,
+    borderColor: 'var(--primary)',
+    background: 'rgba(16, 185, 129, 0.1)',
+    color: 'var(--primary)'
+  };
+
+  const proBtnStyle = {
+    ...btnStyle,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.1))',
+    color: '#F59E0B'
+  };
+
+  const donateBtnStyle = {
+    ...btnStyle,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    background: 'rgba(239, 68, 68, 0.05)',
+    color: '#EF4444'
+  };
+
   return (
     <>
       <header className="glass-panel animate-slide-down" style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between', 
-        padding: '0.75rem 2rem', 
+        padding: '0.6rem 2rem', 
         marginBottom: '2rem',
         gap: '2rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
-          {/* Logo - Clicks to home */}
-          <div 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} 
-            onClick={() => onTabChange('catalog')}
-          >
-            <div style={{ background: 'var(--primary)', padding: '0.5rem', borderRadius: '8px' }}>
-              <Box color="#fff" size={20} />
-            </div>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Aim Brickslab</h1>
+        {/* Left: Logo */}
+        <div 
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flexShrink: 0 }} 
+          onClick={() => onTabChange('catalog')}
+        >
+          <div style={{ background: 'var(--primary)', padding: '0.4rem', borderRadius: '8px' }}>
+            <Box color="#fff" size={20} />
           </div>
-
-          <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <button 
-              onClick={onRankingClick}
-              style={{
-                padding: '0.5rem 1rem', borderRadius: '10px', border: '1px solid transparent',
-                background: currentView === 'ranking' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.03)',
-                color: currentView === 'ranking' ? '#F59E0B' : 'var(--text-muted)',
-                fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-                display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem'
-              }}
-            >
-              <Trophy size={18} /> Ranking
-            </button>
-
-            <button 
-              onClick={onProClick}
-              style={{ 
-                display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2))', 
-                padding: '0.5rem 1.2rem', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)', 
-                color: '#FCD34D', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 700, fontSize: '0.95rem'
-              }}
-            >
-              <Crown size={20} /> Brickslab Pro
-            </button>
-          </nav>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Aim Brickslab</h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+        {/* Right: All Buttons */}
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button style={proBtnStyle} onClick={onProClick}>
+            <Crown size={16} /> Premium: ¡Llévalo a casa!
+          </button>
+
+          <button style={donateBtnStyle} onClick={() => setShowDonationModal(true)}>
+            <Heart size={16} fill="#EF4444" /> Dona un set LEGO®
+          </button>
+
           <button 
-            className="btn btn-outline" 
-            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '0.4rem 0.8rem', fontSize: '0.8rem', minHeight: '36px' }} 
-            onClick={() => setShowDonationModal(true)}
+            style={currentView === 'ranking' ? activeBtnStyle : btnStyle} 
+            onClick={onRankingClick}
           >
-            <Heart size={14} fill="#EF4444" style={{ marginRight: '4px' }} /> Donar
+            <Trophy size={16} /> Ranking
           </button>
 
           {isLoggedIn ? (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <>
               {(userRole === 'admin' || userRole === 'superadmin') && (
                 <button 
-                  className="btn btn-outline" 
-                  style={{ borderColor: '#8B5CF6', color: '#8B5CF6', padding: '0.4rem 0.8rem', fontSize: '0.8rem', minHeight: '36px' }} 
+                  style={{ ...btnStyle, borderColor: '#8B5CF6', color: '#8B5CF6' }} 
                   onClick={onAdminClick}
                 >
                   Admin
                 </button>
               )}
               <button 
-                className={`btn ${currentView === 'profile' ? 'btn-primary' : 'btn-outline'}`} 
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', minHeight: '36px' }} 
+                style={currentView === 'profile' ? activeBtnStyle : btnStyle} 
                 onClick={onProfileClick}
               >
-                <User size={14} style={{ marginRight: '4px' }} /> Perfil
+                <User size={16} /> Mi Perfil
               </button>
               <button 
-                className="btn btn-outline" 
-                style={{ borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171', padding: '0.4rem 0.8rem', fontSize: '0.8rem', minHeight: '36px' }} 
+                style={{ ...btnStyle, color: '#F87171' }} 
                 onClick={onLogoutClick}
               >
-                Salir
+                Cerrar Sesión
               </button>
-            </div>
+            </>
           ) : (
-            <button 
-              className="btn btn-primary" 
-              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', minHeight: '36px' }} 
-              onClick={onLoginClick}
-            >
-              <LogIn size={14} style={{ marginRight: '4px' }} /> Entrar
+            <button style={{ ...btnStyle, background: 'var(--primary)', color: '#fff', border: 'none' }} onClick={onLoginClick}>
+              <LogIn size={16} /> Iniciar Sesión
             </button>
           )}
         </div>
@@ -138,13 +147,13 @@ export const Header: React.FC<Props> = ({
         style={{
           position: 'fixed', bottom: '2rem', left: '2rem', zIndex: 9999,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: '50px', height: '50px', borderRadius: '50%', cursor: 'pointer',
+          width: '45px', height: '45px', borderRadius: '50%', cursor: 'pointer',
           background: 'var(--accent)', border: 'none', color: 'white',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
         }}
         aria-label="Alternar tema"
       >
-        {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
       </button>
 
       {showDonationModal && (
