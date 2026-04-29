@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "heroku-postbuild": "npm install --include=dev && npx prisma generate && npx prisma db push && npm run build"
+    "heroku-postbuild": "npm install --include=dev && npx prisma generate && npm run build"
   },
   "engines": {
     "node": "20.x"

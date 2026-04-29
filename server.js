@@ -16,6 +16,18 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
+// Auto-sync schema safely
+async function syncSchema() {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_brickslab" ADD COLUMN IF NOT EXISTS "isProOnly" BOOLEAN NOT NULL DEFAULT false;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_ranks" ADD COLUMN IF NOT EXISTS "brickslabPro" BOOLEAN NOT NULL DEFAULT false;`);
+    console.log('Database schema verified and updated.');
+  } catch (e) {
+    console.warn('Schema sync warning:', e.message);
+  }
+}
+syncSchema();
+
 app.use(cors());
 app.use(express.json());
 
