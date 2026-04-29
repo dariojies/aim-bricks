@@ -466,44 +466,44 @@ function App() {
             </button>
             
             <div style={{ 
-              width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem',
-              boxShadow: '0 0 25px rgba(212, 175, 55, 0.4)'
+              width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem',
+              boxShadow: '0 0 20px rgba(212, 175, 55, 0.4)'
             }}>
-              <Plus size={36} color="#000" strokeWidth={3} />
+              <Plus size={32} color="#000" strokeWidth={3} />
             </div>
 
             <h2 style={{ 
-              fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem', 
+              fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem', 
               color: '#FBBF24', letterSpacing: '-0.02em'
             }}>
               Brickslab Pro
             </h2>
             
-            <p style={{ color: '#fff', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-              ¡Lleva tu pasión por LEGO® al siguiente nivel! Conviértete en miembro <strong>Brickslab Pro</strong> y disfruta de ventajas exclusivas:
+            <p style={{ color: '#fff', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+              ¡Lleva tu pasión por LEGO® al siguiente nivel con ventajas exclusivas!
             </p>
 
-            <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-              <ul style={{ color: '#e5e7eb', fontSize: '0.95rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', listStyle: 'none', padding: 0, margin: 0 }}>
-                <li style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', marginBottom: '1.25rem', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+              <ul style={{ color: '#e5e7eb', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: '#FBBF24' }}>✓</div>
-                  <div><strong>Préstamo a casa:</strong> Llévate tus sets favoritos y móntalos tranquilamente en tu hogar.</div>
+                  <div><strong>Préstamo a casa:</strong> Móntalos tranquilamente en tu hogar.</div>
                 </li>
-                <li style={{ display: 'flex', gap: '0.75rem' }}>
+                <li style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: '#FBBF24' }}>✓</div>
-                  <div><strong>Sets Exclusivos:</strong> Acceso a modelos de gran tamaño y ediciones especiales solo para miembros Pro.</div>
+                  <div><strong>Sets Exclusivos:</strong> Modelos grandes y ediciones especiales.</div>
                 </li>
-                <li style={{ display: 'flex', gap: '0.75rem' }}>
+                <li style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: '#FBBF24' }}>✓</div>
-                  <div><strong>Sin esperas:</strong> Prioridad en la reserva de novedades del catálogo.</div>
+                  <div><strong>Sin esperas:</strong> Prioridad en la reserva de novedades.</div>
                 </li>
               </ul>
             </div>
 
-            <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', border: '1px dotted #FBBF24' }}>
-              <p style={{ color: '#FBBF24', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>
-                📍 Para apuntarte, dirígete a la Secretaría de Aim Education e infórmate sobre la suscripción Brickslab Pro.
+            <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px dotted #FBBF24' }}>
+              <p style={{ color: '#FBBF24', fontWeight: 600, margin: 0, fontSize: '0.85rem' }}>
+                📍 Infórmate en Secretaría para apuntarte.
               </p>
             </div>
 
@@ -511,10 +511,10 @@ function App() {
               className="btn" 
               onClick={() => setShowProModal(false)}
               style={{ 
-                width: '100%', padding: '1rem', 
+                width: '100%', padding: '0.85rem', 
                 background: 'linear-gradient(135deg, #D4AF37, #FBBF24)',
                 color: '#000', fontWeight: 800, border: 'none', borderRadius: '12px',
-                fontSize: '1rem', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
+                fontSize: '0.9rem', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
                 textTransform: 'uppercase', letterSpacing: '0.05em'
               }}
             >
