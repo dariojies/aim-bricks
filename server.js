@@ -84,11 +84,13 @@ async function syncSchema() {
 
 async function migrateToDynamic() {
   try {
-    // Check if we have already migrated by checking if categories exist
-    const catCount = await prisma.bricks_categories.count();
-    if (catCount > 0) return; // Already migrated or categories manually added
+    // Check if we have legacy data that hasn't been migrated yet
+    const legacyBrickslabsCount = await prisma.bricks_brickslab.count();
+    const legacyBooksCount = await prisma.bricks_librarybook.count();
+    
+    if (legacyBrickslabsCount === 0 && legacyBooksCount === 0) return; 
 
-    console.log('Starting data migration to dynamic categories...');
+    console.log(`Starting data migration to dynamic categories (${legacyBrickslabsCount} sets, ${legacyBooksCount} books)...`);
 
     // Get the first club as the default "Master" club
     let club = await prisma.tul_clubs.findFirst();
@@ -554,6 +556,53 @@ app.post('/api/admin/return', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// Catalog Endpoint (Public/Multi-tenant)
+app.get('/api/catalog', async (req, res) => {
+  try {
+    const { clubId } = req.query;
+    let club;
+    if (clubId) {
+      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+    } else {
+      // Logic for subdomain can be added here
+      club = await prisma.tul_clubs.findFirst();
+    }
+    if (!club) return res.json([]);
+
+    const items = await prisma.bricks_items.findMany({
+      where: { clubId: club.club_id },
+      include: { category: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Map to include legacy-compatible fields and metadata
+    const formatted = items.map(i => {
+      const metadata = i.metadata || {};
+      return {
+        id: i.id,
+        clubId: i.clubId,
+        categoryId: i.categoryId,
+        title: i.title,
+        description: i.description,
+        imageUrl: i.imageUrl,
+        stock: i.stock,
+        isProOnly: i.isProOnly,
+        isAvailable: i.isAvailable,
+        type: i.category.name, // Filter expects "Aim Brickslab" or "Biblioteca" (mapped to "Libro" in UI)
+        legoReference: metadata.legoReference || null,
+        author: metadata.author || null,
+        isbn: metadata.isbn || null,
+        status: i.isAvailable ? 'Disponible' : 'Reservado'
+      };
+    });
+
+    res.json(formatted);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cargar el catálogo' });
   }
 });
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy, LayoutGrid } from 'lucide-react';
+import { Box, Crown, LogIn, User, Moon, Sun, Heart, Trophy, LayoutGrid, X, Menu } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -13,14 +13,17 @@ interface Props {
   onProClick: () => void;
   categories: any[];
   activeCategoryId: string | null;
-  onCategoryChange: (id: string) => void;
+  onCategoryChange: (id: string | null) => void;
   clubName?: string;
+  onTabChange: (tab: 'catalog' | 'profile' | 'admin' | 'ranking') => void;
+  currentView: string;
 }
 
 export const Header: React.FC<Props> = ({ 
   isLoggedIn, userRole, onLoginClick, onLogoutClick, onProfileClick, 
   onAdminClick, onHomeClick, onRankingClick, onProClick,
-  categories, activeCategoryId, onCategoryChange, clubName
+  categories, activeCategoryId, onCategoryChange, clubName,
+  onTabChange, currentView
 }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
@@ -41,19 +44,19 @@ export const Header: React.FC<Props> = ({
 
   return (
     <>
-      <header className="glass-panel responsive-header" style={{ padding: '1rem 2rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={onHomeClick}>
-            <div style={{ background: 'var(--accent)', padding: '0.5rem', borderRadius: '10px' }}>
+      <header className="glass-panel animate-slide-down" style={{ padding: '1.25rem 2rem', marginBottom: '3rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => { onTabChange('catalog'); onCategoryChange(null); }}>
+            <div style={{ background: 'var(--secondary)', padding: '0.6rem', borderRadius: '10px' }}>
               <Box color="#fff" size={24} />
             </div>
-            <h1 className="text-gradient header-title" style={{ fontSize: '1.5rem', margin: 0 }}>{clubName || 'Aim Bricks'}</h1>
+            <h1 className="text-gradient" style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Aim Brickslab</h1>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <button
               className="btn btn-outline"
-              style={{ padding: '0.5rem 1rem', borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{ borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               onClick={() => setShowDonationModal(true)}
             >
               <Heart size={18} fill="#EF4444" /> Donar
@@ -62,19 +65,19 @@ export const Header: React.FC<Props> = ({
             {isLoggedIn ? (
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {(userRole === 'admin' || userRole === 'superadmin') && (
-                  <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: '#8B5CF6', color: '#8B5CF6' }} onClick={onAdminClick}>
+                  <button className={`btn ${currentView === 'admin' ? 'btn-primary' : 'btn-outline'}`} style={{ borderColor: '#8B5CF6', color: currentView === 'admin' ? '#fff' : '#8B5CF6' }} onClick={onAdminClick}>
                     Admin
                   </button>
                 )}
-                <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={onProfileClick}>
+                <button className={`btn ${currentView === 'profile' ? 'btn-primary' : 'btn-outline'}`} onClick={onProfileClick}>
                   <User size={18} /> Perfil
                 </button>
-                <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }} onClick={onLogoutClick}>
+                <button className="btn btn-outline" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }} onClick={onLogoutClick}>
                   Salir
                 </button>
               </div>
             ) : (
-              <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onLoginClick}>
+              <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={onLoginClick}>
                 <LogIn size={18} /> Entrar
               </button>
             )}
@@ -83,11 +86,11 @@ export const Header: React.FC<Props> = ({
 
         <div style={{ width: '100%', display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
           <button 
-            onClick={onHomeClick}
+            onClick={() => { onTabChange('catalog'); onCategoryChange(null); }}
             style={{
               padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
-              background: !activeCategoryId ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
-              color: !activeCategoryId ? '#fff' : 'var(--text)',
+              background: currentView === 'catalog' && !activeCategoryId ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+              color: currentView === 'catalog' && !activeCategoryId ? '#fff' : 'var(--text)',
               fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
               display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
             }}
@@ -98,10 +101,10 @@ export const Header: React.FC<Props> = ({
           {categories.map(cat => (
             <button 
               key={cat.id}
-              onClick={() => onCategoryChange(cat.id)}
+              onClick={() => { onTabChange('catalog'); onCategoryChange(cat.id); }}
               style={{
                 padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
-                background: activeCategoryId === cat.id ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+                background: activeCategoryId === cat.id ? 'var(--secondary)' : 'rgba(255,255,255,0.05)',
                 color: activeCategoryId === cat.id ? '#fff' : 'var(--text)',
                 fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
@@ -111,11 +114,12 @@ export const Header: React.FC<Props> = ({
             </button>
           ))}
 
-          <button
+          <button 
             onClick={onRankingClick}
             style={{
               padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid transparent',
-              background: 'rgba(255,255,255,0.05)', color: '#F59E0B',
+              background: currentView === 'ranking' ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+              color: currentView === 'ranking' ? '#fff' : '#F59E0B',
               fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
               display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap'
             }}
@@ -140,20 +144,10 @@ export const Header: React.FC<Props> = ({
       <button
         onClick={toggleTheme}
         style={{
-          position: 'fixed',
-          bottom: '2rem',
-          left: '2rem',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '56px',
-          height: '56px',
-          borderRadius: '50%',
-          cursor: 'pointer',
-          background: 'var(--accent)',
-          border: 'none',
-          color: 'white',
+          position: 'fixed', bottom: '2rem', left: '2rem', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '56px', height: '56px', borderRadius: '50%', cursor: 'pointer',
+          background: 'var(--accent)', border: 'none', color: 'white',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
         }}
         aria-label="Alternar tema"

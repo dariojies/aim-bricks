@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) => {
-  const [filter, setFilter] = useState<'Todos' | 'Aim Brickslab' | 'Libro'>('Todos');
+  const [filter, setFilter] = useState<'Todos' | 'Aim Brickslab' | 'Biblioteca'>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredItems = items.filter(item => {
@@ -46,14 +46,14 @@ export const Catalog: React.FC<Props> = ({ items, onReserveClick, onProAlert }) 
         />
         
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          {['Todos', 'Aim Brickslab', 'Libro'].map(f => (
+          {['Todos', 'Aim Brickslab', 'Biblioteca'].map(f => (
             <button
               key={f}
               className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'}`}
               style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               onClick={() => setFilter(f as any)}
             >
-              {f === 'Libro' ? 'Biblioteca' : f}
+              {f}
             </button>
           ))}
         </div>

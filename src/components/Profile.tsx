@@ -8,23 +8,28 @@ interface Props {
 }
 
 export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPieces }) => {
+  // Ensure we have safe defaults for arrays to prevent crashes with old data formats
+  const readBooks = user?.readBooks || [];
+  const builtBrickslabs = user?.builtBrickslabs || [];
+  const currentReservations = user?.currentReservations || [];
+
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 0' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h2 className="text-gradient hero-title">Mi Perfil</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem' }}>
-          ¡Hola, {user.name}! Aquí tienes un resumen de tu actividad en Aim Brickslab y Libros.
+          ¡Hola, {user?.name || 'Usuario'}! Aquí tienes un resumen de tu actividad en Aim Brickslab y Libros.
         </p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
         <section className="glass-panel" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
-            <BookOpen size={24} /> Libros Leídos ({user.readBooks.length})
+            <BookOpen size={24} /> Libros Leídos ({readBooks.length})
           </h3>
-          {user.readBooks.length > 0 ? (
+          {readBooks.length > 0 ? (
             <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-              {user.readBooks.map(book => (
+              {readBooks.map(book => (
                 <div key={book.id} style={{ display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
                   <img src={book.imageUrl} alt={book.title} style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '6px' }} />
                   <div>
@@ -41,11 +46,11 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
 
         <section className="glass-panel" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent)' }}>
-            <Box size={24} /> Brickslabs Montados ({user.builtBrickslabs.length})
+            <Box size={24} /> Brickslabs Montados ({builtBrickslabs.length})
           </h3>
-          {user.builtBrickslabs.length > 0 ? (
+          {builtBrickslabs.length > 0 ? (
             <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-              {user.builtBrickslabs.map(set => (
+              {builtBrickslabs.map(set => (
                 <div key={set.id} style={{ display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
                   <img src={set.imageUrl} alt={set.title} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px' }} />
                   <div style={{ flex: 1 }}>
@@ -74,11 +79,11 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
 
         <section className="glass-panel" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FCD34D' }}>
-            <Clock size={24} /> Reservas Actuales ({user.currentReservations.length})
+            <Clock size={24} /> Reservas Actuales ({currentReservations.length})
           </h3>
-          {user.currentReservations.length > 0 ? (
+          {currentReservations.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {user.currentReservations.map(res => (
+              {currentReservations.map(res => (
                 <div key={res.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem 1.5rem', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontWeight: 500 }}>{res.text}</span>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

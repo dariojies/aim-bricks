@@ -376,6 +376,8 @@ function App() {
           setActiveCategoryId(id);
         }}
         clubName={user?.clubName}
+        onTabChange={(tab) => setCurrentView(tab)}
+        currentView={currentView}
       />
 
       <main className="animate-fade-in">
