@@ -393,16 +393,6 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-      {detectedClubId && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '0.5rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.75rem', textAlign: 'center' }}>
-          🛠️ Debug: Club Detectado [{detectedClubId}]
-        </div>
-      )}
-      {!detectedClubId && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', padding: '0.5rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.75rem', textAlign: 'center' }}>
-          ⚠️ Debug: No se detectó Club ID en la sesión.
-        </div>
-      )}
       <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>
         Panel de Administración
       </h2>

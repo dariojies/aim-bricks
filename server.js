@@ -1455,7 +1455,6 @@ app.get('/api/ranking', async (req, res) => {
 app.get('/api/admin/memberships', async (req, res) => {
   try {
     const { clubId } = req.query;
-    console.log(`[Memberships] Fetching for clubId: ${clubId}`);
     if (!clubId) return res.status(400).json({ error: 'Falta clubId' });
     
     // Query both memberships and registered users in parallel
@@ -1469,8 +1468,6 @@ app.get('/api/admin/memberships', async (req, res) => {
         select: { email: true }
       })
     ]);
-
-    console.log(`[Memberships] Found ${memberships.length} authorized and ${registeredUsers.length} registered.`);
 
     const registeredEmails = new Set(registeredUsers.map(u => u.email.toLowerCase()));
 
