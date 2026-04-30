@@ -75,11 +75,9 @@ export const AdminDashboard: React.FC = () => {
   const [catDescription, setCatDescription] = useState('');
   const [catIcon, setCatIcon] = useState('');
   const [catHome, setCatHome] = useState(true);
-  const [catShowAuthor, setCatShowAuthor] = useState(false);
-  const [catShowIsbn, setCatShowIsbn] = useState(false);
-  const [catShowReference, setCatShowReference] = useState(false);
-  const [catLocalBtnText, setCatLocalBtnText] = useState('');
-  const [catHomeBtnText, setCatHomeBtnText] = useState('');
+  const [catCustomFields, setCatCustomFields] = useState<any[]>([]);
+  const [catReservationMode, setCatReservationMode] = useState<'brickslab' | 'library'>('brickslab');
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
 
   // Filter Active Reservations
@@ -263,18 +261,14 @@ export const AdminDashboard: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          clubId: detectedClubId,
           categoryId: newItemCategoryId,
           title: newItemTitle,
           description: newItemDesc,
           imageUrl: newItemImage,
           stock: newItemStock,
           isProOnly,
-          metadata: {
-            isLego,
-            legoReference: legoReferenceInput,
-            author,
-            isbn
-          }
+          metadata: customFieldValues
         })
       });
       if (res.ok) {
@@ -282,10 +276,8 @@ export const AdminDashboard: React.FC = () => {
         setNewItemDesc('');
         setNewItemImage('');
         setNewItemStock('1');
-        setIsLego(false);
-        setLegoReferenceInput('');
-        setAuthor('');
-        setIsbn('');
+        setIsProOnly(false);
+        setCustomFieldValues({});
         alert('Elemento añadido correctamente');
         fetchCatalog();
       }
@@ -851,44 +843,37 @@ export const AdminDashboard: React.FC = () => {
                 </select>
               </div>
 
-              {(() => {
-                const selectedCat = categories.find(c => c.id === newItemCategoryId);
-                if (!selectedCat) return null;
-                return (
-                  <>
-                    {selectedCat.showReference && (
-                      <>
-                        <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <input type="checkbox" id="isLego" checked={isLego} onChange={e => setIsLego(e.target.checked)} />
-                          <label htmlFor="isLego" style={{ color: 'var(--text)' }}>Es un set con Referencia (Ej: LEGO®)</label>
-                        </div>
-                        <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
-                          <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Exclusivo Pro (Se puede llevar a casa)</label>
-                        </div>
-                        {isLego && (
-                          <div style={{ gridColumn: '1 / -1' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Número de Referencia (Ej: 75197)</label>
-                            <input value={legoReferenceInput} onChange={e => setLegoReferenceInput(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {selectedCat.showAuthor && (
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Autor(es)</label>
-                        <input value={author} onChange={e => setAuthor(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                      </div>
-                    )}
-                    {selectedCat.showIsbn && (
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>ISBN</label>
-                        <input value={isbn} onChange={e => setIsbn(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+              {/* Dynamic Custom Fields */}
+              {categories.find(c => c.id === newItemCategoryId)?.config?.customFields?.map((field: any) => (
+                <div key={field.name} style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
+                  {field.type === 'checkbox' ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={!!customFieldValues[field.name]} 
+                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })} 
+                      />
+                      <span style={{ color: 'var(--text)' }}>{field.label}</span>
+                    </div>
+                  ) : (
+                    <input 
+                      type={field.type} 
+                      value={customFieldValues[field.name] || ''} 
+                      onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })} 
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} 
+                    />
+                  )}
+                </div>
+              ))}
+
+              {/* Special Brickslab Pro toggle if in brickslab mode */}
+              {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
+                  <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Exclusivo Brickslab Pro (Se puede llevar a casa)</label>
+                </div>
+              )}
 
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
@@ -1263,17 +1248,15 @@ export const AdminDashboard: React.FC = () => {
                   description: catDescription, 
                   icon: catIcon, 
                   isHomeAllowed: catHome,
-                  showAuthor: catShowAuthor,
-                  showIsbn: catShowIsbn,
-                  showReference: catShowReference,
-                  localBtnText: catLocalBtnText,
-                  homeBtnText: catHomeBtnText
+                  config: {
+                    customFields: catCustomFields,
+                    reservationMode: catReservationMode
+                  }
                 })
               });
               if (res.ok) {
                 setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true); 
-                setCatShowAuthor(false); setCatShowIsbn(false); setCatShowReference(false);
-                setCatLocalBtnText(''); setCatHomeBtnText('');
+                setCatCustomFields([]); setCatReservationMode('brickslab');
                 setEditingCatId(null);
                 fetchCategories();
               }
@@ -1281,38 +1264,58 @@ export const AdminDashboard: React.FC = () => {
               <input required placeholder="Nombre (Ej: LEGO® Sets)" value={catName} onChange={e => setCatName(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               <input placeholder="Icono (opcional)" value={catIcon} onChange={e => setCatIcon(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               <textarea placeholder="Descripción" value={catDescription} onChange={e => setCatDescription(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '80px' }} />
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="checkbox" checked={catShowAuthor} onChange={e => setCatShowAuthor(e.target.checked)} />
-                  <label>Mostrar campo Autor</label>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="checkbox" checked={catShowIsbn} onChange={e => setCatShowIsbn(e.target.checked)} />
-                  <label>Mostrar campo ISBN</label>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="checkbox" checked={catShowReference} onChange={e => setCatShowReference(e.target.checked)} />
-                  <label>Mostrar campo Referencia</label>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="checkbox" checked={catHome} onChange={e => setCatHome(e.target.checked)} />
-                  <label>Mostrar en Inicio</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="checkbox" checked={catHome} onChange={e => setCatHome(e.target.checked)} />
+                <label>Mostrar en Inicio</label>
+              </div>
+
+              <div style={{ padding: '1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                <h4 style={{ marginBottom: '1rem', color: 'var(--accent)', fontSize: '1rem' }}>Modo de Reserva</h4>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button type="button" onClick={() => setCatReservationMode('brickslab')} className={`btn ${catReservationMode === 'brickslab' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }}>Modo Bricks (Pro/Standard)</button>
+                  <button type="button" onClick={() => setCatReservationMode('library')} className={`btn ${catReservationMode === 'library' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }}>Modo Lectura (Botón Único)</button>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Texto botón Local</label>
-                  <input placeholder="Ej: Reservar para leer" value={catLocalBtnText} onChange={e => setCatLocalBtnText(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Texto botón Casa</label>
-                  <input placeholder="Ej: Reservar para llevar" value={catHomeBtnText} onChange={e => setCatHomeBtnText(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              <div style={{ padding: '1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                <h4 style={{ marginBottom: '1rem', color: 'var(--accent)', fontSize: '1rem' }}>Constructor de Campos Personalizados</h4>
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                  {catCustomFields.map((field, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input 
+                        placeholder="Etiqueta (Ej: ISBN)" 
+                        value={field.label} 
+                        onChange={e => {
+                          const newFields = [...catCustomFields];
+                          newFields[idx].label = e.target.value;
+                          newFields[idx].name = e.target.value.toLowerCase().replace(/\s+/g, '_');
+                          setCatCustomFields(newFields);
+                        }}
+                        style={{ flex: 2, padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                      />
+                      <select 
+                        value={field.type} 
+                        onChange={e => {
+                          const newFields = [...catCustomFields];
+                          newFields[idx].type = e.target.value;
+                          setCatCustomFields(newFields);
+                        }}
+                        style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                      >
+                        <option value="text">Texto</option>
+                        <option value="number">Número</option>
+                        <option value="checkbox">Checkbox</option>
+                      </select>
+                      <button type="button" onClick={() => setCatCustomFields(catCustomFields.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn btn-outline" onClick={() => setCatCustomFields([...catCustomFields, { label: '', name: '', type: 'text' }])} style={{ width: 'fit-content' }}>
+                    <Plus size={16} /> Añadir Campo
+                  </button>
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary">{editingCatId ? 'Guardar Cambios' : 'Añadir Categoría'}</button>
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>{editingCatId ? 'Guardar Cambios' : 'Añadir Categoría'}</button>
             </form>
           </div>
 
@@ -1330,11 +1333,9 @@ export const AdminDashboard: React.FC = () => {
                         setCatDescription(cat.description || '');
                         setCatIcon(cat.icon || '');
                         setCatHome(cat.isHomeAllowed);
-                        setCatShowAuthor(cat.showAuthor || false);
-                        setCatShowIsbn(cat.showIsbn || false);
-                        setCatShowReference(cat.showReference || false);
-                        setCatLocalBtnText(cat.localBtnText || '');
-                        setCatHomeBtnText(cat.homeBtnText || '');
+                        const config = cat.config || {};
+                        setCatCustomFields(config.customFields || []);
+                        setCatReservationMode(config.reservationMode || 'brickslab');
                       }} className="text-accent" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Pencil size={18} /></button>
                       <button onClick={async () => {
                         if (confirm(`¿Borrar categoría ${cat.name}? Los artículos se borrarán.`)) {

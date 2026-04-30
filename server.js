@@ -79,12 +79,7 @@ async function syncSchema() {
     await prisma.$executeRawUnsafe(`ALTER TABLE "tul_clubs" ADD COLUMN IF NOT EXISTS "subdomain" VARCHAR(255)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "tul_clubs" ADD COLUMN IF NOT EXISTS "description" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "clubId" UUID`);
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "showAuthor" BOOLEAN DEFAULT false`);
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "showIsbn" BOOLEAN DEFAULT false`);
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "showReference" BOOLEAN DEFAULT false`);
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "localBtnText" TEXT`);
-    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "homeBtnText" TEXT`);
-    
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "config" JSONB`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_brickslab" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_librarybook" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
 
@@ -210,27 +205,57 @@ async function migrateToDynamic() {
     // Create default categories using UPSERT to be safe
     const legoCat = await prisma.bricks_categories.upsert({
       where: { id: '00000000-0000-0000-0000-000000000001' }, // Fixed ID for main Lego cat
-      update: {},
+      update: {
+        config: {
+          customFields: [
+            { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
+            { name: 'pieces', label: 'Número de Piezas', type: 'number' }
+          ],
+          reservationMode: 'brickslab'
+        }
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000001',
         clubId: club.id,
         name: 'Aim Brickslab',
         icon: 'Box',
         isHomeAllowed: true,
-        description: 'Colección de sets LEGO para montar'
+        description: 'Colección de sets LEGO para montar',
+        config: {
+          customFields: [
+            { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
+            { name: 'pieces', label: 'Número de Piezas', type: 'number' }
+          ],
+          reservationMode: 'brickslab'
+        }
       }
     });
 
     const libraryCat = await prisma.bricks_categories.upsert({
       where: { id: '00000000-0000-0000-0000-000000000002' }, // Fixed ID for main Library cat
-      update: {},
+      update: {
+        config: {
+          customFields: [
+            { name: 'author', label: 'Autor', type: 'text' },
+            { name: 'isbn', label: 'ISBN', type: 'text' }
+          ],
+          reservationMode: 'library'
+        }
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000002',
         clubId: club.id,
         name: 'Biblioteca',
         icon: 'Book',
         isHomeAllowed: false,
-        description: 'Libros y manuales'
+        description: 'Libros y manuales',
+        config: {
+          customFields: [
+            { name: 'author', label: 'Autor', type: 'text' },
+            { name: 'isbn', label: 'ISBN', type: 'text' }
+          ],
+          reservationMode: 'library'
+        }
       }
     });
 
@@ -743,7 +768,10 @@ app.get('/api/catalog', async (req, res) => {
         stock: i.stock,
         isProOnly: i.isProOnly,
         isAvailable: i.isAvailable,
-        type: i.category.name, // Filter expects "Aim Brickslab" or "Biblioteca" (mapped to "Libro" in UI)
+        type: i.category.name,
+        categoryConfig: i.category.config || {},
+        metadata: metadata,
+        // Legacy support fields
         legoReference: metadata.legoReference || null,
         author: metadata.author || null,
         isbn: metadata.isbn || null,
@@ -783,20 +811,9 @@ app.get('/api/admin/categories', async (req, res) => {
 
 app.post('/api/admin/categories', async (req, res) => {
   try {
-    const { clubId, name, icon, isHomeAllowed, description, showAuthor, showIsbn, showReference, localBtnText, homeBtnText } = req.body;
+    const { clubId, name, icon, isHomeAllowed, description, config } = req.body;
     await prisma.bricks_categories.create({
-      data: { 
-        clubId, 
-        name, 
-        icon, 
-        isHomeAllowed: !!isHomeAllowed, 
-        description,
-        showAuthor: !!showAuthor,
-        showIsbn: !!showIsbn,
-        showReference: !!showReference,
-        localBtnText,
-        homeBtnText
-      }
+      data: { clubId, name, icon, isHomeAllowed: !!isHomeAllowed, description, config }
     });
     res.json({ success: true });
   } catch (error) {
@@ -808,20 +825,10 @@ app.post('/api/admin/categories', async (req, res) => {
 app.put('/api/admin/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, icon, isHomeAllowed, description, showAuthor, showIsbn, showReference, localBtnText, homeBtnText } = req.body;
+    const { name, icon, isHomeAllowed, description, config } = req.body;
     await prisma.bricks_categories.update({
       where: { id },
-      data: { 
-        name, 
-        icon, 
-        isHomeAllowed: !!isHomeAllowed, 
-        description,
-        showAuthor: !!showAuthor,
-        showIsbn: !!showIsbn,
-        showReference: !!showReference,
-        localBtnText,
-        homeBtnText
-      }
+      data: { name, icon, isHomeAllowed: !!isHomeAllowed, description, config }
     });
     res.json({ success: true });
   } catch (error) {

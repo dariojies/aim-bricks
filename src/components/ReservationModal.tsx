@@ -4,7 +4,6 @@ import { Crown, X } from 'lucide-react';
 
 interface Props {
   item: CatalogItem;
-  category?: any;
   onClose: () => void;
   onConfirm: () => void;
   isLoggedIn: boolean;
@@ -12,12 +11,8 @@ interface Props {
   onLoginRequest: () => void;
 }
 
-export const ReservationModal: React.FC<Props> = ({ item, category, onClose, onConfirm, isLoggedIn, isPro, onLoginRequest }) => {
+export const ReservationModal: React.FC<Props> = ({ item, onClose, onConfirm, isLoggedIn, isPro, onLoginRequest }) => {
   const [reservationType, setReservationType] = React.useState<'local' | 'home'>(isPro ? 'home' : 'local');
-  
-  const localLabel = category?.localBtnText || 'Reservar para el local';
-  const homeLabel = category?.homeBtnText || 'Reservar para casa';
-
   return (
     <div style={{
       position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
@@ -48,8 +43,8 @@ export const ReservationModal: React.FC<Props> = ({ item, category, onClose, onC
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: reservationType === 'local' ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: 'all 0.2s' }}>
                   <input type="radio" name="resType" checked={reservationType === 'local'} onChange={() => setReservationType('local')} style={{ width: '1.2rem', height: '1.2rem' }} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>{localLabel}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Disfruta de la experiencia en nuestro club</div>
+                    <div style={{ fontWeight: 600 }}>Montar en el local</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Disfruta de la experiencia Aim Brickslab</div>
                   </div>
                 </label>
                 
@@ -62,10 +57,10 @@ export const ReservationModal: React.FC<Props> = ({ item, category, onClose, onC
                   <input type="radio" name="resType" disabled={!isPro} checked={reservationType === 'home'} onChange={() => setReservationType('home')} style={{ width: '1.2rem', height: '1.2rem' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {homeLabel} {isPro && <Crown size={14} style={{ color: '#FCD34D' }} />}
+                      Llevar a casa {isPro && <Crown size={14} style={{ color: '#FCD34D' }} />}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      {isPro ? 'Como miembro Pro, puedes disfrutarlos en casa' : 'Opción exclusiva para rango Pro'}
+                      {isPro ? 'Como miembro Pro, puedes llevártelo' : 'Exclusivo para rango Brickslab Pro'}
                     </div>
                   </div>
                 </label>

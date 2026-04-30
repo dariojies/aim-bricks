@@ -3,16 +3,12 @@ import { Box, BookOpen, CheckCircle, Lock } from 'lucide-react';
 
 interface Props {
   item: CatalogItem;
-  category?: any;
   onSelect: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
 }
 
-export const ItemCard: React.FC<Props> = ({ item, category, onSelect, onProAlert }) => {
+export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
   const isAvailable = item.status === 'Disponible';
-  
-  const localLabel = category?.localBtnText || 'Reservar para el local';
-  const homeLabel = category?.homeBtnText || 'Reservar para casa';
 
   return (
     <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isAvailable ? 1 : 0.8, transition: 'all 0.3s ease' }}>
@@ -25,18 +21,21 @@ export const ItemCard: React.FC<Props> = ({ item, category, onSelect, onProAlert
               {item.type}
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0' }}>{item.title}</h3>
-            {category?.showReference && item.legoReference && (
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                Ref: {item.legoReference}
-              </div>
-            )}
-            {(category?.showAuthor || category?.showIsbn) && (
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                {category?.showAuthor && item.author && item.author !== 'Desconocido' && <span>{item.author}</span>}
-                {category?.showAuthor && item.author && item.author !== 'Desconocido' && category?.showIsbn && item.isbn && <span>•</span>}
-                {category?.showIsbn && item.isbn && <span>ISBN: {item.isbn}</span>}
-              </div>
-            )}
+            
+            {/* Dynamic Metadata Fields */}
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              {item.categoryConfig?.customFields?.map((field: any, idx: number) => {
+                const value = item.metadata?.[field.name];
+                if (!value) return null;
+                return (
+                  <span key={field.name}>
+                    {idx > 0 && item.categoryConfig.customFields.some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
+                    {field.label}: {field.type === 'checkbox' ? (value ? 'Sí' : 'No') : value}
+                  </span>
+                );
+              })}
+            </div>
+
             {item.isProOnly && (
               <div style={{ 
                 display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FBBF24', 
@@ -64,6 +63,14 @@ export const ItemCard: React.FC<Props> = ({ item, category, onSelect, onProAlert
           <button className="btn btn-outline" style={{ width: '100%' }} disabled>
             Actualmente Reservado
           </button>
+        ) : item.categoryConfig?.reservationMode === 'library' ? (
+          <button 
+            className="btn btn-primary" 
+            style={{ width: '100%' }}
+            onClick={() => onSelect(item)}
+          >
+            Reservar para leer en casa/local
+          </button>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <button 
@@ -71,7 +78,7 @@ export const ItemCard: React.FC<Props> = ({ item, category, onSelect, onProAlert
               style={{ width: '100%' }}
               onClick={() => onSelect(item)}
             >
-              {localLabel}
+              Reservar para montar en el local
             </button>
             <button 
               className="btn" 
@@ -95,7 +102,7 @@ export const ItemCard: React.FC<Props> = ({ item, category, onSelect, onProAlert
                 onProAlert(item);
               }}
             >
-              <Box size={16} /> {homeLabel}
+              <Box size={16} /> Reservar para montar en casa
             </button>
           </div>
         )}
