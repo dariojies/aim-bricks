@@ -474,6 +474,7 @@ function App() {
               items={items}
               categories={categories}
               onReserveClick={handleReserveClick}
+              clubId={user?.clubId}
               onProAlert={(item) => {
                 const perm = user?.permissions?.[item.categoryId || ''];
                 if (perm?.pro) {
@@ -487,7 +488,7 @@ function App() {
         ) : currentView === 'profile' && user ? (
           <Profile user={user} onCancelReservation={handleCancelReservation} onReportPieces={handleReportPieces} />
         ) : currentView === 'admin' && (user?.role === 'admin' || user?.role === 'superadmin') ? (
-          <AdminDashboard />
+          <AdminDashboard user={user} />
         ) : currentView === 'ranking' ? (
           <Ranking />
         ) : null}

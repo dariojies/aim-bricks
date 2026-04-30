@@ -16,7 +16,11 @@ interface AdminReservation {
   status?: string;
 }
 
-export const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  user?: any;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls' | 'categories' | 'memberships'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
@@ -837,29 +841,38 @@ export const AdminDashboard: React.FC = () => {
                 </select>
               </div>
 
-              {/* Dynamic Custom Fields */}
-              {categories.find(c => c.id === newItemCategoryId)?.config?.customFields?.map((field: any) => (
-                <div key={field.name} style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
-                  {field.type === 'checkbox' ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {/* Dynamic Custom Fields with hardcoded fallbacks for default categories */}
+              {(() => {
+                const cat = categories.find(c => c.id === newItemCategoryId);
+                const isAim = user?.clubId === 'b68ca873-5086-474f-a296-fe60b149b8a2';
+                let fields = cat?.config?.customFields || [];
+                if (fields.length === 0 && isAim) {
+                  if (cat?.name === 'Aim Brickslab') fields = [{ name: 'legoReference', label: 'Referencia LEGO', type: 'text' }, { name: 'pieces', label: 'Piezas', type: 'number' }];
+                  if (cat?.name === 'Biblioteca' || cat?.name === 'Libro') fields = [{ name: 'author', label: 'Autor(es)', type: 'text' }, { name: 'isbn', label: 'ISBN', type: 'text' }];
+                }
+                return fields.map((field: any) => (
+                  <div key={field.name} style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
+                    {field.type === 'checkbox' ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!customFieldValues[field.name]}
+                          onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })}
+                        />
+                        <span style={{ color: 'var(--text)' }}>{field.label}</span>
+                      </div>
+                    ) : (
                       <input
-                        type="checkbox"
-                        checked={!!customFieldValues[field.name]}
-                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })}
+                        type={field.type}
+                        value={customFieldValues[field.name] || ''}
+                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                       />
-                      <span style={{ color: 'var(--text)' }}>{field.label}</span>
-                    </div>
-                  ) : (
-                    <input
-                      type={field.type}
-                      value={customFieldValues[field.name] || ''}
-                      onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
-                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
-                    />
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ));
+              })()}
 
               {/* Special Brickslab Pro toggle if in brickslab mode */}
               {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (

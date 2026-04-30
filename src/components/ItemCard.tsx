@@ -5,10 +5,23 @@ interface Props {
   item: CatalogItem;
   onSelect: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
+  clubId?: string;
 }
 
-export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
+export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }) => {
   const isAvailable = item.status === 'Disponible';
+
+  // Fallback config ONLY for Aim Education to ensure legacy buttons/fields show correctly
+  // For other clubs, they start with a blank slate (no fields, default mode)
+  const isAim = clubId === 'b68ca873-5086-474f-a296-fe60b149b8a2';
+  const config = item.categoryConfig?.reservationMode ? item.categoryConfig : {
+    reservationMode: isAim && (item.type === 'Biblioteca' || item.type === 'Libro') ? 'library' : 'brickslab',
+    customFields: (isAim && item.type === 'Aim Brickslab')
+      ? [{ name: 'legoReference', label: 'Referencia LEGO', type: 'text' }, { name: 'pieces', label: 'Piezas', type: 'number' }]
+      : (isAim && (item.type === 'Biblioteca' || item.type === 'Libro') 
+          ? [{ name: 'author', label: 'Autor(es)', type: 'text' }, { name: 'isbn', label: 'ISBN', type: 'text' }]
+          : [])
+  };
 
   return (
     <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isAvailable ? 1 : 0.8, transition: 'all 0.3s ease' }}>
@@ -24,17 +37,29 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
             
             {/* Dynamic Metadata Fields */}
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {item.categoryConfig?.customFields?.map((field: any, idx: number) => {
+              {config?.customFields?.map((field: any, idx: number) => {
                 const value = item.metadata?.[field.name];
                 if (!value) return null;
                 return (
                   <span key={field.name}>
-                    {idx > 0 && item.categoryConfig?.customFields?.some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
+                    {idx > 0 && config.customFields.some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
                     {field.label}: {field.type === 'checkbox' ? (value ? 'Sí' : 'No') : value}
                   </span>
                 );
               })}
             </div>
+
+            {/* Legacy Support: Always show Author/ISBN if they exist in metadata but not in customFields */}
+            {(!config?.customFields?.some(f => f.name === 'author') && item.metadata?.author) && (
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Autor: {item.metadata.author}
+              </div>
+            )}
+            {(!config?.customFields?.some(f => f.name === 'isbn') && item.metadata?.isbn) && (
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                ISBN: {item.metadata.isbn}
+              </div>
+            )}
 
             {item.isProOnly && (
               <div style={{ 
@@ -63,7 +88,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
           <button className="btn btn-outline" style={{ width: '100%' }} disabled>
             Actualmente Reservado
           </button>
-        ) : item.categoryConfig?.reservationMode === 'library' ? (
+        ) : config?.reservationMode === 'library' ? (
           <button 
             className="btn btn-primary" 
             style={{ width: '100%' }}

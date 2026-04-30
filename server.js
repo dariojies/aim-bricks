@@ -181,6 +181,67 @@ async function migrateToDynamic() {
     }
     }
 
+    // 4. Ensure default categories have the NEW config for Aim Education (Exact ID provided)
+    const aimClubId = 'b68ca873-5086-474f-a296-fe60b149b8a2';
+    const aimClub = await prisma.bricks_clubs.findUnique({ where: { id: aimClubId } });
+    if (aimClub) {
+      // Lego Category
+      await prisma.bricks_categories.upsert({
+        where: { id: '00000000-0000-0000-0000-000000000001' },
+        update: {
+          clubId: aimClubId, // Ensure it's linked to the correct ID
+          config: {
+            reservationMode: 'brickslab',
+            customFields: [
+              { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
+              { name: 'pieces', label: 'Número de Piezas', type: 'number' }
+            ]
+          }
+        },
+        create: {
+          id: '00000000-0000-0000-0000-000000000001',
+          clubId: aimClubId,
+          name: 'Aim Brickslab',
+          icon: 'Box',
+          config: {
+            reservationMode: 'brickslab',
+            customFields: [
+              { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
+              { name: 'pieces', label: 'Número de Piezas', type: 'number' }
+            ]
+          }
+        }
+      });
+
+      // Library Category
+      await prisma.bricks_categories.upsert({
+        where: { id: '00000000-0000-0000-0000-000000000002' },
+        update: {
+          clubId: aimClubId,
+          config: {
+            reservationMode: 'library',
+            customFields: [
+              { name: 'author', label: 'Autor(es)', type: 'text' },
+              { name: 'isbn', label: 'ISBN', type: 'text' }
+            ]
+          }
+        },
+        create: {
+          id: '00000000-0000-0000-0000-000000000002',
+          clubId: aimClubId,
+          name: 'Biblioteca',
+          icon: 'Book',
+          config: {
+            reservationMode: 'library',
+            customFields: [
+              { name: 'author', label: 'Autor(es)', type: 'text' },
+              { name: 'isbn', label: 'ISBN', type: 'text' }
+            ]
+          }
+        }
+      });
+    }
+
     if (itemCount > 0) {
       if (legacyReports.length > 0) {
         console.log('Items already synced, migrating orphan reports...');
@@ -201,53 +262,6 @@ async function migrateToDynamic() {
       }
       return;
     }
-
-    // Create default categories using UPSERT to be safe
-    const legoCat = await prisma.bricks_categories.upsert({
-      where: { id: '00000000-0000-0000-0000-000000000001' }, // Fixed ID for main Lego cat
-      update: {
-        config: {
-          customFields: [
-            { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
-            { name: 'pieces', label: 'Número de Piezas', type: 'number' }
-          ],
-          reservationMode: 'brickslab'
-        }
-      },
-      create: {
-        id: '00000000-0000-0000-0000-000000000001',
-        clubId: club.id,
-        name: 'Aim Brickslab',
-        icon: 'Box',
-        isHomeAllowed: true,
-        description: 'Colección de sets LEGO para montar',
-        config: {
-          customFields: [
-            { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
-            { name: 'pieces', label: 'Número de Piezas', type: 'number' }
-          ],
-          reservationMode: 'brickslab'
-        }
-      }
-    });
-
-    const libraryCat = await prisma.bricks_categories.upsert({
-      where: { id: '00000000-0000-0000-0000-000000000002' }, // Fixed ID for main Library cat
-      update: {
-        config: {
-          customFields: [
-            { name: 'author', label: 'Autor', type: 'text' },
-            { name: 'isbn', label: 'ISBN', type: 'text' }
-          ],
-          reservationMode: 'library'
-        }
-      },
-      create: {
-        id: '00000000-0000-0000-0000-000000000002',
-        clubId: club.id,
-        name: 'Biblioteca',
-        icon: 'Book',
-        isHomeAllowed: false,
         description: 'Libros y manuales',
         config: {
           customFields: [
@@ -417,9 +431,12 @@ app.post('/api/auth/login', async (req, res) => {
       where: { userId: user.user_id }
     });
 
+    const club = user.club_id ? await prisma.bricks_clubs.findUnique({ where: { id: user.club_id } }) : null;
+
     const profile = {
       id: user.user_id,
       clubId: user.club_id,
+      clubName: club?.name || null,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
       role: user.dev_role || 'student',
@@ -483,9 +500,12 @@ app.post('/api/auth/me', async (req, res) => {
       where: { userId: user.user_id }
     });
 
+    const club = user.club_id ? await prisma.bricks_clubs.findUnique({ where: { id: user.club_id } }) : null;
+
     const profile = {
       id: user.user_id,
       clubId: user.club_id,
+      clubName: club?.name || null,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
       role: user.dev_role || 'student',

@@ -8,9 +8,10 @@ interface Props {
   categories: { id: string, name: string }[];
   onReserveClick: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
+  clubId?: string;
 }
 
-export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert }) => {
+export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert, clubId }) => {
   const [filterId, setFilterId] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -88,7 +89,7 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
 
       <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem' }}>
         {filteredItems.map(item => (
-          <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} />
+          <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} clubId={clubId} />
         ))}
         {filteredItems.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '5rem', color: 'var(--text-muted)' }}>
