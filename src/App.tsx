@@ -497,10 +497,11 @@ function App() {
       {selectedItem && (
         <ReservationModal
           item={selectedItem}
+          category={categories.find(c => c.id === selectedItem.categoryId)}
           onClose={() => setSelectedItem(null)}
           onConfirm={handleConfirmReservation}
           isLoggedIn={!!user}
-          isPro={user?.permissions?.brickslabPro || false}
+          isPro={user?.permissions?.[selectedItem.categoryId || '']?.pro || false}
           onLoginRequest={() => {
             setSelectedItem(null);
             setShowLoginModal(true);

@@ -79,6 +79,12 @@ async function syncSchema() {
     await prisma.$executeRawUnsafe(`ALTER TABLE "tul_clubs" ADD COLUMN IF NOT EXISTS "subdomain" VARCHAR(255)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "tul_clubs" ADD COLUMN IF NOT EXISTS "description" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "clubId" UUID`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "showAuthor" BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "showIsbn" BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "showReference" BOOLEAN DEFAULT false`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "localBtnText" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "homeBtnText" TEXT`);
+    
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_brickslab" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_librarybook" ADD COLUMN IF NOT EXISTS "club_id" UUID`);
 
@@ -777,9 +783,20 @@ app.get('/api/admin/categories', async (req, res) => {
 
 app.post('/api/admin/categories', async (req, res) => {
   try {
-    const { clubId, name, icon, isHomeAllowed, description } = req.body;
+    const { clubId, name, icon, isHomeAllowed, description, showAuthor, showIsbn, showReference, localBtnText, homeBtnText } = req.body;
     await prisma.bricks_categories.create({
-      data: { clubId, name, icon, isHomeAllowed: !!isHomeAllowed, description }
+      data: { 
+        clubId, 
+        name, 
+        icon, 
+        isHomeAllowed: !!isHomeAllowed, 
+        description,
+        showAuthor: !!showAuthor,
+        showIsbn: !!showIsbn,
+        showReference: !!showReference,
+        localBtnText,
+        homeBtnText
+      }
     });
     res.json({ success: true });
   } catch (error) {
@@ -791,10 +808,20 @@ app.post('/api/admin/categories', async (req, res) => {
 app.put('/api/admin/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, icon, isHomeAllowed, description } = req.body;
+    const { name, icon, isHomeAllowed, description, showAuthor, showIsbn, showReference, localBtnText, homeBtnText } = req.body;
     await prisma.bricks_categories.update({
       where: { id },
-      data: { name, icon, isHomeAllowed: !!isHomeAllowed, description }
+      data: { 
+        name, 
+        icon, 
+        isHomeAllowed: !!isHomeAllowed, 
+        description,
+        showAuthor: !!showAuthor,
+        showIsbn: !!showIsbn,
+        showReference: !!showReference,
+        localBtnText,
+        homeBtnText
+      }
     });
     res.json({ success: true });
   } catch (error) {

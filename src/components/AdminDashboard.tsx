@@ -75,6 +75,11 @@ export const AdminDashboard: React.FC = () => {
   const [catDescription, setCatDescription] = useState('');
   const [catIcon, setCatIcon] = useState('');
   const [catHome, setCatHome] = useState(true);
+  const [catShowAuthor, setCatShowAuthor] = useState(false);
+  const [catShowIsbn, setCatShowIsbn] = useState(false);
+  const [catShowReference, setCatShowReference] = useState(false);
+  const [catLocalBtnText, setCatLocalBtnText] = useState('');
+  const [catHomeBtnText, setCatHomeBtnText] = useState('');
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
 
   // Filter Active Reservations
@@ -846,37 +851,44 @@ export const AdminDashboard: React.FC = () => {
                 </select>
               </div>
 
-              {categories.find(c => c.id === newItemCategoryId)?.name.toLowerCase().includes('bricks') && (
-                <>
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" id="isLego" checked={isLego} onChange={e => setIsLego(e.target.checked)} />
-                    <label htmlFor="isLego" style={{ color: 'var(--text)' }}>Es un set de LEGO®</label>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
-                    <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Exclusivo Brickslab Pro (Se puede llevar a casa)</label>
-                  </div>
-                  {isLego && (
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Número de referencia LEGO (Ej: Harry Potter 71043)</label>
-                      <input value={legoReferenceInput} onChange={e => setLegoReferenceInput(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                    </div>
-                  )}
-                </>
-              )}
-
-              {categories.find(c => c.id === newItemCategoryId)?.name.toLowerCase().includes('libro') && (
-                <>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Autor(es)</label>
-                    <input value={author} onChange={e => setAuthor(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>ISBN</label>
-                    <input value={isbn} onChange={e => setIsbn(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                  </div>
-                </>
-              )}
+              {(() => {
+                const selectedCat = categories.find(c => c.id === newItemCategoryId);
+                if (!selectedCat) return null;
+                return (
+                  <>
+                    {selectedCat.showReference && (
+                      <>
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input type="checkbox" id="isLego" checked={isLego} onChange={e => setIsLego(e.target.checked)} />
+                          <label htmlFor="isLego" style={{ color: 'var(--text)' }}>Es un set con Referencia (Ej: LEGO®)</label>
+                        </div>
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
+                          <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Exclusivo Pro (Se puede llevar a casa)</label>
+                        </div>
+                        {isLego && (
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Número de Referencia (Ej: 75197)</label>
+                            <input value={legoReferenceInput} onChange={e => setLegoReferenceInput(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {selectedCat.showAuthor && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Autor(es)</label>
+                        <input value={author} onChange={e => setAuthor(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                      </div>
+                    )}
+                    {selectedCat.showIsbn && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>ISBN</label>
+                        <input value={isbn} onChange={e => setIsbn(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
@@ -1250,21 +1262,56 @@ export const AdminDashboard: React.FC = () => {
                   name: catName, 
                   description: catDescription, 
                   icon: catIcon, 
-                  isHomeAllowed: catHome 
+                  isHomeAllowed: catHome,
+                  showAuthor: catShowAuthor,
+                  showIsbn: catShowIsbn,
+                  showReference: catShowReference,
+                  localBtnText: catLocalBtnText,
+                  homeBtnText: catHomeBtnText
                 })
               });
               if (res.ok) {
-                setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true); setEditingCatId(null);
+                setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true); 
+                setCatShowAuthor(false); setCatShowIsbn(false); setCatShowReference(false);
+                setCatLocalBtnText(''); setCatHomeBtnText('');
+                setEditingCatId(null);
                 fetchCategories();
               }
             }} style={{ display: 'grid', gap: '1rem' }}>
               <input required placeholder="Nombre (Ej: LEGO® Sets)" value={catName} onChange={e => setCatName(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               <input placeholder="Icono (opcional)" value={catIcon} onChange={e => setCatIcon(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               <textarea placeholder="Descripción" value={catDescription} onChange={e => setCatDescription(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '80px' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input type="checkbox" checked={catHome} onChange={e => setCatHome(e.target.checked)} />
-                <label>Mostrar en Inicio</label>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" checked={catShowAuthor} onChange={e => setCatShowAuthor(e.target.checked)} />
+                  <label>Mostrar campo Autor</label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" checked={catShowIsbn} onChange={e => setCatShowIsbn(e.target.checked)} />
+                  <label>Mostrar campo ISBN</label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" checked={catShowReference} onChange={e => setCatShowReference(e.target.checked)} />
+                  <label>Mostrar campo Referencia</label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" checked={catHome} onChange={e => setCatHome(e.target.checked)} />
+                  <label>Mostrar en Inicio</label>
+                </div>
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Texto botón Local</label>
+                  <input placeholder="Ej: Reservar para leer" value={catLocalBtnText} onChange={e => setCatLocalBtnText(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Texto botón Casa</label>
+                  <input placeholder="Ej: Reservar para llevar" value={catHomeBtnText} onChange={e => setCatHomeBtnText(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                </div>
+              </div>
+
               <button type="submit" className="btn btn-primary">{editingCatId ? 'Guardar Cambios' : 'Añadir Categoría'}</button>
             </form>
           </div>
@@ -1283,6 +1330,11 @@ export const AdminDashboard: React.FC = () => {
                         setCatDescription(cat.description || '');
                         setCatIcon(cat.icon || '');
                         setCatHome(cat.isHomeAllowed);
+                        setCatShowAuthor(cat.showAuthor || false);
+                        setCatShowIsbn(cat.showIsbn || false);
+                        setCatShowReference(cat.showReference || false);
+                        setCatLocalBtnText(cat.localBtnText || '');
+                        setCatHomeBtnText(cat.homeBtnText || '');
                       }} className="text-accent" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Pencil size={18} /></button>
                       <button onClick={async () => {
                         if (confirm(`¿Borrar categoría ${cat.name}? Los artículos se borrarán.`)) {

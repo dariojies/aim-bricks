@@ -88,7 +88,13 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
 
       <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem' }}>
         {filteredItems.map(item => (
-          <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} />
+          <ItemCard 
+            key={item.id} 
+            item={item} 
+            category={categories.find(c => c.id === item.categoryId)}
+            onSelect={onReserveClick} 
+            onProAlert={() => onProAlert(item)} 
+          />
         ))}
         {filteredItems.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '5rem', color: 'var(--text-muted)' }}>

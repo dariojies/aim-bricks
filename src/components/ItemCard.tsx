@@ -3,12 +3,16 @@ import { Box, BookOpen, CheckCircle, Lock } from 'lucide-react';
 
 interface Props {
   item: CatalogItem;
+  category?: any;
   onSelect: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
 }
 
-export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
+export const ItemCard: React.FC<Props> = ({ item, category, onSelect, onProAlert }) => {
   const isAvailable = item.status === 'Disponible';
+  
+  const localLabel = category?.localBtnText || 'Reservar para el local';
+  const homeLabel = category?.homeBtnText || 'Reservar para casa';
 
   return (
     <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isAvailable ? 1 : 0.8, transition: 'all 0.3s ease' }}>
@@ -21,16 +25,16 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
               {item.type}
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0' }}>{item.title}</h3>
-            {item.type === 'Aim Brickslab' && item.legoReference && (
+            {category?.showReference && item.legoReference && (
               <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                 Ref: {item.legoReference}
               </div>
             )}
-            {item.type === 'Libro' && (item.author || item.isbn) && (
+            {(category?.showAuthor || category?.showIsbn) && (
               <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                {item.author && item.author !== 'Desconocido' && <span>{item.author}</span>}
-                {item.author && item.author !== 'Desconocido' && item.isbn && <span>•</span>}
-                {item.isbn && <span>ISBN: {item.isbn}</span>}
+                {category?.showAuthor && item.author && item.author !== 'Desconocido' && <span>{item.author}</span>}
+                {category?.showAuthor && item.author && item.author !== 'Desconocido' && category?.showIsbn && item.isbn && <span>•</span>}
+                {category?.showIsbn && item.isbn && <span>ISBN: {item.isbn}</span>}
               </div>
             )}
             {item.isProOnly && (
@@ -60,14 +64,6 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
           <button className="btn btn-outline" style={{ width: '100%' }} disabled>
             Actualmente Reservado
           </button>
-        ) : item.type === 'Libro' ? (
-          <button 
-            className="btn btn-primary" 
-            style={{ width: '100%' }}
-            onClick={() => onSelect(item)}
-          >
-            Reservar para leer en casa/local
-          </button>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <button 
@@ -75,7 +71,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
               style={{ width: '100%' }}
               onClick={() => onSelect(item)}
             >
-              Reservar para montar en el local
+              {localLabel}
             </button>
             <button 
               className="btn" 
@@ -99,7 +95,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
                 onProAlert(item);
               }}
             >
-              <Box size={16} /> Reservar para montar en casa
+              <Box size={16} /> {homeLabel}
             </button>
           </div>
         )}
