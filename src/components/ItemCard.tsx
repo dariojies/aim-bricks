@@ -29,7 +29,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert }) => {
                 if (!value) return null;
                 return (
                   <span key={field.name}>
-                    {idx > 0 && item.categoryConfig.customFields.some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
+                    {idx > 0 && item.categoryConfig?.customFields?.some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
                     {field.label}: {field.type === 'checkbox' ? (value ? 'Sí' : 'No') : value}
                   </span>
                 );
