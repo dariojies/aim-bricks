@@ -5,7 +5,7 @@ export type ItemStatus = 'Disponible' | 'Reservado';
 export interface CatalogItem {
   id: string;
   title: string;
-  type: ItemType;
+  type: string;
   description: string;
   status: ItemStatus;
   isAvailable?: boolean;
@@ -16,6 +16,11 @@ export interface CatalogItem {
   author?: string;
   isProOnly?: boolean;
   categoryId?: string;
+  metadata?: Record<string, any>;
+  categoryConfig?: {
+    customFields?: Array<{ name: string, label: string, type: string }>;
+    reservationMode?: 'brickslab' | 'library';
+  };
 }
 
 export const mockItems: CatalogItem[] = [

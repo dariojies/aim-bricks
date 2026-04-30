@@ -32,12 +32,6 @@ export const AdminDashboard: React.FC = () => {
   const [newItemImage, setNewItemImage] = useState('');
   const [newItemStock, setNewItemStock] = useState('1');
 
-  // New specific fields
-  const [isLego, setIsLego] = useState(false);
-  const [legoReferenceInput, setLegoReferenceInput] = useState('');
-  const [author, setAuthor] = useState('');
-  const [isbn, setIsbn] = useState('');
-
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [filterBrickslab, setFilterBrickslab] = useState(false);
   const [filterLibrary, setFilterLibrary] = useState(false);
