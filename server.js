@@ -262,17 +262,6 @@ async function migrateToDynamic() {
       }
       return;
     }
-        description: 'Libros y manuales',
-        config: {
-          customFields: [
-            { name: 'author', label: 'Autor', type: 'text' },
-            { name: 'isbn', label: 'ISBN', type: 'text' }
-          ],
-          reservationMode: 'library'
-        }
-      }
-    });
-
     // Migrate Brickslabs
     const brickslabs = await prisma.bricks_brickslab.findMany();
     for (const b of brickslabs) {
