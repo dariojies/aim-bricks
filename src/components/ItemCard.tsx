@@ -42,7 +42,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
                 if (!value) return null;
                 return (
                   <span key={field.name}>
-                    {idx > 0 && config.customFields.some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
+                    {idx > 0 && (config.customFields || []).some((f: any, i: number) => i < idx && item.metadata?.[f.name]) && ' • '}
                     {field.label}: {field.type === 'checkbox' ? (value ? 'Sí' : 'No') : value}
                   </span>
                 );
