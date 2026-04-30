@@ -1239,12 +1239,19 @@ export const AdminDashboard: React.FC = () => {
             </h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
+              if (!detectedClubId) return alert('No se ha detectado un Club ID válido.');
               const url = editingCatId ? `${API_URL}/api/admin/categories/${editingCatId}` : `${API_URL}/api/admin/categories`;
               const method = editingCatId ? 'PUT' : 'POST';
               const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: catName, description: catDescription, icon: catIcon, isHomeAllowed: catHome })
+                body: JSON.stringify({ 
+                  clubId: detectedClubId,
+                  name: catName, 
+                  description: catDescription, 
+                  icon: catIcon, 
+                  isHomeAllowed: catHome 
+                })
               });
               if (res.ok) {
                 setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true); setEditingCatId(null);
