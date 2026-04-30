@@ -63,7 +63,7 @@ export const AdminDashboard: React.FC = () => {
   const [catalogSearchTerm, setCatalogSearchTerm] = useState('');
   const [activePolls, setActivePolls] = useState<any[]>([]);
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
-  
+
   // Category Form State
   const [catName, setCatName] = useState('');
   const [catDescription, setCatDescription] = useState('');
@@ -80,7 +80,7 @@ export const AdminDashboard: React.FC = () => {
 
   const [isProOnly, setIsProOnly] = useState(false);
   const [editIsProOnly, setEditIsProOnly] = useState(false);
-  
+
   const [memberEmail, setMemberEmail] = useState('');
   const [memberRole, setMemberRole] = useState<'member' | 'admin' | 'owner'>('member');
   const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
@@ -338,7 +338,7 @@ export const AdminDashboard: React.FC = () => {
     const userStr = localStorage.getItem('aim_bricks_user') || localStorage.getItem('brickslab_user') || localStorage.getItem('user');
     const user = JSON.parse(userStr || '{}');
     let clubId = user.clubId || user.club_id;
-    
+
     // Si es superadmin y no tiene club, intentamos pillar el primero
     if (!clubId && user.role === 'superadmin') {
       try {
@@ -449,22 +449,22 @@ export const AdminDashboard: React.FC = () => {
             <form onSubmit={handleCreateManualReservation} style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr', alignItems: 'end' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Alumno</label>
-                <input 
-                  type="text" 
-                  placeholder="Buscar alumno por nombre o correo..." 
+                <input
+                  type="text"
+                  placeholder="Buscar alumno por nombre o correo..."
                   value={reservationSearchUserTerm}
                   onChange={e => setReservationSearchUserTerm(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', marginBottom: '0.5rem' }}
                 />
-                <select 
+                <select
                   required
-                  value={selectedUserForReservation} 
+                  value={selectedUserForReservation}
                   onChange={e => setSelectedUserForReservation(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                 >
                   <option value="">-- Selecciona un alumno --</option>
-                  {users.filter(u => 
-                    u.name.toLowerCase().includes(reservationSearchUserTerm.toLowerCase()) || 
+                  {users.filter(u =>
+                    u.name.toLowerCase().includes(reservationSearchUserTerm.toLowerCase()) ||
                     u.email.toLowerCase().includes(reservationSearchUserTerm.toLowerCase())
                   ).map(u => (
                     <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
@@ -473,24 +473,24 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Artículo (Set o Libro)</label>
-                <input 
-                  type="text" 
-                  placeholder="Buscar artículo por título o referencia..." 
+                <input
+                  type="text"
+                  placeholder="Buscar artículo por título o referencia..."
                   value={reservationSearchItemTerm}
                   onChange={e => setReservationSearchItemTerm(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', marginBottom: '0.5rem' }}
                 />
-                <select 
+                <select
                   required
-                  value={selectedItemForReservation} 
+                  value={selectedItemForReservation}
                   onChange={e => setSelectedItemForReservation(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                 >
                   <option value="">-- Selecciona un artículo --</option>
-                  {items.filter(i => 
-                    i.isAvailable && 
-                    (i.title.toLowerCase().includes(reservationSearchItemTerm.toLowerCase()) || 
-                     (i.legoReference && i.legoReference.toLowerCase().includes(reservationSearchItemTerm.toLowerCase())))
+                  {items.filter(i =>
+                    i.isAvailable &&
+                    (i.title.toLowerCase().includes(reservationSearchItemTerm.toLowerCase()) ||
+                      (i.legoReference && i.legoReference.toLowerCase().includes(reservationSearchItemTerm.toLowerCase())))
                   ).map(i => (
                     <option key={i.id} value={i.id}>{i.type}: {i.title} {i.legoReference ? `(Ref: ${i.legoReference})` : ''}</option>
                   ))}
@@ -505,11 +505,11 @@ export const AdminDashboard: React.FC = () => {
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.5rem' }}>Reservas en curso</h3>
-              
+
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative' }}>
                   <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
-                  <input 
+                  <input
                     type="text"
                     placeholder="Buscar alumno..."
                     value={reservationFilterSearchTerm}
@@ -519,28 +519,28 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--background)', padding: '0.25rem', borderRadius: '10px', border: '1px solid var(--surface-border)' }}>
-                  <button 
+                  <button
                     className="btn"
                     onClick={() => setReservationStatusFilter('all')}
-                    style={{ 
+                    style={{
                       padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none',
                       background: reservationStatusFilter === 'all' ? 'var(--primary)' : 'transparent',
                       color: reservationStatusFilter === 'all' ? '#fff' : 'var(--text-muted)'
                     }}
                   >Todas</button>
-                  <button 
+                  <button
                     className="btn"
                     onClick={() => setReservationStatusFilter('reserved')}
-                    style={{ 
+                    style={{
                       padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none',
                       background: reservationStatusFilter === 'reserved' ? 'var(--primary)' : 'transparent',
                       color: reservationStatusFilter === 'reserved' ? '#fff' : 'var(--text-muted)'
                     }}
                   >Pendientes</button>
-                  <button 
+                  <button
                     className="btn"
                     onClick={() => setReservationStatusFilter('delivered')}
-                    style={{ 
+                    style={{
                       padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none',
                       background: reservationStatusFilter === 'delivered' ? 'var(--primary)' : 'transparent',
                       color: reservationStatusFilter === 'delivered' ? '#fff' : 'var(--text-muted)'
@@ -550,127 +550,127 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-          {reservations.filter(r => {
-            const matchesSearch = r.userName.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase()) || 
-                                 r.userEmail.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase());
-            const matchesStatus = reservationStatusFilter === 'all' || 
-                                 (reservationStatusFilter === 'reserved' && r.status === 'Reserved') ||
-                                 (reservationStatusFilter === 'delivered' && r.status === 'Delivered');
-            return matchesSearch && matchesStatus;
-          }).length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No hay reservas que coincidan con los filtros.</p>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                    <th style={{ padding: '1rem 0.5rem' }}>Usuario</th>
-                    <th style={{ padding: '1rem 0.5rem' }}>Artículo</th>
-                    <th style={{ padding: '1rem 0.5rem' }}>Tipo</th>
-                    <th style={{ padding: '1rem 0.5rem' }}>Fecha</th>
-                    <th style={{ padding: '1rem 0.5rem' }}>Estado</th>
-                    <th style={{ padding: '1rem 0.5rem' }}>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reservations.filter(r => {
-                    const matchesSearch = r.userName.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase()) || 
-                                         r.userEmail.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase());
-                    const matchesStatus = reservationStatusFilter === 'all' || 
-                                         (reservationStatusFilter === 'reserved' && r.status === 'Reserved') ||
-                                         (reservationStatusFilter === 'delivered' && r.status === 'Delivered');
-                    return matchesSearch && matchesStatus;
-                  }).map(r => (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <div style={{ fontWeight: 500 }}>{r.userName}</div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{r.userEmail}</div>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem' }}>{r.itemTitle}</td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '999px',
-                          fontSize: '0.75rem',
-                          background: r.itemType === 'Libro' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                          color: r.itemType === 'Libro' ? '#60A5FA' : '#F87171'
-                        }}>
-                          {r.itemType}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem' }}>{new Date(r.reservationDate).toLocaleDateString()}</td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '999px',
-                          fontSize: '0.75rem',
-                          background: r.status === 'Reserved' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                          color: r.status === 'Reserved' ? '#EAB308' : '#22C55E'
-                        }}>
-                          {r.status === 'Reserved' ? 'Pendiente Recogida' : 'Entregado a Alumno'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        {r.status === 'Reserved' ? (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              className="btn btn-primary"
-                              style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                              onClick={() => handleDeliver(r.id)}
-                            >
-                              <CheckCircle size={16} /> Marcar Entregado
-                            </button>
-                            <button
-                              className="btn btn-outline"
-                              style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#EF4444', color: '#EF4444' }}
-                              onClick={() => handleAdminCancel(r.id)}
-                            >
-                              Anular
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              className="btn btn-primary"
-                              style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
-                              onClick={() => handleReturn(r.id)}
-                            >
-                              <CheckCircle size={16} /> Marcar Devuelto
-                            </button>
-                            {r.itemType === 'Aim Brickslab' && (
+            {reservations.filter(r => {
+              const matchesSearch = r.userName.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase()) ||
+                r.userEmail.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase());
+              const matchesStatus = reservationStatusFilter === 'all' ||
+                (reservationStatusFilter === 'reserved' && r.status === 'Reserved') ||
+                (reservationStatusFilter === 'delivered' && r.status === 'Delivered');
+              return matchesSearch && matchesStatus;
+            }).length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>No hay reservas que coincidan con los filtros.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                      <th style={{ padding: '1rem 0.5rem' }}>Usuario</th>
+                      <th style={{ padding: '1rem 0.5rem' }}>Artículo</th>
+                      <th style={{ padding: '1rem 0.5rem' }}>Tipo</th>
+                      <th style={{ padding: '1rem 0.5rem' }}>Fecha</th>
+                      <th style={{ padding: '1rem 0.5rem' }}>Estado</th>
+                      <th style={{ padding: '1rem 0.5rem' }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reservations.filter(r => {
+                      const matchesSearch = r.userName.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase()) ||
+                        r.userEmail.toLowerCase().includes(reservationFilterSearchTerm.toLowerCase());
+                      const matchesStatus = reservationStatusFilter === 'all' ||
+                        (reservationStatusFilter === 'reserved' && r.status === 'Reserved') ||
+                        (reservationStatusFilter === 'delivered' && r.status === 'Delivered');
+                      return matchesSearch && matchesStatus;
+                    }).map(r => (
+                      <tr key={r.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          <div style={{ fontWeight: 500 }}>{r.userName}</div>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{r.userEmail}</div>
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem' }}>{r.itemTitle}</td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            background: r.itemType === 'Libro' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            color: r.itemType === 'Libro' ? '#60A5FA' : '#F87171'
+                          }}>
+                            {r.itemType}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem' }}>{new Date(r.reservationDate).toLocaleDateString()}</td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            background: r.status === 'Reserved' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                            color: r.status === 'Reserved' ? '#EAB308' : '#22C55E'
+                          }}>
+                            {r.status === 'Reserved' ? 'Pendiente Recogida' : 'Entregado a Alumno'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          {r.status === 'Reserved' ? (
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button
+                                className="btn btn-primary"
+                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={() => handleDeliver(r.id)}
+                              >
+                                <CheckCircle size={16} /> Marcar Entregado
+                              </button>
                               <button
                                 className="btn btn-outline"
-                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#F59E0B', color: '#F59E0B' }}
-                                onClick={async () => {
-                                  const desc = prompt(`Reportar piezas faltantes para ${r.itemTitle}.\nDescribe las piezas que faltan:`);
-                                  if (desc) {
-                                    try {
-                                      const res = await fetch(`${API_URL}/api/pieces/report`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ userId: r.userId, brickslabId: r.itemId, description: desc })
-                                      });
-                                      if (res.ok) alert('Reporte de piezas enviado.');
-                                      else alert('Error al enviar el reporte.');
-                                    } catch (e) { console.error(e); }
-                                  }
-                                }}
+                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#EF4444', color: '#EF4444' }}
+                                onClick={() => handleAdminCancel(r.id)}
                               >
-                                Faltan Piezas
+                                Anular
                               </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button
+                                className="btn btn-primary"
+                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
+                                onClick={() => handleReturn(r.id)}
+                              >
+                                <CheckCircle size={16} /> Marcar Devuelto
+                              </button>
+                              {r.itemType === 'Aim Brickslab' && (
+                                <button
+                                  className="btn btn-outline"
+                                  style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: '#F59E0B', color: '#F59E0B' }}
+                                  onClick={async () => {
+                                    const desc = prompt(`Reportar piezas faltantes para ${r.itemTitle}.\nDescribe las piezas que faltan:`);
+                                    if (desc) {
+                                      try {
+                                        const res = await fetch(`${API_URL}/api/pieces/report`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ userId: r.userId, brickslabId: r.itemId, description: desc })
+                                        });
+                                        if (res.ok) alert('Reporte de piezas enviado.');
+                                        else alert('Error al enviar el reporte.');
+                                      } catch (e) { console.error(e); }
+                                    }
+                                  }}
+                                >
+                                  Faltan Piezas
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
       {activeTab === 'users' && (
         <div className="glass-panel" style={{ padding: '2rem' }}>
@@ -843,19 +843,19 @@ export const AdminDashboard: React.FC = () => {
                   <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
                   {field.type === 'checkbox' ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={!!customFieldValues[field.name]} 
-                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })} 
+                      <input
+                        type="checkbox"
+                        checked={!!customFieldValues[field.name]}
+                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })}
                       />
                       <span style={{ color: 'var(--text)' }}>{field.label}</span>
                     </div>
                   ) : (
-                    <input 
-                      type={field.type} 
-                      value={customFieldValues[field.name] || ''} 
-                      onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })} 
-                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} 
+                    <input
+                      type={field.type}
+                      value={customFieldValues[field.name] || ''}
+                      onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                     />
                   )}
                 </div>
@@ -897,15 +897,15 @@ export const AdminDashboard: React.FC = () => {
                 Inventario Actual
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '0 0.75rem' }}>
                   <Search size={16} className="text-muted" />
-                  <input 
+                  <input
                     type="text"
                     placeholder="Buscar set o libro..."
                     value={catalogSearchTerm}
                     onChange={e => setCatalogSearchTerm(e.target.value)}
-                    style={{ 
-                      padding: '0.5rem 0', 
-                      border: 'none', 
-                      background: 'transparent', 
+                    style={{
+                      padding: '0.5rem 0',
+                      border: 'none',
+                      background: 'transparent',
                       color: 'var(--text)',
                       fontSize: '0.875rem',
                       width: '150px',
@@ -919,7 +919,7 @@ export const AdminDashboard: React.FC = () => {
               </span>
             </h3>
             <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-              {items.filter(item => 
+              {items.filter(item =>
                 item.title.toLowerCase().includes(catalogSearchTerm.toLowerCase()) ||
                 (item.legoReference && item.legoReference.toLowerCase().includes(catalogSearchTerm.toLowerCase())) ||
                 (item.author && item.author.toLowerCase().includes(catalogSearchTerm.toLowerCase())) ||
@@ -1126,7 +1126,7 @@ export const AdminDashboard: React.FC = () => {
                               <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
                                 <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)' }}></div>
                               </div>
-                              
+
                               <div style={{ marginTop: '0.5rem' }}>
                                 <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Votantes:</div>
                                 <div style={{ maxHeight: '100px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', padding: '0.5rem' }}>
@@ -1236,11 +1236,11 @@ export const AdminDashboard: React.FC = () => {
               const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                   clubId: detectedClubId,
-                  name: catName, 
-                  description: catDescription, 
-                  icon: catIcon, 
+                  name: catName,
+                  description: catDescription,
+                  icon: catIcon,
                   isHomeAllowed: catHome,
                   config: {
                     customFields: catCustomFields,
@@ -1249,7 +1249,7 @@ export const AdminDashboard: React.FC = () => {
                 })
               });
               if (res.ok) {
-                setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true); 
+                setCatName(''); setCatDescription(''); setCatIcon(''); setCatHome(true);
                 setCatCustomFields([]); setCatReservationMode('brickslab');
                 setEditingCatId(null);
                 fetchCategories();
@@ -1266,8 +1266,8 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ padding: '1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
                 <h4 style={{ marginBottom: '1rem', color: 'var(--accent)', fontSize: '1rem' }}>Modo de Reserva</h4>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button type="button" onClick={() => setCatReservationMode('brickslab')} className={`btn ${catReservationMode === 'brickslab' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }}>Modo Bricks (Pro/Standard)</button>
-                  <button type="button" onClick={() => setCatReservationMode('library')} className={`btn ${catReservationMode === 'library' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }}>Modo Lectura (Botón Único)</button>
+                  <button type="button" onClick={() => setCatReservationMode('brickslab')} className={`btn ${catReservationMode === 'brickslab' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }}>Modo Botón Doble (Pro/Standard)</button>
+                  <button type="button" onClick={() => setCatReservationMode('library')} className={`btn ${catReservationMode === 'library' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }}>Modo Botón Único</button>
                 </div>
               </div>
 
@@ -1276,9 +1276,9 @@ export const AdminDashboard: React.FC = () => {
                 <div style={{ display: 'grid', gap: '0.75rem' }}>
                   {catCustomFields.map((field, idx) => (
                     <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <input 
-                        placeholder="Etiqueta (Ej: ISBN)" 
-                        value={field.label} 
+                      <input
+                        placeholder="Etiqueta (Ej: ISBN)"
+                        value={field.label}
                         onChange={e => {
                           const newFields = [...catCustomFields];
                           newFields[idx].label = e.target.value;
@@ -1287,8 +1287,8 @@ export const AdminDashboard: React.FC = () => {
                         }}
                         style={{ flex: 2, padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                       />
-                      <select 
-                        value={field.type} 
+                      <select
+                        value={field.type}
                         onChange={e => {
                           const newFields = [...catCustomFields];
                           newFields[idx].type = e.target.value;
@@ -1359,8 +1359,8 @@ export const AdminDashboard: React.FC = () => {
             <form onSubmit={handleAddMembership} style={{ display: 'flex', gap: '1rem', alignItems: 'end' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Correo Electrónico</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   placeholder="alumno@ejemplo.com"
                   value={memberEmail}
@@ -1370,7 +1370,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div style={{ width: '150px' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Rol</label>
-                <select 
+                <select
                   value={memberRole}
                   onChange={e => setMemberRole(e.target.value as any)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
@@ -1389,7 +1389,7 @@ export const AdminDashboard: React.FC = () => {
               <h3 style={{ fontSize: '1.5rem' }}>Miembros Autorizados</h3>
               <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
                 <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
+                <input
                   type="text"
                   placeholder="Buscar por email..."
                   value={membershipSearchTerm}
@@ -1416,44 +1416,44 @@ export const AdminDashboard: React.FC = () => {
                     memberships
                       .filter(m => m.email.toLowerCase().includes(membershipSearchTerm.toLowerCase()))
                       .map(m => (
-                      <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <td style={{ padding: '1rem', fontWeight: 500 }}>{m.email}</td>
-                        <td style={{ padding: '1rem' }}>
-                          <span style={{ 
-                            padding: '0.2rem 0.5rem', 
-                            borderRadius: '4px', 
-                            fontSize: '0.75rem', 
-                            background: m.role === 'owner' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(255,255,255,0.1)',
-                            color: m.role === 'owner' ? '#A78BFA' : 'var(--text)'
-                          }}>
-                            {m.role === 'owner' ? 'Dueño' : m.role === 'admin' ? 'Admin' : 'Miembro'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          <span style={{ 
-                            padding: '0.2rem 0.5rem', 
-                            borderRadius: '4px', 
-                            fontSize: '0.75rem', 
-                            background: m.isRegistered ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                            color: m.isRegistered ? '#10B981' : 'var(--text-muted)'
-                          }}>
-                            {m.isRegistered ? 'Registrado' : 'Pendiente'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                          {new Date(m.createdAt).toLocaleDateString()}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'right' }}>
-                          <button 
-                            onClick={() => handleDeleteMembership(m.id)}
-                            className="text-error"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                        <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '1rem', fontWeight: 500 }}>{m.email}</td>
+                          <td style={{ padding: '1rem' }}>
+                            <span style={{
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              background: m.role === 'owner' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(255,255,255,0.1)',
+                              color: m.role === 'owner' ? '#A78BFA' : 'var(--text)'
+                            }}>
+                              {m.role === 'owner' ? 'Dueño' : m.role === 'admin' ? 'Admin' : 'Miembro'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '1rem' }}>
+                            <span style={{
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              background: m.isRegistered ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                              color: m.isRegistered ? '#10B981' : 'var(--text-muted)'
+                            }}>
+                              {m.isRegistered ? 'Registrado' : 'Pendiente'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                            {new Date(m.createdAt).toLocaleDateString()}
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right' }}>
+                            <button
+                              onClick={() => handleDeleteMembership(m.id)}
+                              className="text-error"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
               </table>
