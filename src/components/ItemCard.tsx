@@ -85,7 +85,11 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
           {item.description}
         </p>
         {!isAvailable ? (
-          <button className="btn btn-outline" style={{ width: '100%' }} disabled>
+          <button 
+            className="btn btn-outline" 
+            style={{ width: '100%', opacity: 0.6, cursor: 'pointer' }}
+            onClick={() => onSelect(item)}
+          >
             Actualmente Reservado
           </button>
         ) : config?.reservationMode === 'library' ? (

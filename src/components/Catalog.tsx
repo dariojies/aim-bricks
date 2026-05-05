@@ -23,8 +23,10 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
     
     return matchesFilter && matchesSearch;
   }).sort((a, b) => {
-    if (a.isAvailable === b.isAvailable) return 0;
-    return a.isAvailable ? -1 : 1;
+    const aAvailable = a.status === 'Disponible';
+    const bAvailable = b.status === 'Disponible';
+    if (aAvailable === bAvailable) return 0;
+    return aAvailable ? -1 : 1;
   });
 
   return (

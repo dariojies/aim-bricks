@@ -438,7 +438,7 @@ app.post('/api/auth/login', async (req, res) => {
       currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
         id: r.id,
         status: r.status === 'Active' ? 'Reserved' : r.status,
-        text: `${r.status}: ${r.brickslab?.title || r.libraryBook?.title || 'Artículo'}`,
+        text: `${r.status === 'Delivered' ? 'En préstamo' : 'Reservado'}: ${r.brickslab?.title || r.libraryBook?.title || 'Artículo'}`,
         itemId: r.itemId || r.brickslabId || r.libraryBookId,
         categoryId: r.categoryId
       })),
@@ -507,7 +507,7 @@ app.post('/api/auth/me', async (req, res) => {
       currentReservations: user.reservations.filter(r => ['Active', 'Reserved', 'Delivered'].includes(r.status)).map(r => ({
         id: r.id,
         status: r.status === 'Active' ? 'Reserved' : r.status,
-        text: `${r.status}: ${r.brickslab?.title || r.libraryBook?.title || r.item?.title || 'Artículo'}`,
+        text: `${r.status === 'Delivered' ? 'En préstamo' : 'Reservado'}: ${r.brickslab?.title || r.libraryBook?.title || r.item?.title || 'Artículo'}`,
         itemId: r.itemId || r.brickslabId || r.libraryBookId,
         categoryId: r.categoryId || r.item?.categoryId,
         isBrickslab: !!(r.brickslabId || (r.item && r.item.category.name === 'Aim Brickslab')),
@@ -758,15 +758,23 @@ app.get('/api/catalog', async (req, res) => {
     }
     if (!club) return res.json([]);
 
-    const items = await prisma.bricks_items.findMany({
-      where: { clubId: club.id },
-      include: { category: true },
-      orderBy: { createdAt: 'desc' }
-    });
+    const [items, activeReservations] = await Promise.all([
+      prisma.bricks_items.findMany({
+        where: { clubId: club.id },
+        include: { category: true },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.bricks_reservation.findMany({
+        where: { status: { in: ['Active', 'Reserved', 'Delivered'] } }
+      })
+    ]);
 
     // Map to include legacy-compatible fields and metadata
     const formatted = items.map(i => {
       const metadata = i.metadata || {};
+      const reservedCount = activeReservations.filter(r => r.itemId === i.id).length;
+      const isActuallyAvailable = i.isAvailable && reservedCount < (i.stock || 1);
+      
       return {
         id: i.id,
         clubId: i.clubId,
@@ -776,7 +784,7 @@ app.get('/api/catalog', async (req, res) => {
         imageUrl: i.imageUrl,
         stock: i.stock,
         isProOnly: i.isProOnly,
-        isAvailable: i.isAvailable,
+        isAvailable: isActuallyAvailable,
         type: i.category.name,
         categoryConfig: i.category.config || {},
         metadata: metadata,
@@ -784,7 +792,7 @@ app.get('/api/catalog', async (req, res) => {
         legoReference: metadata.legoReference || null,
         author: metadata.author || null,
         isbn: metadata.isbn || null,
-        status: i.isAvailable ? 'Disponible' : 'Reservado'
+        status: isActuallyAvailable ? 'Disponible' : 'Reservado'
       };
     });
 
@@ -977,17 +985,19 @@ app.post('/api/reservations', async (req, res) => {
       return res.status(403).json({ error: "Este artículo es exclusivo para miembros Pro." });
     }
 
-    // Limit check (usually 1 active per category, but we can make it configurable)
-    const userActiveInCategory = await prisma.bricks_reservation.count({
+    // Limit check: 1 active reservation per category
+    const activeReservation = await prisma.bricks_reservation.findFirst({
       where: {
         userId,
-        status: { in: ['Reserved', 'Delivered'] },
+        status: { in: ['Reserved', 'Delivered', 'Active'] },
         categoryId: finalCategoryId
-      }
+      },
+      include: { brickslab: true, libraryBook: true, item: true }
     });
 
-    if (userActiveInCategory > 0) {
-      return res.status(400).json({ error: `Ya tienes un artículo de esta categoría reservado. Debes entregarlo primero.` });
+    if (activeReservation) {
+      const title = activeReservation.item?.title || activeReservation.brickslab?.title || activeReservation.libraryBook?.title || 'otro artículo';
+      return res.status(400).json({ error: `Ya tienes una reserva activa en esta categoría (${title}). Debes devolverlo para poder reservar otro.` });
     }
 
     // Stock check
@@ -1113,7 +1123,13 @@ app.post('/api/admin/pieces/resolve', async (req, res) => {
 app.get('/api/polls', async (req, res) => {
   try {
     const activePoll = await prisma.bricks_poll.findFirst({
-      where: { isActive: true },
+      where: { 
+        isActive: true,
+        OR: [
+          { expiresAt: { gt: new Date() } },
+          { expiresAt: null }
+        ]
+      },
       include: {
         options: {
           include: { _count: { select: { votes: true } } }
