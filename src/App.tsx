@@ -91,18 +91,22 @@ function App() {
     } catch (e) { console.error('Error syncing session:', e); }
   };
 
-  // URL Parameter detection for deep linking (Ticket #83)
+  // URL Parameter and Path detection for deep linking (Ticket #83)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const catParam = params.get('cat')?.toLowerCase();
-    if (catParam) {
+    const pathParam = window.location.pathname.replace('/', '').toLowerCase();
+    
+    const target = catParam || pathParam;
+    
+    if (target) {
       const foundCat = categories.find(c => 
-        c.name.toLowerCase().includes(catParam) || 
-        (catParam === 'lego' && c.name === 'Aim Brickslab') ||
-        (catParam === 'libros' && c.name === 'Biblioteca')
+        c.name.toLowerCase().includes(target) || 
+        (target === 'lego' && c.name === 'Aim Brickslab') ||
+        (target === 'libros' && c.name === 'Biblioteca') ||
+        (target === 'biblioteca' && c.name === 'Biblioteca')
       );
       if (foundCat) {
-        // We'll pass an initialFilterId prop to Catalog
         setInitialFilterId(foundCat.id);
       }
     }
@@ -461,9 +465,13 @@ function App() {
       <main className="animate-fade-in">
         {currentView === 'catalog' ? (
           <>
-            <div style={{ padding: '0 2rem', marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-1px' }}>Catálogo</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>Explora y reserva tus articulos favoritos del catálogo.</p>
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h1 className="text-gradient" style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-1px' }}>
+                Catálogo
+              </h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>
+                Explora y reserva tus artículos favoritos del catálogo.
+              </p>
             </div>
 
             {activePoll && (
