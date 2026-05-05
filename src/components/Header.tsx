@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, LogIn, User, Moon, Sun, Heart, Trophy, Crown } from 'lucide-react';
+import { Box, LogIn, User, Heart, Trophy, Crown } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -19,22 +19,7 @@ export const Header: React.FC<Props> = ({
   onAdminClick, onRankingClick, onProClick,
   onTabChange, currentView
 }) => {
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
-  });
-
   const [showDonationModal, setShowDonationModal] = useState(false);
-
-  useEffect(() => {
-    if (theme === 'light') {
-      document.body.classList.add('light-theme');
-    } else {
-      document.body.classList.remove('light-theme');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
   const btnStyle = {
     padding: '0.4rem 0.75rem',
@@ -141,19 +126,6 @@ export const Header: React.FC<Props> = ({
         </div>
       </header>
 
-      <button
-        onClick={toggleTheme}
-        style={{
-          position: 'fixed', bottom: '2rem', left: '2rem', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer',
-          background: 'var(--accent)', border: 'none', color: 'white',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
-        }}
-        aria-label="Alternar tema"
-      >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
 
       {showDonationModal && (
         <div style={{
