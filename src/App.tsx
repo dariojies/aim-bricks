@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { ArrowUp, MessageCircle, AlertCircle, CheckCircle2, X, Plus } from 'lucide-react';
+import { ArrowUp, MessageCircle, AlertCircle, CheckCircle2, X, Plus, Sun, Moon } from 'lucide-react';
 import { Catalog } from './components/Catalog';
 import { Profile } from './components/Profile';
 import { ReservationModal } from './components/ReservationModal';
@@ -43,6 +43,25 @@ function App() {
   const [supportStatus, setSupportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [showProModal, setShowProModal] = useState(false);
 
+  // Theme State (Ticket #82)
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('aim_bricks_theme');
+    return saved ? saved === 'dark' : true;
+  });
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+    localStorage.setItem('aim_bricks_theme', !isDark ? 'dark' : 'light');
+  };
+
+  useEffect(() => {
+    if (isDark) {
+      document.body.classList.remove('light-theme');
+    } else {
+      document.body.classList.add('light-theme');
+    }
+  }, [isDark]);
+
   const syncUserSession = async () => {
     const saved = localStorage.getItem('aim_bricks_user');
     if (!saved) return;
@@ -70,6 +89,23 @@ function App() {
       }
     } catch (e) { console.error('Error syncing session:', e); }
   };
+
+  // URL Parameter detection for deep linking (Ticket #83)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const catParam = params.get('cat')?.toLowerCase();
+    if (catParam) {
+      const foundCat = categories.find(c => 
+        c.name.toLowerCase().includes(catParam) || 
+        (catParam === 'lego' && c.name === 'Aim Brickslab') ||
+        (catParam === 'libros' && c.name === 'Biblioteca')
+      );
+      if (foundCat) {
+        // We'll pass an initialFilterId prop to Catalog
+        setInitialFilterId(foundCat.id);
+      }
+    }
+  }, [categories]);
 
   useEffect(() => {
     loadCatalog();
@@ -475,6 +511,7 @@ function App() {
               categories={categories}
               onReserveClick={handleReserveClick}
               clubId={user?.clubId}
+              initialFilterId={initialFilterId}
               onProAlert={(item) => {
                 const perm = user?.permissions?.[item.categoryId || ''];
                 if (perm?.pro) {
@@ -736,13 +773,44 @@ function App() {
         </div>
       )}
 
+      {/* Floating Theme Toggle (Ticket #82 - Styled like Support) */}
+      <button
+        className="btn"
+        onClick={toggleTheme}
+        style={{
+          position: 'fixed', bottom: '2rem', left: '1.5rem', zIndex: 90,
+          width: '60px', height: '60px', borderRadius: '50%', padding: 0,
+          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
+          background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+          color: 'white',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+          cursor: 'pointer',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1) translateY(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
+        }}
+        aria-label="Cambiar tema"
+        title="Cambiar entre modo claro y oscuro"
+      >
+        {isDark ? <Sun size={28} color="white" /> : <Moon size={28} color="white" />}
+      </button>
+
       {/* Floating Scroll to Top button */}
       {showScrollTop && (
         <button
           className="btn"
           onClick={scrollToTop}
           style={{
-            position: 'fixed', bottom: '6.5rem', right: '1.5rem', zIndex: 90,
+            position: 'fixed', bottom: '6.5rem', left: '1.5rem', zIndex: 90,
             width: '60px', height: '60px', borderRadius: '50%', padding: 0,
             boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
             background: 'linear-gradient(135deg, #10B981, #3B82F6)',
@@ -803,6 +871,37 @@ function App() {
         title="Enviar ticket de soporte"
       >
         <MessageCircle size={28} color="white" />
+      </button>
+
+      {/* Floating Theme Toggle (Ticket #82 - Styled like Support) */}
+      <button
+        className="btn"
+        onClick={toggleTheme}
+        style={{
+          position: 'fixed', bottom: '2rem', left: '1.5rem', zIndex: 90,
+          width: '60px', height: '60px', borderRadius: '50%', padding: 0,
+          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
+          background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+          color: 'white',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+          cursor: 'pointer',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1) translateY(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
+        }}
+        aria-label="Cambiar tema"
+        title="Cambiar entre modo claro y oscuro"
+      >
+        {isDark ? <Sun size={28} color="white" /> : <Moon size={28} color="white" />}
       </button>
 
       {/* Support Modal */}

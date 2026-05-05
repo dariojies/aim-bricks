@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CatalogItem } from '../data/mockData';
 import { ItemCard } from './ItemCard';
 import { Search, Box } from 'lucide-react';
@@ -9,11 +9,19 @@ interface Props {
   onReserveClick: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
   clubId?: string;
+  initialFilterId?: string;
 }
 
-export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert, clubId }) => {
+export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert, clubId, initialFilterId }) => {
   const [filterId, setFilterId] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Handle initial filtering from URL (Ticket #83)
+  useEffect(() => {
+    if (initialFilterId) {
+      setFilterId(initialFilterId);
+    }
+  }, [initialFilterId]);
 
   const filteredItems = items.filter(item => {
     const matchesFilter = filterId === 'Todos' || item.categoryId === filterId;
