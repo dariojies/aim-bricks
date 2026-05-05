@@ -19,6 +19,7 @@ function App() {
   });
   const [currentView, setCurrentView] = useState<'catalog' | 'profile' | 'admin' | 'ranking'>('catalog');
   const [categories, setCategories] = useState<any[]>([]);
+  const [initialFilterId, setInitialFilterId] = useState<string>('Todos');
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
 
