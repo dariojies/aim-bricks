@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Box, LogIn, User, Heart, Trophy, Crown } from 'lucide-react';
 
 interface Props {
