@@ -596,8 +596,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                             padding: '0.25rem 0.75rem',
                             borderRadius: '999px',
                             fontSize: '0.75rem',
-                            background: r.itemType === 'Libro' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                            color: r.itemType === 'Libro' ? '#60A5FA' : '#F87171'
+                            fontWeight: 600,
+                            background: (r.itemType === 'Aim Brickslab') ? 'rgba(6, 182, 212, 0.1)' : (r.itemType === 'Libro' || r.itemType === 'Biblioteca') ? 'rgba(168, 85, 247, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                            color: (r.itemType === 'Aim Brickslab') ? '#22D3EE' : (r.itemType === 'Libro' || r.itemType === 'Biblioteca') ? '#A78BFA' : '#94A3B8'
                           }}>
                             {r.itemType}
                           </span>

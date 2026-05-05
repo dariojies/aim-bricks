@@ -29,8 +29,22 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
       <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--accent)', fontSize: '0.875rem', fontWeight: 600 }}>
-              {item.type === 'Aim Brickslab' ? <Box size={16} /> : <BookOpen size={16} />}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.4rem', 
+              marginBottom: '0.6rem', 
+              fontSize: '0.75rem', 
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              padding: '0.25rem 0.6rem',
+              borderRadius: '6px',
+              width: 'fit-content',
+              background: (item.type === 'Aim Brickslab') ? 'rgba(6, 182, 212, 0.1)' : (item.type === 'Biblioteca' || item.type === 'Libro') ? 'rgba(168, 85, 247, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+              color: (item.type === 'Aim Brickslab') ? '#22D3EE' : (item.type === 'Biblioteca' || item.type === 'Libro') ? '#A78BFA' : '#94A3B8'
+            }}>
+              {item.type === 'Aim Brickslab' ? <Box size={14} /> : <BookOpen size={14} />}
               {item.type}
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0' }}>{item.title}</h3>
