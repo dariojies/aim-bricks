@@ -736,9 +736,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <tbody>
                 {users.filter(u => {
                   const matchSearch = u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
-                  const matchBrickslab = filterBrickslab ? u.permissions?.brickslab : true;
-                  const matchLibrary = filterLibrary ? u.permissions?.library : true;
-                  const matchAnyRank = filterAnyRank ? (u.permissions?.brickslab || u.permissions?.library) : true;
+                  
+                  // New dynamic filter logic based on category reservation modes
+                  const hasBrickslabPermission = categories.some(cat => 
+                    cat.config?.reservationMode === 'brickslab' && 
+                    (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
+                  );
+                  const hasLibraryPermission = categories.some(cat => 
+                    cat.config?.reservationMode === 'library' && 
+                    (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
+                  );
+                  const hasAnyPermission = categories.some(cat => 
+                    (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
+                  );
+
+                  const matchBrickslab = filterBrickslab ? hasBrickslabPermission : true;
+                  const matchLibrary = filterLibrary ? hasLibraryPermission : true;
+                  const matchAnyRank = filterAnyRank ? hasAnyPermission : true;
+
                   return matchSearch && matchBrickslab && matchLibrary && matchAnyRank;
                 }).map(u => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
