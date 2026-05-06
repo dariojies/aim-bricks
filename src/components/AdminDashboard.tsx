@@ -84,6 +84,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const [isProOnly, setIsProOnly] = useState(false);
   const [editIsProOnly, setEditIsProOnly] = useState(false);
+  const [allowHomeBuild, setAllowHomeBuild] = useState(true);
+  const [editAllowHomeBuild, setEditAllowHomeBuild] = useState(true);
 
   const [memberEmail, setMemberEmail] = useState('');
   const [memberRole, setMemberRole] = useState<'member' | 'admin' | 'owner'>('member');
@@ -266,7 +268,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           imageUrl: newItemImage,
           stock: newItemStock,
           isProOnly,
-          metadata: customFieldValues
+          metadata: { ...customFieldValues, allowHomeBuild }
         })
       });
       if (res.ok) {
@@ -275,6 +277,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         setNewItemImage('');
         setNewItemStock('1');
         setIsProOnly(false);
+        setAllowHomeBuild(true);
         setCustomFieldValues({});
         alert('Elemento añadido correctamente');
         fetchCatalog();
@@ -289,6 +292,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     setEditStock(item.stock?.toString() || '1');
     setEditImage(item.imageUrl || '');
     setEditIsProOnly(item.isProOnly || false);
+    setEditAllowHomeBuild(item.metadata?.allowHomeBuild !== false); // Default to true if not set
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -304,7 +308,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           description: editDesc,
           stock: editStock,
           imageUrl: editImage,
-          isProOnly: editIsProOnly
+          isProOnly: editIsProOnly,
+          metadata: { ...(editingItem.metadata || {}), allowHomeBuild: editAllowHomeBuild }
         })
       });
       if (res.ok) {
@@ -877,9 +882,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
               {/* Special Brickslab Pro toggle if in brickslab mode */}
               {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (
-                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
-                  <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Exclusivo Brickslab Pro (Se puede llevar a casa)</label>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
+                    <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Artículo Exclusivo Pro (No visible para usuarios estándar)</label>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="allowHomeBuild" checked={allowHomeBuild} onChange={e => setAllowHomeBuild(e.target.checked)} />
+                    <label htmlFor="allowHomeBuild" style={{ color: '#D4AF37', fontWeight: 600 }}>Permitir reserva para llevar a CASA (Solo alumnos Pro)</label>
+                  </div>
                 </div>
               )}
 
@@ -1002,9 +1013,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 <textarea required value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '100px' }} />
               </div>
               {editingItem.type === 'Aim Brickslab' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <input type="checkbox" id="edit-pro-check" checked={editIsProOnly} onChange={e => setEditIsProOnly(e.target.checked)} />
-                  <label htmlFor="edit-pro-check" style={{ fontWeight: 600, color: 'var(--accent)' }}>Exclusivo para Brickslab Pro</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="edit-pro-check" checked={editIsProOnly} onChange={e => setEditIsProOnly(e.target.checked)} />
+                    <label htmlFor="edit-pro-check" style={{ fontWeight: 600, color: 'var(--accent)' }}>Exclusivo para Brickslab Pro</label>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="edit-home-check" checked={editAllowHomeBuild} onChange={e => setEditAllowHomeBuild(e.target.checked)} />
+                    <label htmlFor="edit-home-check" style={{ fontWeight: 600, color: '#D4AF37' }}>Permitir reserva para llevar a CASA</label>
+                  </div>
                 </div>
               )}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
