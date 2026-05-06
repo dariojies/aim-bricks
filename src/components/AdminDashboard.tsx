@@ -40,6 +40,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [filterBrickslab, setFilterBrickslab] = useState(false);
   const [filterLibrary, setFilterLibrary] = useState(false);
   const [filterAnyRank, setFilterAnyRank] = useState(false);
+  const [filterProOnly, setFilterProOnly] = useState(false);
 
   // Manual Reservation state
   const [selectedUserForReservation, setSelectedUserForReservation] = useState('');
@@ -718,6 +719,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               >
                 Abonados
               </button>
+              <button
+                className="btn"
+                style={{ 
+                  padding: '0.5rem 1rem', 
+                  fontSize: '0.875rem',
+                  background: filterProOnly ? 'linear-gradient(135deg, #D4AF37, #FBBF24)' : 'transparent',
+                  borderColor: filterProOnly ? 'transparent' : '#D4AF37',
+                  color: filterProOnly ? '#000' : '#D4AF37',
+                  fontWeight: 700,
+                  boxShadow: filterProOnly ? '0 0 15px rgba(212, 175, 55, 0.4)' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+                onClick={() => setFilterProOnly(!filterProOnly)}
+              >
+                Solo Pro
+              </button>
             </div>
           </div>
           <div className="table-responsive-wrapper">
@@ -749,12 +766,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   const hasAnyPermission = categories.some(cat => 
                     (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
                   );
+                  const hasProPermission = categories.some(cat => u.permissions?.[cat.id]?.pro);
 
                   const matchBrickslab = filterBrickslab ? hasBrickslabPermission : true;
                   const matchLibrary = filterLibrary ? hasLibraryPermission : true;
                   const matchAnyRank = filterAnyRank ? hasAnyPermission : true;
+                  const matchProOnly = filterProOnly ? hasProPermission : true;
 
-                  return matchSearch && matchBrickslab && matchLibrary && matchAnyRank;
+                  return matchSearch && matchBrickslab && matchLibrary && matchAnyRank && matchProOnly;
                 }).map(u => (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                     <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{u.name}</td>
