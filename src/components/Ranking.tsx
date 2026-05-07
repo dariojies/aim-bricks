@@ -18,7 +18,12 @@ export const Ranking: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/ranking`)
+    const userStr = localStorage.getItem('aim_bricks_user');
+    const userObj = userStr ? JSON.parse(userStr) : null;
+    const clubId = userObj?.clubId || '';
+    const url = clubId ? `${API_URL}/api/ranking?clubId=${clubId}` : `${API_URL}/api/ranking`;
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         setRanking(data);

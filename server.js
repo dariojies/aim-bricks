@@ -1610,8 +1610,22 @@ app.put('/api/support/:id', async (req, res) => {
 // Ranking Endpoint
 app.get('/api/ranking', async (req, res) => {
   try {
+    const { clubId } = req.query;
+
+    let validEmails = null;
+    if (clubId) {
+      const memberships = await prisma.bricks_club_memberships.findMany({
+        where: { clubId },
+        select: { email: true }
+      });
+      validEmails = memberships.map(m => m.email.toLowerCase());
+    }
+
     const history = await prisma.bricks_userhistory.findMany({
-      where: { brickslabId: { not: null } },
+      where: { 
+        brickslabId: { not: null },
+        ...(validEmails ? { user: { email: { in: validEmails } } } : {})
+      },
       include: { user: true }
     });
     
