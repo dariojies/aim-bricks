@@ -420,6 +420,24 @@ app.post('/api/auth/login', async (req, res) => {
       where: { userId: user.user_id }
     });
 
+    const membershipsRaw = await prisma.bricks_club_memberships.findMany({
+      where: { email: user.email.toLowerCase() }
+    });
+
+    let memberships = [];
+    if (membershipsRaw.length > 0) {
+      const clubIds = membershipsRaw.map(m => m.clubId);
+      const clubsInfo = await prisma.bricks_clubs.findMany({
+        where: { id: { in: clubIds } }
+      });
+      memberships = membershipsRaw.map(m => ({
+        id: m.id,
+        clubId: m.clubId,
+        role: m.role,
+        clubName: clubsInfo.find(c => c.id === m.clubId)?.name || null
+      }));
+    }
+
     const club = user.club_id ? await prisma.bricks_clubs.findUnique({ where: { id: user.club_id } }) : null;
 
     const profile = {
@@ -428,6 +446,7 @@ app.post('/api/auth/login', async (req, res) => {
       clubName: club?.name || null,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
+      memberships,
       role: user.dev_role || 'student',
       categories: categories.map(c => ({
         id: c.id,
@@ -489,6 +508,24 @@ app.post('/api/auth/me', async (req, res) => {
       where: { userId: user.user_id }
     });
 
+    const membershipsRaw = await prisma.bricks_club_memberships.findMany({
+      where: { email: user.email.toLowerCase() }
+    });
+
+    let memberships = [];
+    if (membershipsRaw.length > 0) {
+      const clubIds = membershipsRaw.map(m => m.clubId);
+      const clubsInfo = await prisma.bricks_clubs.findMany({
+        where: { id: { in: clubIds } }
+      });
+      memberships = membershipsRaw.map(m => ({
+        id: m.id,
+        clubId: m.clubId,
+        role: m.role,
+        clubName: clubsInfo.find(c => c.id === m.clubId)?.name || null
+      }));
+    }
+
     const club = user.club_id ? await prisma.bricks_clubs.findUnique({ where: { id: user.club_id } }) : null;
 
     const profile = {
@@ -497,6 +534,7 @@ app.post('/api/auth/me', async (req, res) => {
       clubName: club?.name || null,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
+      memberships,
       role: user.dev_role || 'student',
       categories: categories.map(c => ({
         id: c.id,
