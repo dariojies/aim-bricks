@@ -31,6 +31,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [categories, setCategories] = useState<any[]>([]);
   const [memberships, setMemberships] = useState<any[]>([]);
   const [allClubs, setAllClubs] = useState<any[]>([]);
+  const [detectedClubId, setDetectedClubId] = useState('');
 
   // Super Admin state
   const [newClubName, setNewClubName] = useState('');
@@ -105,11 +106,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     fetchCatalog();
     fetchUsers();
     fetchReports();
-    fetchActivePolls();
+  useEffect(() => {
+    // Determine which club the user is admin/owner of
+    if (user?.memberships && user.memberships.length > 0) {
+      const adminMembership = user.memberships.find((m: any) => m.role === 'owner' || m.role === 'admin') || user.memberships[0];
+      const initialClubId = localStorage.getItem('detectedClubId') || adminMembership.clubId;
+      setDetectedClubId(initialClubId);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!detectedClubId) return;
+    localStorage.setItem('detectedClubId', detectedClubId);
+    
     fetchCategories();
+    fetchActivePolls();
+    fetchReports();
+    fetchUsers();
+    fetchReservations();
+    fetchCatalog();
     fetchMemberships();
     if (isSuperAdmin) fetchAllClubs();
-  }, []);
+  }, [detectedClubId]);
 
   const fetchAllClubs = async () => {
     try {
@@ -120,7 +138,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/categories`);
+      const res = await fetch(`${API_URL}/api/admin/categories?clubId=${detectedClubId}`);
       if (res.ok) {
         const cats = await res.json();
         setCategories(cats);
@@ -131,21 +149,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const fetchActivePolls = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/polls/active`);
+      const res = await fetch(`${API_URL}/api/admin/polls/active?clubId=${detectedClubId}`);
       if (res.ok) setActivePolls(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchReports = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/pieces`);
+      const res = await fetch(`${API_URL}/api/admin/pieces?clubId=${detectedClubId}`);
       if (res.ok) setReports(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/users/permissions`);
+      const res = await fetch(`${API_URL}/api/admin/users/permissions?clubId=${detectedClubId}`);
       if (res.ok) setUsers(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -163,14 +181,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const fetchReservations = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/reservations`);
+      const res = await fetch(`${API_URL}/api/admin/reservations?clubId=${detectedClubId}`);
       if (res.ok) setReservations(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchCatalog = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/catalog`);
+      const res = await fetch(`${API_URL}/api/catalog?clubId=${detectedClubId}`);
       if (res.ok) setItems(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -411,9 +429,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-      <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>
-        Panel de Administración
-      </h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 className="text-gradient" style={{ fontSize: '2.5rem', margin: 0 }}>
+          Panel de Administración
+        </h2>
+        {user?.memberships?.filter((m: any) => m.role === 'owner' || m.role === 'admin').length > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Gestionando:</span>
+            <select 
+              value={detectedClubId} 
+              onChange={(e) => setDetectedClubId(e.target.value)}
+              style={{ background: 'none', border: 'none', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
+            >
+              {user.memberships.filter((m: any) => m.role === 'owner' || m.role === 'admin').map((m: any) => (
+                <option key={m.clubId} value={m.clubId} style={{ background: 'var(--surface)', color: 'var(--text)' }}>
+                  {m.clubName || 'Club ' + m.clubId.substring(0, 5)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button
