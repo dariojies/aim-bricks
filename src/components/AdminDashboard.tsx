@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil, Search } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search, X } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -33,7 +33,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [allClubs, setAllClubs] = useState<any[]>([]);
   const [detectedClubId, setDetectedClubId] = useState('');
   const [selectedClubStats, setSelectedClubStats] = useState<any>(null);
-  const [isStatsLoading, setIsStatsLoading] = useState(false);
 
   // Super Admin state
   const [newClubName, setNewClubName] = useState('');
@@ -134,7 +133,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   };
 
   const fetchClubStats = async (club: any) => {
-    setIsStatsLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/admin/clubs/${club.id}/stats`);
       if (res.ok) {
@@ -142,7 +140,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         setSelectedClubStats({ ...stats, clubName: club.name });
       }
     } catch (e) { console.error(e); }
-    setIsStatsLoading(false);
   };
 
   const fetchCategories = async () => {
@@ -384,8 +381,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       alert('Error de conexión con el servidor.');
     }
   };
-
-  const [detectedClubId, setDetectedClubId] = useState<string | null>(null);
 
   const fetchMemberships = async () => {
     const userStr = localStorage.getItem('aim_bricks_user') || localStorage.getItem('brickslab_user') || localStorage.getItem('user');
