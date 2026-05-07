@@ -122,8 +122,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     fetchReservations();
     fetchCatalog();
     fetchMemberships();
-    if (isSuperAdmin) fetchAllClubs();
   }, [detectedClubId]);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetchAllClubs();
+    }
+  }, [isSuperAdmin]);
 
   const fetchAllClubs = async () => {
     try {
