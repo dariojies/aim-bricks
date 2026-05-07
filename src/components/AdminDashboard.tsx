@@ -1715,6 +1715,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' 
             }} onClick={() => setSelectedClubStats(null)}>
               <div 
+                className="hide-scrollbar"
                 style={{ 
                   background: 'var(--surface)', width: '100%', maxWidth: '600px', 
                   borderRadius: '20px', padding: '2.5rem', border: '1px solid #A78BFA',
