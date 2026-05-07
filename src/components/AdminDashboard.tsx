@@ -32,6 +32,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [memberships, setMemberships] = useState<any[]>([]);
   const [allClubs, setAllClubs] = useState<any[]>([]);
   const [detectedClubId, setDetectedClubId] = useState('');
+  const [selectedClubStats, setSelectedClubStats] = useState<any>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
 
   // Super Admin state
   const [newClubName, setNewClubName] = useState('');
@@ -134,6 +136,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       const res = await fetch(`${API_URL}/api/admin/clubs/all`);
       if (res.ok) setAllClubs(await res.json());
     } catch (e) { console.error(e); }
+  };
+
+  const fetchClubStats = async (club: any) => {
+    setIsStatsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/clubs/${club.id}/stats`);
+      if (res.ok) {
+        const stats = await res.json();
+        setSelectedClubStats({ ...stats, clubName: club.name });
+      }
+    } catch (e) { console.error(e); }
+    setIsStatsLoading(false);
   };
 
   const fetchCategories = async () => {
@@ -1665,15 +1679,101 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Clubes en el Sistema</h3>
-            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
               {allClubs.map(c => (
-                <div key={c.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
-                  <div style={{ fontWeight: 600 }}>{c.name}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '0.5rem' }}>ID: {c.id}</div>
+                <div 
+                  key={c.id} 
+                  onClick={() => fetchClubStats(c)}
+                  style={{ 
+                    padding: '1.5rem', 
+                    background: 'rgba(255,255,255,0.05)', 
+                    borderRadius: '12px', 
+                    border: '1px solid var(--surface-border)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.borderColor = '#A78BFA';
+                    e.currentTarget.style.background = 'rgba(167, 139, 250, 0.1)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'var(--surface-border)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                  }}
+                >
+                  <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>{c.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {c.id}</div>
+                  <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#A78BFA', fontWeight: 600 }}>Click para auditar →</div>
                 </div>
               ))}
             </div>
           </div>
+
+          {selectedClubStats && (
+            <div style={{ 
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+              background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+              zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' 
+            }} onClick={() => setSelectedClubStats(null)}>
+              <div 
+                style={{ 
+                  background: 'var(--surface)', width: '100%', maxWidth: '600px', 
+                  borderRadius: '20px', padding: '2.5rem', border: '1px solid #A78BFA',
+                  maxHeight: '90vh', overflowY: 'auto'
+                }} 
+                onClick={e => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <h2 style={{ fontSize: '2rem', color: '#A78BFA' }}>{selectedClubStats.clubName}</h2>
+                  <button onClick={() => setSelectedClubStats(null)} style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer' }}>
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                  <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 800 }}>{selectedClubStats.totalMembers}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Miembros Totales</div>
+                  </div>
+                  <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 800 }}>{selectedClubStats.totalItems}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Productos Únicos</div>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <h4 style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', textTransform: 'uppercase' }}>Dueños del Club</h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {selectedClubStats.owners.map((email: string) => (
+                      <div key={email} style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#A78BFA', padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.9rem', border: '1px solid rgba(167, 139, 250, 0.2)' }}>
+                        {email}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', textTransform: 'uppercase' }}>Desglose por Categorías</h4>
+                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    {selectedClubStats.categories.map((cat: any) => (
+                      <div key={cat.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+                        <span style={{ fontWeight: 600 }}>{cat.name}</span>
+                        <span style={{ color: '#A78BFA' }}>{cat.itemCount} productos</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Stock Total Acumulado: <span style={{ color: 'var(--text)', fontWeight: 700 }}>{selectedClubStats.totalStock} unidades</span></div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

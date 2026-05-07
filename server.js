@@ -843,6 +843,37 @@ app.post('/api/admin/clubs', async (req, res) => {
   }
 });
 
+app.get('/api/admin/clubs/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [memberships, categories, items] = await Promise.all([
+      prisma.bricks_club_memberships.findMany({ where: { clubId: id } }),
+      prisma.bricks_categories.findMany({ 
+        where: { clubId: id },
+        include: { _count: { select: { items: true } } }
+      }),
+      prisma.bricks_items.findMany({ where: { clubId: id } })
+    ]);
+
+    const stats = {
+      owners: memberships.filter(m => m.role === 'owner').map(m => m.email),
+      totalMembers: memberships.length,
+      categories: categories.map(c => ({
+        name: c.name,
+        itemCount: c._count.items
+      })),
+      totalItems: items.length,
+      totalStock: items.reduce((acc, item) => acc + (item.stock || 0), 0)
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener estadísticas del club' });
+  }
+});
+
 // Categories Management
 app.get('/api/admin/categories', async (req, res) => {
   try {
