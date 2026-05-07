@@ -44,7 +44,6 @@ model users {
   bricks_missing_pieces                                              bricks_missing_pieces[]
   bricks_poll_vote                                                   bricks_poll_vote[]
   bricks_user_permissions                                            bricks_user_permissions[]
-  clubs                                                              bricks_clubs?             @relation(fields: [club_id], references: [id], onUpdate: NoAction)
 }
 
 model bricks_brickslab {
@@ -729,7 +728,6 @@ model bricks_clubs {
   name        String
   createdAt   DateTime @default(now())
   
-  users       users[]
   categories  bricks_categories[]
   items       bricks_items[]
 }

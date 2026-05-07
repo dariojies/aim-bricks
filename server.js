@@ -394,41 +394,6 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // Auto-link to club if not assigned
-    if (!user.club_id) {
-      const membership = await prisma.bricks_club_memberships.findFirst({
-        where: { email: user.email.toLowerCase() }
-      });
-      if (membership) {
-        // Verify the club actually exists to prevent foreign key constraint errors (P2003)
-        const clubExists = await prisma.bricks_clubs.findUnique({
-          where: { id: membership.clubId }
-        });
-        
-        if (clubExists) {
-          await prisma.users.update({
-            where: { user_id: user.user_id },
-            data: { club_id: membership.clubId, dev_role: membership.role }
-          });
-          // Re-fetch user with new club info
-          user.club_id = membership.clubId;
-          user.dev_role = membership.role;
-        } else {
-          console.warn(`Warning: Membership for ${user.email} points to a non-existent club ID: ${membership.clubId}`);
-        }
-      }
-    }
-
-    const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
-
-    const categories = await prisma.bricks_categories.findMany({
-      where: { clubId: user.club_id }
-    });
-
-    const dynamicPermissions = await prisma.bricks_user_permissions.findMany({
-      where: { userId: user.user_id }
-    });
-
     const membershipsRaw = await prisma.bricks_club_memberships.findMany({
       where: { email: user.email.toLowerCase() }
     });
@@ -447,16 +412,36 @@ app.post('/api/auth/login', async (req, res) => {
       }));
     }
 
-    const club = user.club_id ? await prisma.bricks_clubs.findUnique({ where: { id: user.club_id } }) : null;
+    // Determine the active club for session initialization entirely from memberships
+    let activeClubId = null;
+    let activeDevRole = user.dev_role || 'student';
+
+    if (memberships.length > 0) {
+       const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
+       activeClubId = primaryMembership.clubId;
+       activeDevRole = primaryMembership.role;
+    }
+
+    const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+
+    const categories = activeClubId ? await prisma.bricks_categories.findMany({
+      where: { clubId: activeClubId }
+    }) : [];
+
+    const dynamicPermissions = await prisma.bricks_user_permissions.findMany({
+      where: { userId: user.user_id }
+    });
+
+    const club = activeClubId ? await prisma.bricks_clubs.findUnique({ where: { id: activeClubId } }) : null;
 
     const profile = {
       id: user.user_id,
-      clubId: user.club_id,
+      clubId: activeClubId,
       clubName: club?.name || null,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
       memberships,
-      role: user.dev_role || 'student',
+      role: activeDevRole,
       categories: categories.map(c => ({
         id: c.id,
         name: c.name,
@@ -509,14 +494,6 @@ app.post('/api/auth/me', async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    const categories = await prisma.bricks_categories.findMany({
-      where: { clubId: user.club_id }
-    });
-
-    const dynamicPermissions = await prisma.bricks_user_permissions.findMany({
-      where: { userId: user.user_id }
-    });
-
     const membershipsRaw = await prisma.bricks_club_memberships.findMany({
       where: { email: user.email.toLowerCase() }
     });
@@ -535,16 +512,34 @@ app.post('/api/auth/me', async (req, res) => {
       }));
     }
 
-    const club = user.club_id ? await prisma.bricks_clubs.findUnique({ where: { id: user.club_id } }) : null;
+    // Determine the active club for session initialization entirely from memberships
+    let activeClubId = null;
+    let activeDevRole = user.dev_role || 'student';
+
+    if (memberships.length > 0) {
+       const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
+       activeClubId = primaryMembership.clubId;
+       activeDevRole = primaryMembership.role;
+    }
+
+    const categories = activeClubId ? await prisma.bricks_categories.findMany({
+      where: { clubId: activeClubId }
+    }) : [];
+
+    const dynamicPermissions = await prisma.bricks_user_permissions.findMany({
+      where: { userId: user.user_id }
+    });
+
+    const club = activeClubId ? await prisma.bricks_clubs.findUnique({ where: { id: activeClubId } }) : null;
 
     const profile = {
       id: user.user_id,
-      clubId: user.club_id,
+      clubId: activeClubId,
       clubName: club?.name || null,
       name: `${user.name} ${user.surname || ''}`.trim(),
       email: user.email,
       memberships,
-      role: user.dev_role || 'student',
+      role: activeDevRole,
       categories: categories.map(c => ({
         id: c.id,
         name: c.name,
