@@ -400,13 +400,22 @@ app.post('/api/auth/login', async (req, res) => {
         where: { email: user.email.toLowerCase() }
       });
       if (membership) {
-        await prisma.users.update({
-          where: { user_id: user.user_id },
-          data: { club_id: membership.clubId, dev_role: membership.role }
+        // Verify the club actually exists to prevent foreign key constraint errors (P2003)
+        const clubExists = await prisma.bricks_clubs.findUnique({
+          where: { id: membership.clubId }
         });
-        // Re-fetch user with new club info
-        user.club_id = membership.clubId;
-        user.dev_role = membership.role;
+        
+        if (clubExists) {
+          await prisma.users.update({
+            where: { user_id: user.user_id },
+            data: { club_id: membership.clubId, dev_role: membership.role }
+          });
+          // Re-fetch user with new club info
+          user.club_id = membership.clubId;
+          user.dev_role = membership.role;
+        } else {
+          console.warn(`Warning: Membership for ${user.email} points to a non-existent club ID: ${membership.clubId}`);
+        }
       }
     }
 
