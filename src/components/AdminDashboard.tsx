@@ -104,11 +104,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchReservations();
-    fetchCatalog();
-    fetchUsers();
-    fetchReports();
-  useEffect(() => {
     // Determine which club the user is admin/owner of
     if (user?.memberships && user.memberships.length > 0) {
       const adminMembership = user.memberships.find((m: any) => m.role === 'owner' || m.role === 'admin') || user.memberships[0];
