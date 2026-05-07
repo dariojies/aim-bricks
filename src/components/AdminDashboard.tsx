@@ -1772,6 +1772,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Stock Total Acumulado: <span style={{ color: 'var(--text)', fontWeight: 700 }}>{selectedClubStats.totalStock} unidades</span></div>
                 </div>
               </div>
+            </div>
           )}
         </div>
       )}
