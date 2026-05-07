@@ -97,7 +97,7 @@ export const Header: React.FC<Props> = ({
 
           {isLoggedIn ? (
             <>
-              {(userRole === 'admin' || userRole === 'superadmin') && (
+              {(userRole === 'owner' || userRole === 'admin' || userRole === 'superadmin') && (
                 <button 
                   style={{ ...btnStyle, borderColor: '#8B5CF6', color: '#8B5CF6' }} 
                   onClick={onAdminClick}
