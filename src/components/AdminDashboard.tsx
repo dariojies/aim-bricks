@@ -1307,6 +1307,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                  clubId: detectedClubId,
                   title: pollTitle,
                   description: pollDesc,
                   expiresAt: pollExpiresAt,

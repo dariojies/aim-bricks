@@ -621,13 +621,19 @@ app.get('/api/admin/users/permissions', async (req, res) => {
 
     if (!club) return res.json([]);
 
+    const memberships = await prisma.bricks_club_memberships.findMany({
+      where: { clubId: club.id },
+      select: { email: true }
+    });
+    const validEmails = memberships.map(m => m.email.toLowerCase());
+
     const [usersList, categories] = await Promise.all([
       prisma.users.findMany({
-        where: { club_id: club.club_id },
+        where: { email: { in: validEmails } },
         include: { bricks_user_permissions: true, bricks_ranks: true },
         orderBy: { name: 'asc' }
       }),
-      prisma.bricks_categories.findMany({ where: { clubId: club.club_id } })
+      prisma.bricks_categories.findMany({ where: { clubId: club.id } })
     ]);
 
     res.json(usersList.map(u => {
@@ -707,12 +713,28 @@ app.get('/api/admin/reservations', async (req, res) => {
 
     if (!club) return res.json([]);
 
+    const itemsInClub = await prisma.bricks_items.findMany({
+      where: { clubId: club.id },
+      select: { id: true }
+    });
+    const validItemIds = itemsInClub.map(i => i.id);
+
+    // Also get all emails that have a membership in this club for legacy items
+    const memberships = await prisma.bricks_club_memberships.findMany({
+      where: { clubId: club.id },
+      select: { email: true }
+    });
+    const validEmails = memberships.map(m => m.email.toLowerCase());
+
     const reservations = await prisma.bricks_reservation.findMany({
       where: { 
         status: { in: ['Active', 'Reserved', 'Delivered'] },
-        user: { club_id: club.club_id }
+        OR: [
+          { itemId: { in: validItemIds } },
+          { user: { email: { in: validEmails } } }
+        ]
       },
-      include: { user: true, brickslab: true, libraryBook: true }
+      include: { user: true, brickslab: true, libraryBook: true, item: { include: { category: true } } }
     });
 
     const items = await prisma.bricks_items.findMany({
@@ -1195,7 +1217,7 @@ app.get('/api/admin/pieces', async (req, res) => {
     }
 
     const reports = await prisma.bricks_missing_pieces.findMany({
-      where: { user: { club_id: club.id } },
+      where: { item: { clubId: club.id } },
       include: {
         user: true,
         item: true
@@ -1235,9 +1257,12 @@ app.post('/api/admin/pieces/resolve', async (req, res) => {
 // Polls Endpoints
 app.get('/api/polls', async (req, res) => {
   try {
+    const { clubId } = req.query;
+    
     const activePoll = await prisma.bricks_poll.findFirst({
       where: { 
         isActive: true,
+        ...(clubId ? { clubId } : {}),
         OR: [
           { expiresAt: { gt: new Date() } },
           { expiresAt: null }
@@ -1318,11 +1343,11 @@ app.post('/api/polls/vote', async (req, res) => {
 
 app.post('/api/admin/polls', async (req, res) => {
   try {
-    const { title, description, options, expiresAt } = req.body;
+    const { clubId, title, description, options, expiresAt } = req.body;
 
-    // Deactivate previous
+    // Deactivate previous polls in this club
     await prisma.bricks_poll.updateMany({
-      where: { isActive: true },
+      where: { isActive: true, ...(clubId ? { clubId } : {}) },
       data: { isActive: false }
     });
 
@@ -1337,6 +1362,7 @@ app.post('/api/admin/polls', async (req, res) => {
     // Create new
     await prisma.bricks_poll.create({
       data: {
+        clubId,
         title,
         description,
         expiresAt: finalExpiration,
@@ -1409,21 +1435,24 @@ app.patch('/api/admin/polls/:id/status', async (req, res) => {
   }
 });
 
-app.get('/api/admin/polls/active', async (req, res) => {
-  try {
-    const polls = await prisma.bricks_poll.findMany({
-      include: {
-        options: {
-          include: { 
-            votes: {
-              include: { user: { select: { name: true, surname: true, email: true } } }
-            },
-            _count: { select: { votes: true } } 
+  app.get('/api/admin/polls/active', async (req, res) => {
+    try {
+      const { clubId } = req.query;
+      
+      const polls = await prisma.bricks_poll.findMany({
+        where: clubId ? { clubId } : {},
+        include: {
+          options: {
+            include: { 
+              votes: {
+                include: { user: { select: { name: true, surname: true, email: true } } }
+              },
+              _count: { select: { votes: true } } 
+            }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+        },
+        orderBy: { createdAt: 'desc' }
+      });
 
     res.json(polls.map(poll => ({
       id: poll.id,

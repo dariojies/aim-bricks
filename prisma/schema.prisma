@@ -686,6 +686,7 @@ model bricks_missing_pieces {
 
 model bricks_poll {
   id          String   @id @default(uuid())
+  clubId      String?  @db.Uuid
   title       String
   description String
   isActive    Boolean  @default(true)

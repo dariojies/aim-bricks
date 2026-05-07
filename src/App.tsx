@@ -123,7 +123,11 @@ function App() {
 
     const fetchPoll = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/polls`);
+        const userStr = localStorage.getItem('aim_bricks_user');
+        const userObj = userStr ? JSON.parse(userStr) : null;
+        const clubId = userObj?.clubId || '';
+        const url = clubId ? `${API_URL}/api/polls?clubId=${clubId}` : `${API_URL}/api/polls`;
+        const res = await fetch(url);
         if (res.ok) setActivePoll(await res.json());
       } catch (e) { console.error(e); }
     };
@@ -499,7 +503,8 @@ function App() {
                             const data = await res.json();
                             if (res.ok) {
                               alert('¡Voto registrado con éxito!');
-                              const resPoll = await fetch(`${API_URL}/api/polls`);
+                              const url = user?.clubId ? `${API_URL}/api/polls?clubId=${user.clubId}` : `${API_URL}/api/polls`;
+                              const resPoll = await fetch(url);
                               if (resPoll.ok) setActivePoll(await resPoll.json());
                             } else {
                               alert(data.error || 'Error al votar.');
