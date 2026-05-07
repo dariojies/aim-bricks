@@ -3,6 +3,7 @@ import { Trash2, CheckCircle, Plus, Pencil, Search } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
+const SUPER_ADMINS = ['d3859034-059e-4e90-ad8d-2a0a7f95c1f2', '631c7f2a-4949-442b-890b-24a990aca939'];
 
 interface AdminReservation {
   id: string;
@@ -21,13 +22,20 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls' | 'categories' | 'memberships'>('reservations');
+  const isSuperAdmin = user?.id && SUPER_ADMINS.includes(user.id);
+  const [activeTab, setActiveTab] = useState<'reservations' | 'catalog' | 'users' | 'passwords' | 'pieces' | 'polls' | 'categories' | 'memberships' | 'superadmin'>('reservations');
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [memberships, setMemberships] = useState<any[]>([]);
+  const [allClubs, setAllClubs] = useState<any[]>([]);
+
+  // Super Admin state
+  const [newClubName, setNewClubName] = useState('');
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [ownerClubId, setOwnerClubId] = useState('');
 
   // Add item form state
   const [newItemCategoryId, setNewItemCategoryId] = useState('');
@@ -100,7 +108,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     fetchActivePolls();
     fetchCategories();
     fetchMemberships();
+    if (isSuperAdmin) fetchAllClubs();
   }, []);
+
+  const fetchAllClubs = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/clubs/all`);
+      if (res.ok) setAllClubs(await res.json());
+    } catch (e) { console.error(e); }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -448,6 +464,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         >
           Miembros
         </button>
+        {isSuperAdmin && (
+          <button
+            className={`btn ${activeTab === 'superadmin' ? 'btn-primary' : 'btn-outline'}`}
+            style={{ 
+              borderColor: activeTab === 'superadmin' ? 'var(--primary)' : '#A78BFA',
+              color: activeTab === 'superadmin' ? '#fff' : '#A78BFA'
+            }}
+            onClick={() => setActiveTab('superadmin')}
+          >
+            Control Maestro
+          </button>
+        )}
       </div>
 
       {activeTab === 'reservations' && (
@@ -1524,7 +1552,92 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </table>
             </div>
           </div>
+          {activeTab === 'superadmin' && isSuperAdmin && (
+        <div style={{ display: 'grid', gap: '2rem' }}>
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#A78BFA' }}>Crear Nuevo Club</h3>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const res = await fetch(`${API_URL}/api/admin/clubs`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: newClubName })
+                });
+                if (res.ok) {
+                  alert('Club creado con éxito.');
+                  setNewClubName('');
+                  fetchAllClubs();
+                }
+              } catch (e) { console.error(e); }
+            }} style={{ display: 'flex', gap: '1rem' }}>
+              <input 
+                required 
+                placeholder="Nombre del Club (Ej: Aim Barcelona)" 
+                value={newClubName} 
+                onChange={e => setNewClubName(e.target.value)}
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+              />
+              <button type="submit" className="btn btn-primary">Registrar Club</button>
+            </form>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#A78BFA' }}>Asignar Owner a Club</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Esto otorgará permisos de administración total sobre el club seleccionado al email indicado.</p>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!ownerClubId) return alert('Selecciona un club.');
+              try {
+                const res = await fetch(`${API_URL}/api/admin/memberships`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: ownerEmail, clubId: ownerClubId, role: 'owner' })
+                });
+                if (res.ok) {
+                  alert('Dueño asignado correctamente.');
+                  setOwnerEmail('');
+                } else {
+                  const data = await res.json();
+                  alert(data.error || 'Error al asignar dueño.');
+                }
+              } catch (e) { console.error(e); }
+            }} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr 100px' }}>
+              <input 
+                required 
+                type="email" 
+                placeholder="email@del-owner.com" 
+                value={ownerEmail} 
+                onChange={e => setOwnerEmail(e.target.value)}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+              />
+              <select 
+                required 
+                value={ownerClubId} 
+                onChange={e => setOwnerClubId(e.target.value)}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+              >
+                <option value="">-- Seleccionar Club --</option>
+                {allClubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <button type="submit" className="btn btn-primary">Asignar</button>
+            </form>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Clubes en el Sistema</h3>
+            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+              {allClubs.map(c => (
+                <div key={c.id} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
+                  <div style={{ fontWeight: 600 }}>{c.name}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '0.5rem' }}>ID: {c.id}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+      )}
+    </div>
       )}
     </div>
   );
