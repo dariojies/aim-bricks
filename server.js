@@ -803,6 +803,46 @@ app.get('/api/catalog', async (req, res) => {
   }
 });
 
+// Infrastructure - Clubs Management
+app.get('/api/admin/clubs/all', async (req, res) => {
+  try {
+    const clubs = await prisma.bricks_clubs.findMany({
+      orderBy: { name: 'asc' }
+    });
+    res.json(clubs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.get('/api/admin/clubs', async (req, res) => {
+  try {
+    const { id } = req.query;
+    if (id) {
+      const club = await prisma.bricks_clubs.findUnique({ where: { id } });
+      return res.json(club);
+    }
+    const clubs = await prisma.bricks_clubs.findMany();
+    res.json(clubs);
+  } catch (error) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/clubs', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const club = await prisma.bricks_clubs.create({
+      data: { name }
+    });
+    res.json(club);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 // Categories Management
 app.get('/api/admin/categories', async (req, res) => {
   try {
