@@ -1552,7 +1552,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </table>
             </div>
           </div>
-          {activeTab === 'superadmin' && isSuperAdmin && (
+        </div>
+      )}
+
+      {activeTab === 'superadmin' && isSuperAdmin && (
         <div style={{ display: 'grid', gap: '2rem' }}>
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#A78BFA' }}>Crear Nuevo Club</h3>
@@ -1636,8 +1639,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             </div>
           </div>
         </div>
-      )}
-    </div>
       )}
     </div>
   );
