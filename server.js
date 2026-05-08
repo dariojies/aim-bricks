@@ -101,6 +101,11 @@ async function syncSchema() {
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "description" TEXT;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'Pending';`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "reportedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+    
+    // Safety: Make legacy columns nullable if they still exist in the DB
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ALTER COLUMN "brickslabId" DROP NOT NULL;`);
+    } catch (e) { /* Column might not exist anymore, ignore */ }
 
     console.log('Database structure verified.');
 
