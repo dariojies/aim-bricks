@@ -215,7 +215,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     if (!user || !item) return;
 
     // Permissions check - STRICT
-    const hasDynamicPerm = user.permissions?.[item.categoryId]?.standard || user.permissions?.[item.categoryId]?.pro;
+    const hasDynamicPerm = item.categoryId ? (user.permissions?.[item.categoryId]?.standard || user.permissions?.[item.categoryId]?.pro) : false;
     const hasLegacyBrickslab = user.legacyPermissions?.brickslab || user.legacyPermissions?.brickslabPro;
     const hasLegacyLibrary = user.legacyPermissions?.library;
 
