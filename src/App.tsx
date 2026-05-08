@@ -341,7 +341,7 @@ function App() {
       const res = await fetch(`${API_URL}/api/pieces/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, brickslabId, description })
+        body: JSON.stringify({ userId: user.id, itemId: brickslabId, description })
       });
       if (res.ok) alert('Reporte enviado correctamente. ¡Muchas gracias!');
       else {

@@ -747,7 +747,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                                         const res = await fetch(`${API_URL}/api/pieces/report`, {
                                           method: 'POST',
                                           headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ userId: r.userId, brickslabId: r.itemId, description: desc })
+                                          body: JSON.stringify({ userId: r.userId, itemId: r.itemId, description: desc })
                                         });
                                         if (res.ok) alert('Reporte de piezas enviado.');
                                         else alert('Error al enviar el reporte.');
@@ -1266,8 +1266,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         <div style={{ display: 'grid', gap: '2rem' }}>
           {activePolls.length > 0 && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--accent)' }}>Estado de Votación Actual</h3>
-              {activePolls.map(poll => {
+              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#10B981' }}>Votaciones Activas</h3>
+              {activePolls.filter(p => p.isActive).map(poll => {
                 const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
                 return (
                   <div key={poll.id} style={{ marginBottom: '2rem' }}>
@@ -1364,6 +1364,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Past Polls */}
+          {activePolls.filter(p => !p.isActive).length > 0 && (
+            <div className="glass-panel" style={{ padding: '2rem', opacity: 0.9 }}>
+              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--text-muted)' }}>Votaciones Finalizadas</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {activePolls.filter(p => !p.isActive).map(poll => {
+                  const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
+                  const winner = poll.options.reduce((prev: any, current: any) => (prev.votes > current.votes) ? prev : current, poll.options[0]);
+                  return (
+                    <div key={poll.id} style={{ background: 'rgba(0,0,0,0.1)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h4 style={{ fontWeight: 600 }}>{poll.title}</h4>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn btn-outline"
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto' }}
+                            onClick={async () => {
+                              await fetch(`${API_URL}/api/admin/polls/${poll.id}/status`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ isActive: true })
+                              });
+                              fetchActivePolls();
+                            }}
+                          >
+                            Reabrir
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Votos: {totalVotes}</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--accent)' }}>Ganador: <span style={{ fontWeight: 700 }}>{winner.title}</span> ({winner.votes} votos)</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

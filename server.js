@@ -243,6 +243,7 @@ async function migrateToDynamic() {
     }
 
     if (itemCount > 0) {
+      // Migrate orphan reports even if items are already synced
       if (legacyReports.length > 0) {
         console.log('Items already synced, migrating orphan reports...');
         const items = await prisma.bricks_items.findMany();
@@ -256,10 +257,22 @@ async function migrateToDynamic() {
             });
           }
         }
-        console.log('Orphan reports migration completed.');
-      } else {
-        console.log('Schema and reports already synced, skipping migration.');
       }
+
+      // Also ensure all polls and reports have a clubId
+      await prisma.bricks_poll.updateMany({
+        where: { clubId: null },
+        data: { clubId: aimClubId }
+      });
+
+      const orphanReports = await prisma.bricks_missing_pieces.findMany({
+        where: { item: { clubId: null } },
+        include: { item: true }
+      });
+      // These should already have an itemId from the above logic, but just in case
+      // the items themselves are missing clubId (shouldn't happen with current migration but for safety)
+      
+      console.log('Schema, reports and polls verified/synced.');
       return;
     }
     // Migrate Brickslabs
