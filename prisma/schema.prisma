@@ -59,6 +59,7 @@ model bricks_brickslab {
   isProOnly     Boolean              @default(false)
   reservations  bricks_reservation[]
   history       bricks_userhistory[]
+  missing_pieces bricks_missing_pieces[]
   club_id       String?              @db.Uuid // Added for migration reference
 }
 
@@ -676,11 +677,13 @@ model tul_vocabulary {
 model bricks_missing_pieces {
   id          String   @id @default(uuid())
   itemId      String?  @db.Uuid
+  brickslabId String?
   userId      String?  @db.Uuid
   description String?
   reportedAt  DateTime @default(now())
   status      String   @default("Pending")
   item        bricks_items? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  brickslab   bricks_brickslab? @relation(fields: [brickslabId], references: [id], onDelete: Cascade)
   user        users?            @relation(fields: [userId], references: [user_id], onDelete: Cascade)
 }
 

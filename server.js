@@ -149,9 +149,11 @@ async function migrateToDynamic() {
     const itemCount = await prisma.bricks_items.count();
 
     // Always try to migrate missing pieces if they haven't been linked to UUIDs yet
-    const legacyReports = await prisma.bricks_missing_pieces.findMany({
-      where: { itemId: { not: { in: (await prisma.bricks_items.findMany({ select: { id: true } })).map(i => i.id) } } }
-    });
+    const legacyReportsCount = await prisma.$queryRawUnsafe(`
+      SELECT COUNT(*)::int as count 
+      FROM "bricks_missing_pieces" 
+      WHERE "itemId" IS NULL OR "itemId" NOT IN (SELECT id FROM "bricks_items")
+    `).then(r => r[0]?.count || 0).catch(() => 0);
 
     // Always sync existing users to memberships list (Safely)
     const allUsers = await prisma.users.findMany({
@@ -245,21 +247,47 @@ async function migrateToDynamic() {
           }
         }
       });
+      
+      // Ensure all legacy items also have a clubId
+      await prisma.bricks_brickslab.updateMany({
+        where: { club_id: null },
+        data: { club_id: aimClubId }
+      });
+      await prisma.bricks_librarybook.updateMany({
+        where: { club_id: null },
+        data: { club_id: aimClubId }
+      });
     }
 
     if (itemCount > 0) {
       // Migrate orphan reports even if items are already synced
-      if (legacyReports.length > 0) {
-        console.log('Items already synced, migrating orphan reports...');
+      if (legacyReportsCount > 0) {
+        try {
+          console.log('Migrating legacy missing pieces reports...');
+          // First, if we have a brickslabId column, try to map it to the new itemId UUID
+          await prisma.$executeRawUnsafe(`
+            UPDATE "bricks_missing_pieces" 
+            SET "itemId" = items.id
+            FROM "bricks_items" items
+            JOIN "bricks_brickslab" legacy ON legacy.title = items.title
+            WHERE "bricks_missing_pieces"."brickslabId" = legacy.id
+            AND "bricks_missing_pieces"."itemId" IS NULL;
+          `);
+          console.log('Legacy reports migration via brickslabId completed.');
+        } catch (e) {
+          console.log('Legacy reports migration via SQL failed or not needed:', e.message);
+        }
+
         const items = await prisma.bricks_items.findMany();
         const brickslabs = await prisma.bricks_brickslab.findMany();
         for (const b of brickslabs) {
           const matchingItem = items.find(i => i.title === b.title);
           if (matchingItem) {
-            await prisma.bricks_missing_pieces.updateMany({
-              where: { itemId: b.id }, // Legacy ID
-              data: { itemId: matchingItem.id }
-            });
+            // We use raw update because itemId might be a UUID and b.id is a string, 
+            // and we want to avoid Prisma validation issues if the DB state is inconsistent
+            try {
+              await prisma.$executeRawUnsafe(`UPDATE "bricks_missing_pieces" SET "itemId" = '${matchingItem.id}' WHERE "itemId" = '${b.id}' OR "brickslabId" = '${b.id}';`);
+            } catch (e) {}
           }
         }
       }
@@ -1166,10 +1194,13 @@ app.post('/api/pieces/report', async (req, res) => {
     const { userId, itemId, description } = req.body;
     if (!userId || !itemId || !description) return res.status(400).json({ error: 'Faltan datos' });
 
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId);
+    
     await prisma.bricks_missing_pieces.create({
       data: {
         userId,
-        itemId,
+        itemId: isUuid ? itemId : null,
+        brickslabId: !isUuid ? itemId : null,
         description,
         status: 'Pending'
       }
@@ -1193,10 +1224,16 @@ app.get('/api/admin/pieces', async (req, res) => {
     }
 
     const reports = await prisma.bricks_missing_pieces.findMany({
-      where: { item: { clubId: club.id } },
+      where: {
+        OR: [
+          { item: { clubId: club.id } },
+          { brickslab: { club_id: club.id } }
+        ]
+      },
       include: {
         user: true,
-        item: true
+        item: true,
+        brickslab: true
       },
       orderBy: { reportedAt: 'desc' }
     });
@@ -1205,7 +1242,7 @@ app.get('/api/admin/pieces', async (req, res) => {
       id: r.id,
       userName: `${r.user.name} ${r.user.surname || ''}`.trim(),
       userEmail: r.user.email,
-      itemName: r.item?.title || 'Artículo',
+      itemName: r.item?.title || r.brickslab?.title || 'Artículo',
       description: r.description,
       reportedAt: r.reportedAt,
       status: r.status
