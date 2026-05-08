@@ -215,12 +215,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     if (!user || !item) return;
 
     // Permissions check - STRICT
-    if (item.type === 'Aim Brickslab' && !user.permissions?.brickslab) {
-      alert('Error: Este usuario no tiene el rango necesario (Aim Brickslab) para reservar sets de LEGO.');
-      return;
+    const hasDynamicPerm = user.permissions?.[item.categoryId]?.standard || user.permissions?.[item.categoryId]?.pro;
+    const hasLegacyBrickslab = user.legacyPermissions?.brickslab || user.legacyPermissions?.brickslabPro;
+    const hasLegacyLibrary = user.legacyPermissions?.library;
+
+    let allowed = false;
+    if (hasDynamicPerm) {
+      allowed = true;
+    } else if (item.type === 'Aim Brickslab' && hasLegacyBrickslab) {
+      allowed = true;
+    } else if ((item.type === 'Libro' || item.type === 'Biblioteca') && hasLegacyLibrary) {
+      allowed = true;
     }
-    if (item.type === 'Libro' && !user.permissions?.library) {
-      alert('Error: Este usuario no tiene el rango necesario (Biblioteca) para reservar libros.');
+
+    if (!allowed) {
+      alert(`Error: Este usuario no tiene el rango necesario (${item.type}) para reservar este artículo.`);
       return;
     }
 
