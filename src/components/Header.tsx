@@ -70,7 +70,7 @@ export const Header: React.FC<Props> = ({
 
         {/* Right: All Buttons in ONE line */}
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
-          {userRole !== 'superadmin' && (
+          {userRole !== 'superadmin' && currentView !== 'admin' && (
             <>
               <button 
                 style={{ ...btnStyle, borderColor: 'rgba(245, 158, 11, 0.3)', color: '#F59E0B' }} 
