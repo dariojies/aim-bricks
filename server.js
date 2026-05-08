@@ -69,7 +69,7 @@ async function syncSchema() {
       );
     `);
 
-    // 2. Add columns to existing tables for migration tracking
+    // 2. Add columns to existing tables for migration tracking.
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_reservation" ADD COLUMN IF NOT EXISTS "itemId" UUID;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_reservation" ADD COLUMN IF NOT EXISTS "categoryId" UUID;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_userhistory" ADD COLUMN IF NOT EXISTS "itemId" UUID;`);
@@ -101,7 +101,7 @@ async function syncSchema() {
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "description" TEXT;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'Pending';`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "reportedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
-    
+
     console.log('Database structure verified.');
 
     // 3. Perform Data Migration
@@ -138,16 +138,16 @@ async function migrateToDynamic() {
     // 2. Check if we have legacy data that hasn't been migrated yet
     const legacyBrickslabsCount = await prisma.bricks_brickslab.count();
     const legacyBooksCount = await prisma.bricks_librarybook.count();
-    
-    if (legacyBrickslabsCount === 0 && legacyBooksCount === 0) return; 
+
+    if (legacyBrickslabsCount === 0 && legacyBooksCount === 0) return;
 
     const itemCount = await prisma.bricks_items.count();
-    
+
     // Always try to migrate missing pieces if they haven't been linked to UUIDs yet
     const legacyReports = await prisma.bricks_missing_pieces.findMany({
       where: { itemId: { not: { in: (await prisma.bricks_items.findMany({ select: { id: true } })).map(i => i.id) } } }
     });
-    
+
     // Always sync existing users to memberships list (Safely)
     const allUsers = await prisma.users.findMany({
       where: { club_id: { not: null } },
@@ -155,30 +155,30 @@ async function migrateToDynamic() {
     });
 
     if (allUsers.length > 0) {
-    // Optimized Sync: Fetch existing and create missing in bulk
-    const existingMemberships = await prisma.bricks_club_memberships.findMany({
-      where: { clubId: { in: allUsers.map(u => u.club_id) } },
-      select: { email: true, clubId: true }
-    });
-    
-    const existingSet = new Set(existingMemberships.map(m => `${m.email.toLowerCase()}-${m.clubId}`));
-    
-    const missingUsers = allUsers.filter(u => !existingSet.has(`${u.email.toLowerCase()}-${u.club_id}`));
-
-    if (missingUsers.length > 0) {
-      console.log(`Syncing ${missingUsers.length} missing users to membership list...`);
-      await prisma.bricks_club_memberships.createMany({
-        data: missingUsers.map(u => ({
-          email: u.email.toLowerCase(),
-          clubId: u.club_id,
-          role: u.role || 'member'
-        })),
-        skipDuplicates: true
+      // Optimized Sync: Fetch existing and create missing in bulk
+      const existingMemberships = await prisma.bricks_club_memberships.findMany({
+        where: { clubId: { in: allUsers.map(u => u.club_id) } },
+        select: { email: true, clubId: true }
       });
-      console.log('Bulk sync completed.');
-    } else {
-      console.log('Membership list already up to date.');
-    }
+
+      const existingSet = new Set(existingMemberships.map(m => `${m.email.toLowerCase()}-${m.clubId}`));
+
+      const missingUsers = allUsers.filter(u => !existingSet.has(`${u.email.toLowerCase()}-${u.club_id}`));
+
+      if (missingUsers.length > 0) {
+        console.log(`Syncing ${missingUsers.length} missing users to membership list...`);
+        await prisma.bricks_club_memberships.createMany({
+          data: missingUsers.map(u => ({
+            email: u.email.toLowerCase(),
+            clubId: u.club_id,
+            role: u.role || 'member'
+          })),
+          skipDuplicates: true
+        });
+        console.log('Bulk sync completed.');
+      } else {
+        console.log('Membership list already up to date.');
+      }
     }
 
     // 4. Ensure default categories have the NEW config for Aim Education (Exact ID provided)
@@ -417,9 +417,9 @@ app.post('/api/auth/login', async (req, res) => {
     let activeDevRole = user.dev_role || 'student';
 
     if (memberships.length > 0) {
-       const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
-       activeClubId = primaryMembership.clubId;
-       activeDevRole = primaryMembership.role;
+      const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
+      activeClubId = primaryMembership.clubId;
+      activeDevRole = primaryMembership.role;
     }
 
     const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
@@ -482,11 +482,11 @@ app.post('/api/auth/me', async (req, res) => {
     const user = await prisma.users.findUnique({
       where: { user_id: userId },
       include: {
-        reservations: { 
-          include: { brickslab: true, libraryBook: true, item: { include: { category: true } } } 
+        reservations: {
+          include: { brickslab: true, libraryBook: true, item: { include: { category: true } } }
         },
-        history: { 
-          include: { brickslab: true, libraryBook: true, item: { include: { category: true } } } 
+        history: {
+          include: { brickslab: true, libraryBook: true, item: { include: { category: true } } }
         },
         bricks_ranks: true
       }
@@ -517,9 +517,9 @@ app.post('/api/auth/me', async (req, res) => {
     let activeDevRole = user.dev_role || 'student';
 
     if (memberships.length > 0) {
-       const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
-       activeClubId = primaryMembership.clubId;
-       activeDevRole = primaryMembership.role;
+      const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
+      activeClubId = primaryMembership.clubId;
+      activeDevRole = primaryMembership.role;
     }
 
     const categories = activeClubId ? await prisma.bricks_categories.findMany({
@@ -727,7 +727,7 @@ app.get('/api/admin/reservations', async (req, res) => {
     const validEmails = memberships.map(m => m.email.toLowerCase());
 
     const reservations = await prisma.bricks_reservation.findMany({
-      where: { 
+      where: {
         status: { in: ['Active', 'Reserved', 'Delivered'] },
         OR: [
           { itemId: { in: validItemIds } },
@@ -838,7 +838,7 @@ app.get('/api/catalog', async (req, res) => {
       const metadata = i.metadata || {};
       const reservedCount = activeReservations.filter(r => r.itemId === i.id).length;
       const isActuallyAvailable = i.isAvailable && reservedCount < (i.stock || 1);
-      
+
       return {
         id: i.id,
         clubId: i.clubId,
@@ -910,10 +910,10 @@ app.post('/api/admin/clubs', async (req, res) => {
 app.get('/api/admin/clubs/:id/stats', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const [memberships, categories, items] = await Promise.all([
       prisma.bricks_club_memberships.findMany({ where: { clubId: id } }),
-      prisma.bricks_categories.findMany({ 
+      prisma.bricks_categories.findMany({
         where: { clubId: id },
         include: { _count: { select: { items: true } } }
       }),
@@ -1216,9 +1216,9 @@ app.post('/api/admin/pieces/resolve', async (req, res) => {
 app.get('/api/polls', async (req, res) => {
   try {
     const { clubId } = req.query;
-    
+
     const activePoll = await prisma.bricks_poll.findFirst({
-      where: { 
+      where: {
         isActive: true,
         ...(clubId ? { clubId } : {}),
         OR: [
@@ -1265,7 +1265,7 @@ app.post('/api/polls/vote', async (req, res) => {
     });
 
     const hasLegacyPerm = user?.bricks_ranks && (user.bricks_ranks.canReserveBrickslab || user.bricks_ranks.brickslabPro);
-    const hasDynamicPerm = user?.bricks_user_permissions?.some(p => 
+    const hasDynamicPerm = user?.bricks_user_permissions?.some(p =>
       p.category.name === 'Aim Brickslab' && (p.isStandard || p.isPro)
     );
 
@@ -1393,24 +1393,24 @@ app.patch('/api/admin/polls/:id/status', async (req, res) => {
   }
 });
 
-  app.get('/api/admin/polls/active', async (req, res) => {
-    try {
-      const { clubId } = req.query;
-      
-      const polls = await prisma.bricks_poll.findMany({
-        where: clubId ? { clubId } : {},
-        include: {
-          options: {
-            include: { 
-              votes: {
-                include: { user: { select: { name: true, surname: true, email: true } } }
-              },
-              _count: { select: { votes: true } } 
-            }
+app.get('/api/admin/polls/active', async (req, res) => {
+  try {
+    const { clubId } = req.query;
+
+    const polls = await prisma.bricks_poll.findMany({
+      where: clubId ? { clubId } : {},
+      include: {
+        options: {
+          include: {
+            votes: {
+              include: { user: { select: { name: true, surname: true, email: true } } }
+            },
+            _count: { select: { votes: true } }
           }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.json(polls.map(poll => ({
       id: poll.id,
@@ -1440,9 +1440,9 @@ app.patch('/api/admin/polls/:id/status', async (req, res) => {
 app.post('/api/support', async (req, res) => {
   try {
     const { userId, subject, description } = req.body;
-    
+
     const userUuid = (userId && userId !== 'null' && userId !== '') ? userId : null;
-    
+
     // Confirmed: the database column app_label is an ARRAY, not a string.
     if (userUuid) {
       await prisma.$executeRaw`
@@ -1455,7 +1455,7 @@ app.post('/api/support', async (req, res) => {
         VALUES (${String(subject)}, ${String(description)}, ARRAY['Aim Brickslab'], 'open', 'low', NOW())
       `;
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -1525,7 +1525,7 @@ app.put('/api/support/:id', async (req, res) => {
     // Prisma might have issues with app_label if it's a Postgres array but String in prisma
     // For now we use standard update for other fields, and if appLabel is provided we might need raw SQL
     // But since the user wants a clone of KheTool and I saw appLabel can be an array in some places...
-    
+
     const updateData = {
       status,
       priority,
@@ -1580,17 +1580,17 @@ app.get('/api/ranking', async (req, res) => {
     }
 
     const history = await prisma.bricks_userhistory.findMany({
-      where: { 
+      where: {
         brickslabId: { not: null },
         ...(validEmails ? { user: { email: { in: validEmails } } } : {})
       },
       include: { user: true }
     });
-    
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     const stats = {};
     history.forEach(h => {
       if (!h.user) return; // ignore deleted users
@@ -1605,7 +1605,7 @@ app.get('/api/ranking', async (req, res) => {
           allTime: 0
         };
       }
-      
+
       const d = new Date(h.completedAt);
       stats[uId].allTime++;
       if (d.getFullYear() === currentYear) {
@@ -1615,10 +1615,10 @@ app.get('/api/ranking', async (req, res) => {
         }
       }
     });
-    
+
     const ranking = Object.values(stats);
     res.json(ranking);
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error loading ranking' });
   }
@@ -1629,7 +1629,7 @@ app.get('/api/admin/memberships', async (req, res) => {
   try {
     const { clubId } = req.query;
     if (!clubId) return res.status(400).json({ error: 'Falta clubId' });
-    
+
     // Query both memberships and registered users in parallel
     const [memberships, registeredUsers] = await Promise.all([
       prisma.bricks_club_memberships.findMany({
@@ -1663,7 +1663,7 @@ app.post('/api/admin/memberships', async (req, res) => {
   try {
     const { clubId, email, role } = req.body;
     if (!clubId || !email) return res.status(400).json({ error: 'Faltan datos' });
-    
+
     await prisma.bricks_club_memberships.upsert({
       where: { email_clubId: { email: email.toLowerCase(), clubId } },
       update: { role: role || 'member' },
