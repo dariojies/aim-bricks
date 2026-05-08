@@ -338,7 +338,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     setEditStock(item.stock?.toString() || '1');
     setEditImage(item.imageUrl || '');
     setEditIsProOnly(item.isProOnly || false);
-    setEditAllowHomeBuild(item.metadata?.allowHomeBuild !== false); // Default to true if not set
+    setEditAllowHomeBuild(item.metadata?.allowHomeBuild !== false); 
+    
+    // Populate dynamic custom fields
+    setCustomFieldValues(item.metadata || {});
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -355,11 +358,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           stock: editStock,
           imageUrl: editImage,
           isProOnly: editIsProOnly,
-          metadata: { ...(editingItem.metadata || {}), allowHomeBuild: editAllowHomeBuild }
+          metadata: { ...customFieldValues, allowHomeBuild: editAllowHomeBuild }
         })
       });
       if (res.ok) {
         setEditingItem(null);
+        setCustomFieldValues({});
         fetchCatalog();
       }
     } catch (e) { console.error(e); }
@@ -954,7 +958,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 </select>
               </div>
 
-              {/* Dynamic Custom Fields with hardcoded fallbacks for default categories */}
+              {/* Dynamic Custom Fields block moved below */}
+
+              {/* Special Brickslab Pro toggle if in brickslab mode */}
+              {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (
+                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
+                    <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Artículo Exclusivo Pro (No visible para usuarios estándar)</label>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" id="allowHomeBuild" checked={allowHomeBuild} onChange={e => setAllowHomeBuild(e.target.checked)} />
+                    <label htmlFor="allowHomeBuild" style={{ color: '#D4AF37', fontWeight: 600 }}>Permitir reserva para llevar a CASA (Solo alumnos Pro)</label>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
+                <input required value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Stock Inicial (Número de copias físicas)</label>
+                <input required value={newItemStock} onChange={e => setNewItemStock(e.target.value)} type="number" min="1" step="1" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+              </div>
+
+              {/* Dynamic Custom Fields placed here for better UX */}
               {(() => {
                 const cat = categories.find(c => c.id === newItemCategoryId);
                 const isAim = user?.clubId === 'b68ca873-5086-474f-a296-fe60b149b8a2';
@@ -986,29 +1015,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   </div>
                 ));
               })()}
-
-              {/* Special Brickslab Pro toggle if in brickslab mode */}
-              {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (
-                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
-                    <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Artículo Exclusivo Pro (No visible para usuarios estándar)</label>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" id="allowHomeBuild" checked={allowHomeBuild} onChange={e => setAllowHomeBuild(e.target.checked)} />
-                    <label htmlFor="allowHomeBuild" style={{ color: '#D4AF37', fontWeight: 600 }}>Permitir reserva para llevar a CASA (Solo alumnos Pro)</label>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
-                <input required value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Stock Inicial (Número de copias físicas)</label>
-                <input required value={newItemStock} onChange={e => setNewItemStock(e.target.value)} type="number" min="1" step="1" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-              </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
                 <textarea required value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '100px' }} />
@@ -1107,6 +1113,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
                 <input required value={editTitle} onChange={e => setEditTitle(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               </div>
+
+              {/* Dynamic Custom Fields for Edit Modal */}
+              {(() => {
+                const cat = categories.find(c => c.name === editingItem.type || c.id === editingItem.categoryId);
+                const isAim = user?.clubId === 'b68ca873-5086-474f-a296-fe60b149b8a2';
+                let fields = cat?.config?.customFields || [];
+                if (fields.length === 0 && isAim) {
+                  if (cat?.name === 'Aim Brickslab') fields = [{ name: 'legoReference', label: 'Referencia LEGO', type: 'text' }, { name: 'pieces', label: 'Piezas', type: 'number' }];
+                  if (cat?.name === 'Biblioteca' || cat?.name === 'Libro') fields = [{ name: 'author', label: 'Autor(es)', type: 'text' }, { name: 'isbn', label: 'ISBN', type: 'text' }];
+                }
+                return fields.map((field: any) => (
+                  <div key={field.name}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
+                    {field.type === 'checkbox' ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!customFieldValues[field.name]}
+                          onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })}
+                        />
+                        <span style={{ color: 'var(--text)' }}>{field.label}</span>
+                      </div>
+                    ) : (
+                      <input
+                        type={field.type}
+                        value={customFieldValues[field.name] || ''}
+                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                      />
+                    )}
+                  </div>
+                ));
+              })()}
+
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Stock Total</label>
                 <input required type="number" min="1" step="1" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
@@ -1364,9 +1404,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {activeTab === 'categories' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
               {editingCatId ? 'Editar Categoría' : 'Añadir Nueva Categoría'}
             </h3>
+
+            {!editingCatId && (
+              <div style={{ marginBottom: '2rem', padding: '1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
+                <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Plantillas Rápidas</h4>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline" 
+                    onClick={() => {
+                      setCatName('Biblioteca');
+                      setCatIcon('📚');
+                      setCatDescription('Colección de libros para préstamo y lectura.');
+                      setCatReservationMode('library');
+                      setCatCustomFields([
+                        { label: 'ISBN', name: 'isbn', type: 'text' },
+                        { label: 'Autor', name: 'autor', type: 'text' }
+                      ]);
+                    }}
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    📖 Plantilla: Biblioteca
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline" 
+                    onClick={() => {
+                      setCatName('Brickslab - Legos');
+                      setCatIcon('🧱');
+                      setCatDescription('Sets de LEGO® para construcción en el club y préstamo premium.');
+                      setCatReservationMode('brickslab');
+                      setCatCustomFields([
+                        { label: 'Referencia LEGO', name: 'lego_reference', type: 'text' },
+                        { label: 'Piezas', name: 'pieces', type: 'number' }
+                      ]);
+                    }}
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    🧱 Plantilla: Brickslab - Legos
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!detectedClubId) return alert('No se ha detectado un Club ID válido.');
