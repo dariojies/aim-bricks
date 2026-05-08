@@ -41,10 +41,10 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
               padding: '0.25rem 0.6rem',
               borderRadius: '6px',
               width: 'fit-content',
-              background: (item.type === 'Aim Brickslab') ? 'rgba(6, 182, 212, 0.1)' : (item.type === 'Biblioteca' || item.type === 'Libro') ? 'rgba(168, 85, 247, 0.1)' : 'rgba(100, 116, 139, 0.1)',
-              color: (item.type === 'Aim Brickslab') ? '#22D3EE' : (item.type === 'Biblioteca' || item.type === 'Libro') ? '#A78BFA' : '#94A3B8'
+              background: (config.reservationMode === 'brickslab') ? 'rgba(6, 182, 212, 0.1)' : 'rgba(168, 85, 247, 0.1)',
+              color: (config.reservationMode === 'brickslab') ? '#22D3EE' : '#A78BFA'
             }}>
-              {item.type === 'Aim Brickslab' ? <Box size={14} /> : <BookOpen size={14} />}
+              {config.reservationMode === 'brickslab' ? <Box size={14} /> : <BookOpen size={14} />}
               {item.type}
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0' }}>{item.title}</h3>

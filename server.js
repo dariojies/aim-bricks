@@ -815,10 +815,10 @@ app.get('/api/catalog', async (req, res) => {
     const { clubId } = req.query;
     let club;
     if (clubId) {
-      club = await prisma.tul_clubs.findUnique({ where: { club_id: clubId } });
+      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
     } else {
       // Logic for subdomain can be added here
-      club = await prisma.tul_clubs.findFirst();
+      club = await prisma.bricks_clubs.findFirst();
     }
     if (!club) return res.json([]);
 
@@ -1055,48 +1055,6 @@ app.put('/api/admin/items/:id', async (req, res) => {
   }
 });
 
-app.get('/api/catalog', async (req, res) => {
-  try {
-    const { clubId } = req.query;
-    
-    // Find club or default to first
-    let club;
-    if (clubId) {
-      club = await prisma.bricks_clubs.findUnique({ where: { id: clubId } });
-    } else {
-      club = await prisma.bricks_clubs.findFirst();
-    }
-
-    if (!club) return res.json([]);
-
-    const [categories, items, activeReservations] = await Promise.all([
-      prisma.bricks_categories.findMany({ where: { clubId: club.club_id } }),
-      prisma.bricks_items.findMany({ where: { clubId: club.club_id } }),
-      prisma.bricks_reservation.findMany({ where: { status: { in: ['Reserved', 'Delivered'] } } })
-    ]);
-
-    const activeCounts = activeReservations.reduce((acc, r) => {
-      const id = r.itemId || r.brickslabId || r.libraryBookId;
-      if (id) acc[id] = (acc[id] || 0) + 1;
-      return acc;
-    }, {});
-
-    const mappedItems = items.map(item => {
-      const cat = categories.find(c => c.id === item.categoryId);
-      const available = (item.stock || 1) - (activeCounts[item.id] || 0);
-      return {
-        ...mapItem(item, cat),
-        isAvailable: available > 0,
-        status: available > 0 ? 'Disponible' : 'Reservado'
-      };
-    });
-
-    res.json(mappedItems);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error del servidor' });
-  }
-});
 
 app.post('/api/reservations', async (req, res) => {
   try {

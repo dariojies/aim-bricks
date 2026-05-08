@@ -45,6 +45,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [newItemDesc, setNewItemDesc] = useState('');
   const [newItemImage, setNewItemImage] = useState('');
   const [newItemStock, setNewItemStock] = useState('1');
+  const [isLegoSet, setIsLegoSet] = useState(false);
 
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [filterBrickslab, setFilterBrickslab] = useState(false);
@@ -324,6 +325,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         setNewItemStock('1');
         setIsProOnly(false);
         setAllowHomeBuild(true);
+        setIsLegoSet(false);
         setCustomFieldValues({});
         alert('Elemento añadido correctamente');
         fetchCatalog();
@@ -974,6 +976,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 </div>
               )}
 
+              {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '-0.5rem' }}>
+                  <input 
+                    type="checkbox" 
+                    id="isLegoSet" 
+                    checked={isLegoSet}
+                    onChange={e => {
+                      const checked = e.target.checked;
+                      setIsLegoSet(checked);
+                      if (checked && !newItemTitle.startsWith('LEGO® ')) {
+                        setNewItemTitle('LEGO® ' + newItemTitle);
+                      } else if (!checked && newItemTitle.startsWith('LEGO® ')) {
+                        setNewItemTitle(newItemTitle.replace('LEGO® ', ''));
+                      }
+                    }} 
+                  />
+                  <label htmlFor="isLegoSet" style={{ color: 'var(--text)', fontWeight: 600 }}>Es un set de LEGO® (Añade prefijo y campos extra)</label>
+                </div>
+              )}
+
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Título</label>
                 <input required value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
@@ -992,28 +1014,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   if (cat?.name === 'Aim Brickslab') fields = [{ name: 'legoReference', label: 'Referencia LEGO', type: 'text' }, { name: 'pieces', label: 'Piezas', type: 'number' }];
                   if (cat?.name === 'Biblioteca' || cat?.name === 'Libro') fields = [{ name: 'author', label: 'Autor(es)', type: 'text' }, { name: 'isbn', label: 'ISBN', type: 'text' }];
                 }
-                return fields.map((field: any) => (
-                  <div key={field.name} style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
-                    {field.type === 'checkbox' ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                return fields.map((field: any) => {
+                  if (field.name === 'legoReference' && !isLegoSet) return null;
+                  return (
+                    <div key={field.name} style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>{field.label}</label>
+                      {field.type === 'checkbox' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={!!customFieldValues[field.name]}
+                            onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })}
+                          />
+                          <span style={{ color: 'var(--text)' }}>{field.label}</span>
+                        </div>
+                      ) : (
                         <input
-                          type="checkbox"
-                          checked={!!customFieldValues[field.name]}
-                          onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.checked })}
+                          type={field.type}
+                          value={customFieldValues[field.name] || ''}
+                          onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                          style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                         />
-                        <span style={{ color: 'var(--text)' }}>{field.label}</span>
-                      </div>
-                    ) : (
-                      <input
-                        type={field.type}
-                        value={customFieldValues[field.name] || ''}
-                        onChange={e => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
-                      />
-                    )}
-                  </div>
-                ));
+                      )}
+                    </div>
+                  );
+                });
               })()}
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
@@ -1421,8 +1446,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                       setCatDescription('Colección de libros para préstamo y lectura.');
                       setCatReservationMode('library');
                       setCatCustomFields([
-                        { label: 'ISBN', name: 'isbn', type: 'text' },
-                        { label: 'Autor', name: 'autor', type: 'text' }
+                        { name: 'author', label: 'Autor(es)', type: 'text' },
+                        { name: 'isbn', label: 'ISBN', type: 'text' }
                       ]);
                     }}
                     style={{ fontSize: '0.85rem' }}
@@ -1438,8 +1463,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                       setCatDescription('Sets de LEGO® para construcción en el club y préstamo premium.');
                       setCatReservationMode('brickslab');
                       setCatCustomFields([
-                        { label: 'Referencia LEGO', name: 'lego_reference', type: 'text' },
-                        { label: 'Piezas', name: 'pieces', type: 'number' }
+                        { name: 'legoReference', label: 'Referencia LEGO', type: 'text' },
+                        { name: 'pieces', label: 'Número de Piezas', type: 'number' }
                       ]);
                     }}
                     style={{ fontSize: '0.85rem' }}
