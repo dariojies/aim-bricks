@@ -3,7 +3,7 @@ import { Trash2, CheckCircle, Plus, Pencil, Search, X } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
-const SUPER_ADMINS = ['d3859034-059e-4e90-ad8d-2a0a7f95c1f2', '631c7f2a-4949-442b-890b-24a990aca939'];
+const SUPER_ADMINS = ['d3859034-059e-4e90-ad8d-2a0a7f95c1f2', '631c7f2a-4949-442b-890b-24a990aca939', '465858fb-4d71-4c0c-b0df-7ea7ac35bb75'];
 
 interface AdminReservation {
   id: string;
@@ -114,7 +114,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   useEffect(() => {
     if (!detectedClubId) return;
     localStorage.setItem('detectedClubId', detectedClubId);
-    
+
     fetchCategories();
     fetchActivePolls();
     fetchReports();
@@ -445,8 +445,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         {user?.memberships?.filter((m: any) => m.role === 'owner' || m.role === 'admin').length > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Gestionando:</span>
-            <select 
-              value={detectedClubId} 
+            <select
+              value={detectedClubId}
               onChange={(e) => setDetectedClubId(e.target.value)}
               style={{ background: 'none', border: 'none', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
             >
@@ -512,7 +512,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         {isSuperAdmin && (
           <button
             className={`btn ${activeTab === 'superadmin' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ 
+            style={{
               borderColor: activeTab === 'superadmin' ? 'var(--primary)' : '#A78BFA',
               color: activeTab === 'superadmin' ? '#fff' : '#A78BFA'
             }}
@@ -794,8 +794,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </button>
               <button
                 className="btn"
-                style={{ 
-                  padding: '0.5rem 1rem', 
+                style={{
+                  padding: '0.5rem 1rem',
                   fontSize: '0.875rem',
                   background: filterProOnly ? 'linear-gradient(135deg, #D4AF37, #FBBF24)' : 'transparent',
                   borderColor: filterProOnly ? 'transparent' : '#D4AF37',
@@ -826,17 +826,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <tbody>
                 {users.filter(u => {
                   const matchSearch = u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
-                  
+
                   // New dynamic filter logic based on category reservation modes
-                  const hasBrickslabPermission = categories.some(cat => 
-                    cat.config?.reservationMode === 'brickslab' && 
+                  const hasBrickslabPermission = categories.some(cat =>
+                    cat.config?.reservationMode === 'brickslab' &&
                     (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
                   );
-                  const hasLibraryPermission = categories.some(cat => 
-                    cat.config?.reservationMode === 'library' && 
+                  const hasLibraryPermission = categories.some(cat =>
+                    cat.config?.reservationMode === 'library' &&
                     (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
                   );
-                  const hasAnyPermission = categories.some(cat => 
+                  const hasAnyPermission = categories.some(cat =>
                     (u.permissions?.[cat.id]?.standard || u.permissions?.[cat.id]?.pro)
                   );
                   const hasProPermission = categories.some(cat => u.permissions?.[cat.id]?.pro);
@@ -1620,10 +1620,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 }
               } catch (e) { console.error(e); }
             }} style={{ display: 'flex', gap: '1rem' }}>
-              <input 
-                required 
-                placeholder="Nombre del Club (Ej: Aim Barcelona)" 
-                value={newClubName} 
+              <input
+                required
+                placeholder="Nombre del Club (Ej: Aim Barcelona)"
+                value={newClubName}
                 onChange={e => setNewClubName(e.target.value)}
                 style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
               />
@@ -1652,17 +1652,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 }
               } catch (e) { console.error(e); }
             }} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr 100px' }}>
-              <input 
-                required 
-                type="email" 
-                placeholder="email@del-owner.com" 
-                value={ownerEmail} 
+              <input
+                required
+                type="email"
+                placeholder="email@del-owner.com"
+                value={ownerEmail}
                 onChange={e => setOwnerEmail(e.target.value)}
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
               />
-              <select 
-                required 
-                value={ownerClubId} 
+              <select
+                required
+                value={ownerClubId}
                 onChange={e => setOwnerClubId(e.target.value)}
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
               >
@@ -1677,13 +1677,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Clubes en el Sistema</h3>
             <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
               {allClubs.map(c => (
-                <div 
-                  key={c.id} 
+                <div
+                  key={c.id}
                   onClick={() => fetchClubStats(c)}
-                  style={{ 
-                    padding: '1.5rem', 
-                    background: 'rgba(255,255,255,0.05)', 
-                    borderRadius: '12px', 
+                  style={{
+                    padding: '1.5rem',
+                    background: 'rgba(255,255,255,0.05)',
+                    borderRadius: '12px',
                     border: '1px solid var(--surface-border)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
@@ -1710,18 +1710,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </div>
 
           {selectedClubStats && (
-            <div style={{ 
-              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
               background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
-              zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' 
+              zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem'
             }} onClick={() => setSelectedClubStats(null)}>
-              <div 
+              <div
                 className="hide-scrollbar"
-                style={{ 
-                  background: 'var(--surface)', width: '100%', maxWidth: '600px', 
+                style={{
+                  background: 'var(--surface)', width: '100%', maxWidth: '600px',
                   borderRadius: '20px', padding: '2.5rem', border: '1px solid #A78BFA',
                   maxHeight: '90vh', overflowY: 'auto'
-                }} 
+                }}
                 onClick={e => e.stopPropagation()}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -1764,7 +1764,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                     ))}
                   </div>
                 </div>
-                
+
                 <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
                   <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Stock Total Acumulado: <span style={{ color: 'var(--text)', fontWeight: 700 }}>{selectedClubStats.totalStock} unidades</span></div>
                 </div>
