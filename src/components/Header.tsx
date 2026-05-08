@@ -70,7 +70,8 @@ export const Header: React.FC<Props> = ({
 
         {/* Right: All Buttons in ONE line */}
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
-          {userRole !== 'superadmin' && currentView !== 'admin' && (
+          {/* Hide these for ALL admin roles (admin, owner, superadmin) in ALL views */}
+          {!['admin', 'owner', 'superadmin'].includes(userRole || '') && (
             <>
               <button 
                 style={{ ...btnStyle, borderColor: 'rgba(245, 158, 11, 0.3)', color: '#F59E0B' }} 
@@ -99,7 +100,10 @@ export const Header: React.FC<Props> = ({
             <>
               {(userRole === 'owner' || userRole === 'admin' || userRole === 'superadmin') && (
                 <button 
-                  style={{ ...btnStyle, borderColor: '#8B5CF6', color: '#8B5CF6' }} 
+                  style={currentView === 'admin' 
+                    ? { ...activeBtnStyle, borderColor: '#8B5CF6', color: '#8B5CF6', background: 'rgba(139, 92, 246, 0.1)' } 
+                    : { ...btnStyle, borderColor: '#8B5CF6', color: '#8B5CF6' }
+                  } 
                   onClick={onAdminClick}
                 >
                   Admin
