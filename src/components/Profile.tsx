@@ -18,7 +18,7 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h2 className="text-gradient hero-title">Mi Perfil</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem' }}>
-          ¡Hola, {user?.name || 'Usuario'}! Aquí tienes un resumen de tu actividad en Aim Brickslab y Libros.
+          ¡Hola, {user?.name || 'Usuario'}! Aquí tienes un resumen de tu actividad en Shelfie y Libros.
         </p>
       </div>
 

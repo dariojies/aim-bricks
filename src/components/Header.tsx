@@ -65,7 +65,7 @@ export const Header: React.FC<Props> = ({
           <div style={{ background: 'var(--primary)', padding: '0.35rem', borderRadius: '8px' }}>
             <Box color="#fff" size={18} />
           </div>
-          <h1 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Aim Brickslab</h1>
+          <h1 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Shelfie</h1>
         </div>
 
         {/* Right: All Buttons in ONE line */}
