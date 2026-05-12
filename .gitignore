@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Local AI/IDE config
+.claude/
+
 # Confidential
 infopriv/
 
@@ -30,3 +33,7 @@ infopriv/
 scratch/
 .env
 .env.local
+.env.*
+
+# One-off migration scripts in root
+add_clubId_poll.js

@@ -1752,7 +1752,13 @@ app.get('/api/admin/clubs', async (req, res) => {
   }
 });
 
-// Serve frontend static files
+// Landing page (served at root, before the React SPA)
+app.use('/landing', express.static(join(__dirname, 'landing')));
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, 'landing', 'index.html'));
+});
+
+// React SPA — all other routes (e.g. /app, /app/*)
 app.use(express.static(join(__dirname, 'dist')));
 
 app.get('/*path', (req, res) => {

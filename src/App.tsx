@@ -94,8 +94,16 @@ function App() {
   // URL Parameter and Path detection for deep linking (Ticket #83)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === '1') {
+      setShowLoginModal(true);
+      window.history.replaceState({}, '', '/app');
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
     const catParam = params.get('cat')?.toLowerCase();
-    const pathParam = window.location.pathname.replace('/', '').toLowerCase();
+    const pathParam = window.location.pathname.replace('/', '').replace('app', '').toLowerCase();
     
     const target = catParam || pathParam;
     
@@ -381,10 +389,9 @@ function App() {
   };
 
   const handleLogout = () => {
-    setUser(null);
-    setCurrentView('catalog');
     localStorage.removeItem('aim_bricks_user');
     localStorage.removeItem('aim_bricks_token');
+    window.location.replace('/');
   };
 
   const handleProfileClick = async () => {
