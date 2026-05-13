@@ -133,9 +133,10 @@ function App() {
       try {
         const userStr = localStorage.getItem('aim_bricks_user');
         const userObj = userStr ? JSON.parse(userStr) : null;
-        const clubId = userObj?.clubId || '';
-        const url = clubId ? `${API_URL}/api/polls?clubId=${clubId}` : `${API_URL}/api/polls`;
-        const res = await fetch(url);
+        const params = new URLSearchParams();
+        if (userObj?.clubId) params.set('clubId', userObj.clubId);
+        if (userObj?.id) params.set('userId', userObj.id);
+        const res = await fetch(`${API_URL}/api/polls?${params.toString()}`);
         if (res.ok) setActivePoll(await res.json());
       } catch (e) { console.error(e); }
     };
@@ -496,31 +497,38 @@ function App() {
                       <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)', borderRadius: '16px' }} />
                       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <h4 style={{ fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{opt.title}</h4>
-                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)' }}>Votos actuales: {opt.votes}</span>
-                        <button
-                          className="btn btn-primary"
-                          style={{ marginTop: 'auto' }}
-                          onClick={async () => {
-                            if (!user) return setShowLoginModal(true);
-                            const res = await fetch(`${API_URL}/api/polls/vote`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ userId: user.id, optionId: opt.id })
-                            });
-                            const data = await res.json();
-                            if (res.ok) {
-                              alert('¡Voto registrado con éxito!');
-                              const url = user?.clubId ? `${API_URL}/api/polls?clubId=${user.clubId}` : `${API_URL}/api/polls`;
-                              const resPoll = await fetch(url);
-                              if (resPoll.ok) setActivePoll(await resPoll.json());
-                            } else {
-                              alert(data.error || 'Error al votar.');
-                            }
-                          }}
-                        >
-                          Votar por este set
-                        </button>
+                        {activePoll.hasVoted ? (
+                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>{opt.votes} {opt.votes === 1 ? 'voto' : 'votos'}</span>
+                        ) : (
+                          <>
+                            <h4 style={{ fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{opt.title}</h4>
+                            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)' }}>Votos actuales: {opt.votes}</span>
+                            <button
+                              className="btn btn-primary"
+                              style={{ marginTop: 'auto' }}
+                              onClick={async () => {
+                                if (!user) return setShowLoginModal(true);
+                                const res = await fetch(`${API_URL}/api/polls/vote`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ userId: user.id, optionId: opt.id })
+                                });
+                                const data = await res.json();
+                                if (res.ok) {
+                                  const params = new URLSearchParams();
+                                  if (user?.clubId) params.set('clubId', user.clubId);
+                                  if (user?.id) params.set('userId', user.id);
+                                  const resPoll = await fetch(`${API_URL}/api/polls?${params.toString()}`);
+                                  if (resPoll.ok) setActivePoll(await resPoll.json());
+                                } else {
+                                  alert(data.error || 'Error al votar.');
+                                }
+                              }}
+                            >
+                              Votar por este set
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

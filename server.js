@@ -1496,7 +1496,7 @@ app.post('/api/admin/pieces/resolve', async (req, res) => {
 // Polls Endpoints
 app.get('/api/polls', async (req, res) => {
   try {
-    const { clubId } = req.query;
+    const { clubId, userId } = req.query;
 
     const activePoll = await prisma.bricks_poll.findFirst({
       where: {
@@ -1516,12 +1516,20 @@ app.get('/api/polls', async (req, res) => {
     });
     if (!activePoll) return res.json(null);
 
-    // Map options to include vote count
+    let hasVoted = false;
+    if (userId) {
+      const vote = await prisma.bricks_poll_vote.findFirst({
+        where: { userId, option: { pollId: activePoll.id } }
+      });
+      hasVoted = !!vote;
+    }
+
     res.json({
       id: activePoll.id,
       title: activePoll.title,
       description: activePoll.description,
       expiresAt: activePoll.expiresAt,
+      hasVoted,
       options: activePoll.options.map(opt => ({
         id: opt.id,
         title: opt.title,
