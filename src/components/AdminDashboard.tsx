@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil, Search, X } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -1860,9 +1860,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                       }} style={{ background: 'none', border: 'none', cursor: cat.locked ? 'not-allowed' : 'pointer', color: '#EF4444', opacity: cat.locked ? 0.3 : 1 }}><Trash2 size={18} /></button>
                     </div>
                   </div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{cat.description || 'Sin descripción'}</p>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)' }}>
-                    {cat._count?.items || 0} artículos
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>{cat.description || 'Sin descripción'}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)' }}>
+                      {cat._count?.items || 0} artículos
+                    </div>
+                    <button
+                      disabled={!!cat.locked}
+                      onClick={async () => {
+                        if (cat.locked) return;
+                        await fetch(`${API_URL}/api/admin/categories/${cat.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: cat.name, icon: cat.icon, isHomeAllowed: cat.isHomeAllowed, description: cat.description, config: cat.config, rankingEnabled: !cat.rankingEnabled })
+                        });
+                        fetchCategories();
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem', fontWeight: 700, padding: '0.25rem 0.6rem', borderRadius: '8px', border: 'none', cursor: cat.locked ? 'not-allowed' : 'pointer', opacity: cat.locked ? 0.4 : 1, background: cat.rankingEnabled ? 'rgba(33,182,104,0.12)' : 'rgba(255,255,255,0.06)', color: cat.rankingEnabled ? '#21B668' : 'var(--text-muted)' }}
+                      title={cat.rankingEnabled ? 'Ranking activo — clic para desactivar' : 'Ranking inactivo — clic para activar'}
+                    >
+                      <Trophy size={12} />
+                      {cat.rankingEnabled ? 'Ranking ON' : 'Ranking OFF'}
+                    </button>
                   </div>
                 </div>
               ))}

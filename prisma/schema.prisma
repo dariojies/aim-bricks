@@ -745,6 +745,7 @@ model bricks_categories {
   name           String
   icon           String   @default("Package")
   isHomeAllowed  Boolean  @default(false)
+  rankingEnabled Boolean  @default(true)
   description    String?
   config         Json?    // { customFields: [], reservationMode: 'brickslab' | 'library' }
   createdAt      DateTime @default(now())

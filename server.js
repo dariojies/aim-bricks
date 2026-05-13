@@ -118,6 +118,7 @@ async function syncSchema() {
 
     // Migrate 'admin' role → 'profesor' in bricks_club_memberships
     await prisma.$executeRawUnsafe(`UPDATE "bricks_club_memberships" SET "role" = 'profesor' WHERE "role" = 'admin';`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_categories" ADD COLUMN IF NOT EXISTS "rankingEnabled" BOOLEAN NOT NULL DEFAULT true;`);
 
     console.log('Database structure verified.');
 
@@ -1223,7 +1224,7 @@ app.post('/api/admin/categories', async (req, res) => {
 app.put('/api/admin/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, icon, isHomeAllowed, description, config } = req.body;
+    const { name, icon, isHomeAllowed, description, config, rankingEnabled } = req.body;
     const cat = await prisma.bricks_categories.findUnique({ where: { id }, select: { clubId: true } });
     if (cat) {
       const lockedIds = await getLockedCategoryIds(cat.clubId);
@@ -1231,7 +1232,7 @@ app.put('/api/admin/categories/:id', async (req, res) => {
     }
     await prisma.bricks_categories.update({
       where: { id },
-      data: { name, icon, isHomeAllowed: !!isHomeAllowed, description, config }
+      data: { name, icon, isHomeAllowed: !!isHomeAllowed, description, config, ...(rankingEnabled !== undefined ? { rankingEnabled: !!rankingEnabled } : {}) }
     });
     res.json({ success: true });
   } catch (error) {
@@ -1857,8 +1858,20 @@ app.put('/api/support/:id', async (req, res) => {
 // Ranking Endpoint
 app.get('/api/ranking', async (req, res) => {
   try {
-    const { clubId } = req.query;
+    const { clubId, categoryId } = req.query;
 
+    // Fetch all categories for this club
+    const allCategories = clubId
+      ? await prisma.bricks_categories.findMany({
+          where: { clubId },
+          select: { id: true, name: true, icon: true, rankingEnabled: true },
+          orderBy: { createdAt: 'asc' },
+        })
+      : [];
+
+    const enabledCategoryIds = allCategories.filter(c => c.rankingEnabled).map(c => c.id);
+
+    // Build membership filter
     let validEmails = null;
     if (clubId) {
       const memberships = await prisma.bricks_club_memberships.findMany({
@@ -1868,9 +1881,20 @@ app.get('/api/ranking', async (req, res) => {
       validEmails = memberships.map(m => m.email.toLowerCase());
     }
 
+    // Build category filter
+    let categoryFilter = {};
+    if (categoryId && categoryId !== 'all') {
+      categoryFilter = { categoryId };
+    } else if (enabledCategoryIds.length > 0) {
+      categoryFilter = { categoryId: { in: enabledCategoryIds } };
+    } else {
+      // Fallback to legacy brickslabId filter if no categories configured
+      categoryFilter = { brickslabId: { not: null } };
+    }
+
     const history = await prisma.bricks_userhistory.findMany({
       where: {
-        brickslabId: { not: null },
+        ...categoryFilter,
         ...(validEmails ? { user: { email: { in: validEmails } } } : {})
       },
       include: { user: true }
@@ -1882,7 +1906,7 @@ app.get('/api/ranking', async (req, res) => {
 
     const stats = {};
     history.forEach(h => {
-      if (!h.user) return; // ignore deleted users
+      if (!h.user) return;
       const uId = h.userId;
       if (!stats[uId]) {
         stats[uId] = {
@@ -1894,19 +1918,15 @@ app.get('/api/ranking', async (req, res) => {
           allTime: 0
         };
       }
-
       const d = new Date(h.completedAt);
       stats[uId].allTime++;
       if (d.getFullYear() === currentYear) {
         stats[uId].yearly++;
-        if (d.getMonth() === currentMonth) {
-          stats[uId].monthly++;
-        }
+        if (d.getMonth() === currentMonth) stats[uId].monthly++;
       }
     });
 
-    const ranking = Object.values(stats);
-    res.json(ranking);
+    res.json({ categories: allCategories, ranking: Object.values(stats) });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error loading ranking' });
