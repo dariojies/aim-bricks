@@ -116,6 +116,9 @@ async function syncSchema() {
       await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ALTER COLUMN "brickslabId" DROP NOT NULL;`);
     } catch (e) { /* Column might not exist anymore, ignore */ }
 
+    // Migrate 'admin' role → 'profesor' in bricks_club_memberships
+    await prisma.$executeRawUnsafe(`UPDATE "bricks_club_memberships" SET "role" = 'profesor' WHERE "role" = 'admin';`);
+
     console.log('Database structure verified.');
 
     // 3. Perform Data Migration
@@ -551,7 +554,7 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
     await prisma.bricks_club_memberships.create({
-      data: { email: email.toLowerCase().trim(), clubId: club.id, role: 'admin' }
+      data: { email: email.toLowerCase().trim(), clubId: club.id, role: 'owner' }
     });
 
     const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
@@ -606,7 +609,7 @@ app.post('/api/auth/me', async (req, res) => {
     let activeDevRole = user.dev_role || 'student';
 
     if (memberships.length > 0) {
-      const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'admin') || memberships[0];
+      const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'profesor') || memberships[0];
       activeClubId = primaryMembership.clubId;
       activeDevRole = primaryMembership.role;
     }
@@ -1938,13 +1941,33 @@ app.get('/api/admin/memberships', async (req, res) => {
 
 app.post('/api/admin/memberships', async (req, res) => {
   try {
-    const { clubId, email, role } = req.body;
+    const { clubId, email, role, requesterEmail } = req.body;
     if (!clubId || !email) return res.status(400).json({ error: 'Faltan datos' });
+
+    const assignedRole = role || 'member';
+
+    // Validate role permissions: only owner/superadmin can assign profesor or owner
+    if (assignedRole === 'profesor' || assignedRole === 'owner') {
+      const requester = requesterEmail
+        ? await prisma.bricks_club_memberships.findUnique({
+            where: { email_clubId: { email: requesterEmail.toLowerCase(), clubId } },
+            select: { role: true }
+          })
+        : null;
+      const requesterDevRole = requesterEmail
+        ? (await prisma.users.findUnique({ where: { email: requesterEmail.toLowerCase() }, select: { dev_role: true } }))?.dev_role
+        : null;
+
+      const canAssignElevated = requesterDevRole === 'superadmin' || requester?.role === 'owner';
+      if (!canAssignElevated) {
+        return res.status(403).json({ error: 'No tienes permiso para asignar ese rol.' });
+      }
+    }
 
     await prisma.bricks_club_memberships.upsert({
       where: { email_clubId: { email: email.toLowerCase(), clubId } },
-      update: { role: role || 'member' },
-      create: { email: email.toLowerCase(), clubId, role: role || 'member' }
+      update: { role: assignedRole },
+      create: { email: email.toLowerCase(), clubId, role: assignedRole }
     });
     res.json({ success: true });
   } catch (error) {

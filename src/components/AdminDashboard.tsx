@@ -100,7 +100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [editAllowHomeBuild, setEditAllowHomeBuild] = useState(true);
 
   const [memberEmail, setMemberEmail] = useState('');
-  const [memberRole, setMemberRole] = useState<'member' | 'admin' | 'owner'>('member');
+  const [memberRole, setMemberRole] = useState<'member' | 'profesor' | 'owner'>('member');
   const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
 
   // Plan state
@@ -119,7 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   useEffect(() => {
     // Determine which club the user is admin/owner of
     if (user?.memberships && user.memberships.length > 0) {
-      const adminMembership = user.memberships.find((m: any) => m.role === 'owner' || m.role === 'admin') || user.memberships[0];
+      const adminMembership = user.memberships.find((m: any) => m.role === 'owner' || m.role === 'profesor') || user.memberships[0];
       const initialClubId = localStorage.getItem('detectedClubId') || adminMembership.clubId;
       setDetectedClubId(initialClubId);
     }
@@ -489,7 +489,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       const res = await fetch(`${API_URL}/api/admin/memberships`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clubId: detectedClubId, email: memberEmail, role: memberRole })
+        body: JSON.stringify({ clubId: detectedClubId, email: memberEmail, role: memberRole, requesterEmail: user.email })
       });
       if (res.ok) {
         setMemberEmail('');
@@ -497,6 +497,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       }
     } catch (err) { console.error(err); }
   };
+
+  const userClubRole = user?.memberships?.find((m: any) => m.clubId === detectedClubId)?.role;
+  const canAssignElevated = user?.role === 'superadmin' || userClubRole === 'owner';
 
   const handleDeleteMembership = async (id: string) => {
     if (!confirm('¿Seguro que quieres eliminar esta autorización?')) return;
@@ -512,7 +515,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         <h2 className="text-gradient" style={{ fontSize: '2.5rem', margin: 0 }}>
           Panel de Administración
         </h2>
-        {user?.memberships?.filter((m: any) => m.role === 'owner' || m.role === 'admin').length > 1 && (
+        {user?.memberships?.filter((m: any) => m.role === 'owner' || m.role === 'profesor').length > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Gestionando:</span>
             <select
@@ -520,7 +523,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               onChange={(e) => setDetectedClubId(e.target.value)}
               style={{ background: 'none', border: 'none', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
             >
-              {user.memberships.filter((m: any) => m.role === 'owner' || m.role === 'admin').map((m: any) => (
+              {user.memberships.filter((m: any) => m.role === 'owner' || m.role === 'profesor').map((m: any) => (
                 <option key={m.clubId} value={m.clubId} style={{ background: 'var(--surface)', color: 'var(--text)' }}>
                   {m.clubName || 'Club ' + m.clubId.substring(0, 5)}
                 </option>
@@ -1881,8 +1884,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                 >
                   <option value="member">Miembro</option>
-                  <option value="admin">Admin</option>
-                  <option value="owner">Dueño</option>
+                  {canAssignElevated && <option value="profesor">Profesor</option>}
+                  {canAssignElevated && <option value="owner">Dueño</option>}
                 </select>
               </div>
               <button type="submit" className="btn btn-primary" style={{ height: '45px' }}>Añadir</button>
@@ -1928,10 +1931,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                               padding: '0.2rem 0.5rem',
                               borderRadius: '4px',
                               fontSize: '0.75rem',
-                              background: m.role === 'owner' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(255,255,255,0.1)',
-                              color: m.role === 'owner' ? '#A78BFA' : 'var(--text)'
+                              background: m.role === 'owner' ? 'rgba(167, 139, 250, 0.1)' : m.role === 'profesor' ? 'rgba(33, 182, 104, 0.1)' : 'rgba(255,255,255,0.1)',
+                              color: m.role === 'owner' ? '#A78BFA' : m.role === 'profesor' ? '#21B668' : 'var(--text)'
                             }}>
-                              {m.role === 'owner' ? 'Dueño' : m.role === 'admin' ? 'Admin' : 'Miembro'}
+                              {m.role === 'owner' ? 'Dueño' : m.role === 'profesor' ? 'Profesor' : 'Miembro'}
                             </span>
                           </td>
                           <td style={{ padding: '1rem' }}>

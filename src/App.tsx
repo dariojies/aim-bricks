@@ -545,7 +545,7 @@ function App() {
           </>
         ) : currentView === 'profile' && user ? (
           <Profile user={user} onCancelReservation={handleCancelReservation} onReportPieces={handleReportPieces} />
-        ) : currentView === 'admin' && (user?.role === 'owner' || user?.role === 'admin' || user?.role === 'superadmin') ? (
+        ) : currentView === 'admin' && (user?.role === 'owner' || user?.role === 'profesor' || user?.role === 'superadmin') ? (
           <AdminDashboard user={user} />
         ) : currentView === 'ranking' ? (
           <Ranking />
