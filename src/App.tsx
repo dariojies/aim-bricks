@@ -427,7 +427,7 @@ function App() {
     <div className="container">
       {(!user || !user.permissions?.brickslab) && (
         <div style={{
-          background: 'linear-gradient(90deg, #10B981, #3B82F6)',
+          background: 'linear-gradient(90deg, #5233A8, #FF99D3, #FFD526, #21B668)',
           color: 'white',
           padding: '0.6rem 1rem',
           textAlign: 'center',
@@ -439,14 +439,14 @@ function App() {
           justifyContent: 'center',
           alignItems: 'center',
           gap: '1rem',
-          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
+          boxShadow: '0 4px 12px rgba(82, 51, 168, 0.2)'
         }}>
           <span>🚀 ¿Quieres reservar sets de LEGO®? Solicita tu acceso a Aim Brickslab ahora</span>
           <button
             onClick={() => setShowEnrollmentModal(true)}
             style={{
               background: 'white',
-              color: '#10B981',
+              color: '#5233A8',
               border: 'none',
               padding: '0.3rem 0.8rem',
               borderRadius: '6px',
@@ -801,8 +801,8 @@ function App() {
         style={{
           position: 'fixed', bottom: '2rem', left: '1.5rem', zIndex: 90,
           width: '60px', height: '60px', borderRadius: '50%', padding: 0,
-          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
-          background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+          boxShadow: '0 8px 32px rgba(82, 51, 168, 0.4)',
+          background: 'linear-gradient(135deg, #5233A8, #21B668)',
           color: 'white',
           border: '2px solid rgba(255, 255, 255, 0.2)',
           cursor: 'pointer',
@@ -813,11 +813,11 @@ function App() {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(82, 51, 168, 0.6)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(82, 51, 168, 0.4)';
         }}
         aria-label="Cambiar tema"
         title="Cambiar entre modo claro y oscuro"
@@ -833,8 +833,8 @@ function App() {
           style={{
             position: 'fixed', bottom: '6.5rem', left: '1.5rem', zIndex: 90,
             width: '60px', height: '60px', borderRadius: '50%', padding: 0,
-            boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
-            background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+            boxShadow: '0 8px 32px rgba(82, 51, 168, 0.4)',
+            background: 'linear-gradient(135deg, #5233A8, #21B668)',
             color: 'white',
             border: '2px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
@@ -845,11 +845,11 @@ function App() {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+            e.currentTarget.style.boxShadow = '0 12px 40px rgba(82, 51, 168, 0.6)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'scale(1) translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(82, 51, 168, 0.4)';
           }}
           aria-label="Volver arriba"
         >
@@ -870,8 +870,8 @@ function App() {
         style={{
           position: 'fixed', bottom: '2rem', right: '1.5rem', zIndex: 90,
           width: '60px', height: '60px', borderRadius: '50%', padding: 0,
-          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
-          background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+          boxShadow: '0 8px 32px rgba(82, 51, 168, 0.4)',
+          background: 'linear-gradient(135deg, #5233A8, #21B668)',
           color: 'white',
           border: '2px solid rgba(255, 255, 255, 0.2)',
           cursor: 'pointer',
@@ -882,11 +882,11 @@ function App() {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(82, 51, 168, 0.6)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(82, 51, 168, 0.4)';
         }}
         aria-label="Soporte"
         title="Enviar ticket de soporte"
@@ -901,8 +901,8 @@ function App() {
         style={{
           position: 'fixed', bottom: '2rem', left: '1.5rem', zIndex: 90,
           width: '60px', height: '60px', borderRadius: '50%', padding: 0,
-          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
-          background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+          boxShadow: '0 8px 32px rgba(82, 51, 168, 0.4)',
+          background: 'linear-gradient(135deg, #5233A8, #21B668)',
           color: 'white',
           border: '2px solid rgba(255, 255, 255, 0.2)',
           cursor: 'pointer',
@@ -913,11 +913,11 @@ function App() {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.6)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(82, 51, 168, 0.6)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.4)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(82, 51, 168, 0.4)';
         }}
         aria-label="Cambiar tema"
         title="Cambiar entre modo claro y oscuro"
@@ -949,7 +949,7 @@ function App() {
             </div>
 
             {supportStatus === 'success' && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#10b981' }}>
+              <div style={{ background: 'rgba(82, 51, 168, 0.1)', border: '1px solid rgba(82, 51, 168, 0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#5233a8' }}>
                 <CheckCircle2 size={20} />
                 <strong>¡Ticket enviado con éxito!</strong>
               </div>

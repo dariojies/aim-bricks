@@ -221,9 +221,9 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
       <head>
         <style>
           body { font-family: sans-serif; padding: 20px; color: #333; }
-          .header { text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 20px; }
+          .header { text-align: center; border-bottom: 2px solid #5233a8; padding-bottom: 10px; margin-bottom: 20px; }
           .ticket { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
-          .id { font-weight: bold; color: #10b981; }
+          .id { font-weight: bold; color: #5233a8; }
           .prio { float: right; font-weight: bold; text-transform: uppercase; font-size: 12px; }
           .subject { font-size: 18px; font-weight: bold; margin: 10px 0; }
           .meta { font-size: 12px; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -236,7 +236,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
         </div>
         ${filteredAndSortedTickets.map(t => `
           <div class="ticket">
-            <span class="prio" style="color: ${t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#10b981'}">${t.priority}</span>
+            <span class="prio" style="color: ${t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#5233a8'}">${t.priority}</span>
             <div class="id">#${t.id} - ${t.status.toUpperCase()}</div>
             <div class="subject">${t.subject}</div>
             <div class="desc">${t.description}</div>
@@ -368,7 +368,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
       {notification && (
         <div style={{
           position: 'fixed', top: '2rem', left: '50%', transform: 'translateX(-50%)',
-          background: notification.type === 'success' ? '#10b981' : notification.type === 'error' ? '#ef4444' : '#3B82F6',
+          background: notification.type === 'success' ? '#5233a8' : notification.type === 'error' ? '#ef4444' : '#3B82F6',
           color: '#fff', padding: '0.75rem 2rem', borderRadius: '12px', fontWeight: 700, zIndex: 4000,
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)', animation: 'slideDown 0.3s ease-out'
         }}>
@@ -423,7 +423,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
                 <button 
                   className="btn" 
                   onClick={exportPDF}
-                  style={{ background: '#10b981', color: '#fff', fontWeight: 700, padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', border: 'none' }}
+                  style={{ background: '#5233a8', color: '#fff', fontWeight: 700, padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', border: 'none' }}
                 >
                   <FileText size={16} /> PDF
                 </button>
@@ -505,7 +505,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
                       background: 'var(--surface)', padding: '1.5rem', borderRadius: '15px', border: '1px solid var(--surface-border)',
                       borderLeft: `6px solid ${
                         ticket.priority === 'high' ? '#ef4444' : 
-                        ticket.priority === 'medium' ? '#f59e0b' : '#10b981'
+                        ticket.priority === 'medium' ? '#f59e0b' : '#5233a8'
                       }`,
                       cursor: 'pointer', transition: 'all 0.2s', position: 'relative'
                     }}
@@ -517,14 +517,14 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
                         <span style={{ fontWeight: 700, color: 'var(--primary)' }}>#{ticket.id}</span>
                         <div style={{ display: 'flex', gap: '0.4rem' }}>
                           {(Array.isArray(ticket.app_label) ? ticket.app_label : [ticket.app_label]).map(l => (
-                            <span key={String(l)} style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--primary)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
+                            <span key={String(l)} style={{ background: 'rgba(82,51,168,0.1)', color: 'var(--primary)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
                               {String(l)}
                             </span>
                           ))}
                         </div>
                         <span style={{ 
-                          background: ticket.priority === 'high' ? 'rgba(239,68,68,0.1)' : ticket.priority === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)',
-                          color: ticket.priority === 'high' ? '#ef4444' : ticket.priority === 'medium' ? '#f59e0b' : '#10b981',
+                          background: ticket.priority === 'high' ? 'rgba(239,68,68,0.1)' : ticket.priority === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(82,51,168,0.1)',
+                          color: ticket.priority === 'high' ? '#ef4444' : ticket.priority === 'medium' ? '#f59e0b' : '#5233a8',
                           padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase'
                         }}>
                           {ticket.priority}
@@ -532,7 +532,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
                       </div>
                       <span style={{ 
                         fontWeight: 800, fontSize: '0.75rem',
-                        color: ticket.status === 'open' ? '#f59e0b' : ticket.status === 'resolved' ? '#10b981' : '#6b7280'
+                        color: ticket.status === 'open' ? '#f59e0b' : ticket.status === 'resolved' ? '#5233a8' : '#6b7280'
                       }}>
                         {ticket.status.toUpperCase()}
                       </span>
@@ -593,7 +593,7 @@ export const SupportManager: React.FC<SupportManagerProps> = ({ onClose, userId,
                    style={{ width: '100%', padding: '0.8rem', background: 'var(--background)', border: '1px solid var(--surface-border)', color: 'var(--text)', borderRadius: '8px', resize: 'none' }}
                  ></textarea>
                </div>
-               <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(16,185,129,0.1)', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)' }}>
+               <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(82,51,168,0.1)', borderRadius: '8px', border: '1px solid rgba(82,51,168,0.2)' }}>
                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
                    📌 Este reporte será etiquetado automáticamente como "Aim Brickslab".
                  </p>

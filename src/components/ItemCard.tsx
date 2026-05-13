@@ -87,9 +87,9 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
           </div>
           <span style={{ 
             display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
-            background: isAvailable ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+            background: isAvailable ? 'rgba(82, 51, 168, 0.1)' : 'rgba(244, 63, 94, 0.1)',
             color: isAvailable ? 'var(--secondary)' : 'var(--accent)',
-            border: `1px solid ${isAvailable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`
+            border: `1px solid ${isAvailable ? 'rgba(82, 51, 168, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`
           }}>
             {isAvailable ? <CheckCircle size={14} /> : <Lock size={14} />}
             {item.status}

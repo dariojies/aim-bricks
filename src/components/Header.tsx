@@ -41,7 +41,7 @@ export const Header: React.FC<Props> = ({
   const activeBtnStyle = {
     ...btnStyle,
     borderColor: 'var(--primary)',
-    background: 'rgba(16, 185, 129, 0.1)',
+    background: 'rgba(82, 51, 168, 0.1)',
     color: 'var(--primary)'
   };
 

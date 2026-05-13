@@ -973,7 +973,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
               {/* Special Brickslab Pro toggle if in brickslab mode */}
               {categories.find(c => c.id === newItemCategoryId)?.config?.reservationMode === 'brickslab' && (
-                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(82, 51, 168, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(82, 51, 168, 0.1)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input type="checkbox" id="isProOnly" checked={isProOnly} onChange={e => setIsProOnly(e.target.checked)} />
                     <label htmlFor="isProOnly" style={{ color: 'var(--accent)', fontWeight: 600 }}>Artículo Exclusivo Pro (No visible para usuarios estándar)</label>
@@ -1194,7 +1194,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 <textarea required value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '100px' }} />
               </div>
               {editingItem.type === 'Aim Brickslab' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.1)', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(82, 51, 168, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(82, 51, 168, 0.1)', marginTop: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input type="checkbox" id="edit-pro-check" checked={editIsProOnly} onChange={e => setEditIsProOnly(e.target.checked)} />
                     <label htmlFor="edit-pro-check" style={{ fontWeight: 600, color: 'var(--accent)' }}>Exclusivo para Brickslab Pro</label>
@@ -1252,7 +1252,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                         Marcar Resuelto
                       </button>
                     ) : (
-                      <span style={{ color: '#10B981', fontSize: '0.875rem', fontWeight: 600 }}>Cerrado</span>
+                      <span style={{ color: '#5233A8', fontSize: '0.875rem', fontWeight: 600 }}>Cerrado</span>
                     )}
                   </div>
                 </div>
@@ -1266,7 +1266,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         <div style={{ display: 'grid', gap: '2rem' }}>
           {activePolls.length > 0 && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#10B981' }}>Votaciones Activas</h3>
+              <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#5233A8' }}>Votaciones Activas</h3>
               {activePolls.filter(p => p.isActive).map(poll => {
                 const totalVotes = poll.options.reduce((acc: number, opt: any) => acc + opt.votes, 0);
                 return (
@@ -1279,9 +1279,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                             fontSize: '0.75rem',
                             padding: '0.25rem 0.6rem',
                             borderRadius: '4px',
-                            background: poll.isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                            color: poll.isActive ? '#10B981' : '#EF4444',
-                            border: poll.isActive ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+                            background: poll.isActive ? 'rgba(82, 51, 168, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            color: poll.isActive ? '#5233A8' : '#EF4444',
+                            border: poll.isActive ? '1px solid rgba(82, 51, 168, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
                           }}>
                             {poll.isActive ? 'Activa' : 'Finalizada'}
                           </span>
@@ -1730,8 +1730,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                               padding: '0.2rem 0.5rem',
                               borderRadius: '4px',
                               fontSize: '0.75rem',
-                              background: m.isRegistered ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                              color: m.isRegistered ? '#10B981' : 'var(--text-muted)'
+                              background: m.isRegistered ? 'rgba(82, 51, 168, 0.1)' : 'rgba(255,255,255,0.05)',
+                              color: m.isRegistered ? '#5233A8' : 'var(--text-muted)'
                             }}>
                               {m.isRegistered ? 'Registrado' : 'Pendiente'}
                             </span>
