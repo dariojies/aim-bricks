@@ -492,11 +492,12 @@ function App() {
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                   {activePoll.options.map((opt: any) => (
-                    <div key={opt.id} style={{ flex: '1 1 200px', maxWidth: '300px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                      <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
-                      <div style={{ padding: '1rem', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <h4 style={{ fontWeight: 600 }}>{opt.title}</h4>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Votos actuales: {opt.votes}</span>
+                    <div key={opt.id} style={{ flex: '1 1 220px', maxWidth: '300px', borderRadius: '16px', overflow: 'hidden', position: 'relative', aspectRatio: '4/3', boxShadow: '0 4px 20px rgba(0,0,0,0.18)', border: '1px solid var(--surface-border)' }}>
+                      <img src={opt.imageUrl} alt={opt.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 55%, transparent 100%)', borderRadius: '16px' }} />
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <h4 style={{ fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{opt.title}</h4>
+                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)' }}>Votos actuales: {opt.votes}</span>
                         <button
                           className="btn btn-primary"
                           style={{ marginTop: 'auto' }}
