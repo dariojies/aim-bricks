@@ -9,7 +9,8 @@ interface Props {
 }
 
 export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }) => {
-  const isAvailable = item.status === 'Disponible';
+  const isLocked = item.categoryLocked === true;
+  const isAvailable = !isLocked && item.status === 'Disponible';
 
   // Fallback config ONLY for Aim Education to ensure legacy buttons/fields show correctly
   // For other clubs, they start with a blank slate (no fields, default mode)
@@ -24,7 +25,21 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
   };
 
   return (
-    <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isAvailable ? 1 : 0.8, transition: 'all 0.3s ease' }}>
+    <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isLocked ? 0.65 : isAvailable ? 1 : 0.8, transition: 'all 0.3s ease', position: 'relative' }}>
+      {isLocked && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2,
+          background: 'rgba(0,0,0,0.45)',
+          backdropFilter: 'blur(2px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+          borderRadius: 'inherit',
+        }}>
+          <Lock size={32} style={{ color: '#908E86' }} />
+          <span style={{ fontSize: '0.8rem', color: '#908E86', fontWeight: 600, textAlign: 'center', padding: '0 1rem' }}>
+            Categoría no disponible en el plan actual
+          </span>
+        </div>
+      )}
       <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
       <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
@@ -98,7 +113,7 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
         <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1.5rem', flex: 1 }}>
           {item.description}
         </p>
-        {!isAvailable ? (
+        {isLocked ? null : !isAvailable ? (
           <button 
             className="btn btn-outline" 
             style={{ width: '100%', opacity: 0.6, cursor: 'pointer' }}

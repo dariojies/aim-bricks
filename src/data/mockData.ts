@@ -7,8 +7,9 @@ export interface CatalogItem {
   title: string;
   type: string;
   description: string;
-  status: ItemStatus;
+  status: ItemStatus | 'Bloqueado';
   isAvailable?: boolean;
+  categoryLocked?: boolean;
   stock?: number;
   imageUrl: string;
   legoReference?: string;

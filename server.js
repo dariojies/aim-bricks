@@ -28,6 +28,15 @@ async function syncSchema() {
         CONSTRAINT "bricks_clubs_pkey" PRIMARY KEY ("id")
       );
     `);
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "bricks_clubs" ADD COLUMN IF NOT EXISTS "plan" TEXT NOT NULL DEFAULT 'starter';
+    `);
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "bricks_clubs" ADD COLUMN IF NOT EXISTS "planPaidAt" TIMESTAMP;
+    `);
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "bricks_clubs" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP;
+    `);
 
     // 1. Create tables if they don't exist
     await prisma.$executeRawUnsafe(`
@@ -868,7 +877,7 @@ app.get('/api/catalog', async (req, res) => {
     }
     if (!club) return res.json([]);
 
-    const [items, activeReservations] = await Promise.all([
+    const [items, activeReservations, lockedIds] = await Promise.all([
       prisma.bricks_items.findMany({
         where: { clubId: club.id },
         include: { category: true },
@@ -876,14 +885,16 @@ app.get('/api/catalog', async (req, res) => {
       }),
       prisma.bricks_reservation.findMany({
         where: { status: { in: ['Active', 'Reserved', 'Delivered'] } }
-      })
+      }),
+      getLockedCategoryIds(club.id),
     ]);
 
     // Map to include legacy-compatible fields and metadata
     const formatted = items.map(i => {
       const metadata = i.metadata || {};
       const reservedCount = activeReservations.filter(r => r.itemId === i.id).length;
-      const isActuallyAvailable = i.isAvailable && reservedCount < (i.stock || 1);
+      const categoryLocked = lockedIds.has(i.categoryId);
+      const isActuallyAvailable = !categoryLocked && i.isAvailable && reservedCount < (i.stock || 1);
 
       return {
         id: i.id,
@@ -895,6 +906,7 @@ app.get('/api/catalog', async (req, res) => {
         stock: i.stock,
         isProOnly: i.isProOnly,
         isAvailable: isActuallyAvailable,
+        categoryLocked,
         type: i.category.name,
         categoryConfig: i.category.config || {},
         metadata: metadata,
@@ -902,7 +914,7 @@ app.get('/api/catalog', async (req, res) => {
         legoReference: metadata.legoReference || null,
         author: metadata.author || null,
         isbn: metadata.isbn || null,
-        status: isActuallyAvailable ? 'Disponible' : 'Reservado'
+        status: categoryLocked ? 'Bloqueado' : isActuallyAvailable ? 'Disponible' : 'Reservado'
       };
     });
 
@@ -953,6 +965,136 @@ app.post('/api/admin/clubs', async (req, res) => {
   }
 });
 
+const PLAN_FEATURES = {
+  starter:  { csvImport: false, maxItems: 50,       maxCategories: 1,  label: 'Starter',  color: '#908E86' },
+  academy:  { csvImport: true,  maxItems: Infinity,  maxCategories: 4,  label: 'Academy',  color: '#5233A8' },
+  network:  { csvImport: true,  maxItems: Infinity,  maxCategories: 10, label: 'Network',  color: '#21B668' },
+};
+
+// A paid plan is active if planExpiresAt is in the future (includes 7-day grace).
+// Starter is always considered active (free, no expiry).
+function getEffectivePlan(club) {
+  if (club.plan === 'starter') return { effectivePlan: 'starter', active: true };
+  if (!club.planExpiresAt) return { effectivePlan: 'starter', active: false };
+  const active = new Date(club.planExpiresAt) > new Date();
+  return { effectivePlan: active ? club.plan : 'starter', active };
+}
+
+// Returns the Set of category IDs that exceed the club's plan limit.
+// Categories are ordered by createdAt ASC — oldest are always kept active.
+async function getLockedCategoryIds(clubId) {
+  const club = await prisma.bricks_clubs.findUnique({
+    where: { id: clubId },
+    select: { plan: true, planExpiresAt: true },
+  });
+  if (!club) return new Set();
+  const { effectivePlan } = getEffectivePlan(club);
+  const features = PLAN_FEATURES[effectivePlan] || PLAN_FEATURES.starter;
+  const allCats = await prisma.bricks_categories.findMany({
+    where: { clubId },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  });
+  if (allCats.length <= features.maxCategories) return new Set();
+  return new Set(allCats.slice(features.maxCategories).map(c => c.id));
+}
+
+app.get('/api/admin/club/plan', async (req, res) => {
+  try {
+    const { clubId } = req.query;
+    if (!clubId) return res.status(400).json({ error: 'clubId requerido' });
+    const club = await prisma.bricks_clubs.findUnique({
+      where: { id: clubId },
+      select: { plan: true, planPaidAt: true, planExpiresAt: true },
+    });
+    if (!club) return res.status(404).json({ error: 'Club no encontrado' });
+    const { effectivePlan, active } = getEffectivePlan(club);
+    const features = PLAN_FEATURES[effectivePlan] || PLAN_FEATURES.starter;
+    res.json({ plan: club.plan, effectivePlan, active, planPaidAt: club.planPaidAt, planExpiresAt: club.planExpiresAt, features });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.put('/api/admin/clubs/:id/plan', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { plan } = req.body;
+    if (!PLAN_FEATURES[plan]) return res.status(400).json({ error: 'Plan inválido' });
+    const club = await prisma.bricks_clubs.update({ where: { id }, data: { plan } });
+    res.json(club);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// Record a payment: sets planPaidAt to now (or provided date), planExpiresAt = paidAt + 30 days + 7 days grace
+app.post('/api/admin/clubs/:id/payment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paidAt } = req.body;
+    const paymentDate = paidAt ? new Date(paidAt) : new Date();
+    const expiresAt = new Date(paymentDate);
+    expiresAt.setDate(expiresAt.getDate() + 37); // 30-day cycle + 7-day grace
+    const club = await prisma.bricks_clubs.update({
+      where: { id },
+      data: { planPaidAt: paymentDate, planExpiresAt: expiresAt },
+    });
+    res.json(club);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/admin/items/import-csv', async (req, res) => {
+  try {
+    const { clubId, categoryId, rows } = req.body;
+    if (!clubId || !categoryId || !Array.isArray(rows)) {
+      return res.status(400).json({ error: 'clubId, categoryId y rows son requeridos' });
+    }
+
+    const club = await prisma.bricks_clubs.findUnique({
+      where: { id: clubId },
+      select: { plan: true, planExpiresAt: true },
+    });
+    if (!club) return res.status(404).json({ error: 'Club no encontrado' });
+    const { effectivePlan, active } = getEffectivePlan(club);
+    const features = PLAN_FEATURES[effectivePlan] || PLAN_FEATURES.starter;
+    if (!features.csvImport) {
+      const reason = !active && club.plan !== 'starter'
+        ? 'Tu suscripción ha expirado. Renueva tu plan para seguir importando elementos.'
+        : 'La importación CSV está disponible a partir del plan Academy.';
+      return res.status(403).json({ error: reason });
+    }
+
+    const created = [];
+    for (const row of rows) {
+      const title = String(row.title || '').trim();
+      if (!title) continue;
+      const item = await prisma.bricks_items.create({
+        data: {
+          clubId,
+          categoryId,
+          title,
+          description: String(row.description || '').trim() || null,
+          imageUrl: String(row.imageUrl || '').trim() || 'https://images.unsplash.com/photo-1587654780291-39c9404d746b',
+          stock: parseInt(row.stock || '1', 10) || 1,
+          isProOnly: row.isProOnly === 'true' || row.isProOnly === true,
+          metadata: {},
+        },
+      });
+      created.push(item.id);
+    }
+    res.json({ success: true, created: created.length });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al importar CSV' });
+  }
+});
+
 app.get('/api/admin/clubs/:id/stats', async (req, res) => {
   try {
     const { id } = req.params;
@@ -996,11 +1138,13 @@ app.get('/api/admin/categories', async (req, res) => {
     }
     if (!club) return res.json([]);
 
+    const lockedIds = await getLockedCategoryIds(club.id);
     const categories = await prisma.bricks_categories.findMany({
       where: { clubId: club.id },
-      include: { _count: { select: { items: true } } }
+      include: { _count: { select: { items: true } } },
+      orderBy: { createdAt: 'asc' },
     });
-    res.json(categories);
+    res.json(categories.map(c => ({ ...c, locked: lockedIds.has(c.id) })));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor' });
@@ -1010,6 +1154,24 @@ app.get('/api/admin/categories', async (req, res) => {
 app.post('/api/admin/categories', async (req, res) => {
   try {
     const { clubId, name, icon, isHomeAllowed, description, config } = req.body;
+
+    const club = await prisma.bricks_clubs.findUnique({
+      where: { id: clubId },
+      select: { plan: true, planExpiresAt: true },
+    });
+    if (club) {
+      const { effectivePlan } = getEffectivePlan(club);
+      const features = PLAN_FEATURES[effectivePlan] || PLAN_FEATURES.starter;
+      const currentCount = await prisma.bricks_categories.count({ where: { clubId } });
+      if (currentCount >= features.maxCategories) {
+        return res.status(403).json({
+          error: `Tu plan ${features.label} permite un máximo de ${features.maxCategories} categoría${features.maxCategories === 1 ? '' : 's'}. Actualiza tu plan para añadir más.`,
+          limitReached: true,
+          maxCategories: features.maxCategories,
+        });
+      }
+    }
+
     await prisma.bricks_categories.create({
       data: { clubId, name, icon, isHomeAllowed: !!isHomeAllowed, description, config }
     });
@@ -1024,6 +1186,11 @@ app.put('/api/admin/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, icon, isHomeAllowed, description, config } = req.body;
+    const cat = await prisma.bricks_categories.findUnique({ where: { id }, select: { clubId: true } });
+    if (cat) {
+      const lockedIds = await getLockedCategoryIds(cat.clubId);
+      if (lockedIds.has(id)) return res.status(403).json({ error: 'Esta categoría está bloqueada por el plan actual.', locked: true });
+    }
     await prisma.bricks_categories.update({
       where: { id },
       data: { name, icon, isHomeAllowed: !!isHomeAllowed, description, config }
@@ -1050,6 +1217,10 @@ app.delete('/api/admin/categories/:id', async (req, res) => {
 app.post('/api/admin/items', async (req, res) => {
   try {
     const { clubId, categoryId, title, description, imageUrl, stock, isProOnly, metadata } = req.body;
+    const lockedIds = await getLockedCategoryIds(clubId);
+    if (lockedIds.has(categoryId)) {
+      return res.status(403).json({ error: 'Esta categoría está bloqueada por el plan actual.', locked: true });
+    }
     const parsedStock = parseInt(stock || '1', 10);
 
     await prisma.bricks_items.create({
@@ -1074,8 +1245,13 @@ app.post('/api/admin/items', async (req, res) => {
 app.delete('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // We clean up reservations/history via Cascade if configured in DB, 
-    // but Prisma relation onDelete: Cascade handles it if we use prisma.model.delete
+    const item = await prisma.bricks_items.findUnique({ where: { id }, select: { clubId: true, categoryId: true } });
+    if (item) {
+      const lockedIds = await getLockedCategoryIds(item.clubId);
+      if (lockedIds.has(item.categoryId)) {
+        return res.status(403).json({ error: 'Esta categoría está bloqueada por el plan actual.', locked: true });
+      }
+    }
     await prisma.bricks_items.delete({ where: { id } });
     res.json({ success: true });
   } catch (error) {
@@ -1088,8 +1264,14 @@ app.put('/api/admin/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, stock, imageUrl, isProOnly, metadata } = req.body;
+    const item = await prisma.bricks_items.findUnique({ where: { id }, select: { clubId: true, categoryId: true } });
+    if (item) {
+      const lockedIds = await getLockedCategoryIds(item.clubId);
+      if (lockedIds.has(item.categoryId)) {
+        return res.status(403).json({ error: 'Esta categoría está bloqueada por el plan actual.', locked: true });
+      }
+    }
     const parsedStock = parseInt(stock || '1', 10);
-
     await prisma.bricks_items.update({
       where: { id },
       data: { title, description, stock: parsedStock, imageUrl, isProOnly: !!isProOnly, metadata }
@@ -1110,6 +1292,12 @@ app.post('/api/reservations', async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Artículo no encontrado' });
 
     const finalCategoryId = categoryId || item.categoryId;
+
+    // Plan lock check
+    const lockedIds = await getLockedCategoryIds(item.clubId);
+    if (lockedIds.has(finalCategoryId)) {
+      return res.status(403).json({ error: 'Esta categoría no está disponible en el plan actual del club.' });
+    }
 
     // Permissions check
     const permission = await prisma.bricks_user_permissions.findUnique({

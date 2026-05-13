@@ -103,6 +103,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [memberRole, setMemberRole] = useState<'member' | 'admin' | 'owner'>('member');
   const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
 
+  // Plan state
+  const [clubPlan, setClubPlan] = useState<{
+    plan: string;
+    effectivePlan: string;
+    active: boolean;
+    planPaidAt: string | null;
+    planExpiresAt: string | null;
+    features: { csvImport: boolean; maxItems: number; maxCategories: number; label: string; color: string };
+  } | null>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvCategoryId, setCsvCategoryId] = useState('');
+  const [csvImporting, setCsvImporting] = useState(false);
+
   useEffect(() => {
     // Determine which club the user is admin/owner of
     if (user?.memberships && user.memberships.length > 0) {
@@ -123,6 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     fetchReservations();
     fetchCatalog();
     fetchMemberships();
+    fetchClubPlan(detectedClubId);
   }, [detectedClubId]);
 
   useEffect(() => {
@@ -135,6 +149,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     try {
       const res = await fetch(`${API_URL}/api/admin/clubs/all`);
       if (res.ok) setAllClubs(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchClubPlan = async (clubId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/club/plan?clubId=${clubId}`);
+      if (res.ok) setClubPlan(await res.json());
     } catch (e) { console.error(e); }
   };
 
@@ -340,6 +361,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         fetchCatalog();
       }
     } catch (e) { console.error(e); }
+  };
+
+  const handleCsvImport = async () => {
+    if (!csvFile || !csvCategoryId) return;
+    setCsvImporting(true);
+    try {
+      const text = await csvFile.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const rows = lines.slice(1).map(line => {
+        const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        const row: Record<string, string> = {};
+        headers.forEach((h, i) => { row[h] = vals[i] || ''; });
+        return row;
+      });
+      const res = await fetch(`${API_URL}/api/admin/items/import-csv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clubId: detectedClubId, categoryId: csvCategoryId, rows }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Importación completada: ${data.created} elementos añadidos.`);
+        setCsvFile(null);
+        fetchCatalog();
+      } else {
+        alert(data.error || 'Error al importar');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error al leer el archivo');
+    } finally {
+      setCsvImporting(false);
+    }
   };
 
   const handleEditClick = (item: CatalogItem) => {
@@ -951,6 +1006,101 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
       {activeTab === 'catalog' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Plan badge + CSV import panel */}
+          {clubPlan && (
+            <div className="glass-panel animate-fade-in" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Plan badge row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Plan</span>
+                <span style={{
+                  background: clubPlan.features.color,
+                  color: 'white',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                }}>
+                  {clubPlan.plan !== 'starter' && clubPlan.plan !== clubPlan.effectivePlan
+                    ? `${clubPlan.plan.charAt(0).toUpperCase() + clubPlan.plan.slice(1)} (expirado)`
+                    : clubPlan.features.label}
+                </span>
+                {clubPlan.features.maxItems !== Infinity && (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>· Máx. {clubPlan.features.maxItems} recursos</span>
+                )}
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>· Máx. {clubPlan.features.maxCategories} categoría{clubPlan.features.maxCategories === 1 ? '' : 's'}</span>
+                {clubPlan.planExpiresAt && clubPlan.plan !== 'starter' && (
+                  <span style={{ fontSize: '0.8rem', color: clubPlan.active ? 'var(--text-muted)' : '#FF4F15' }}>
+                    · {clubPlan.active ? 'Activo hasta' : 'Venció el'} {new Date(clubPlan.planExpiresAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
+
+              {/* CSV import — always shown, locked when plan doesn't include it */}
+              <div style={{ borderTop: '1px solid var(--surface-border)', paddingTop: '1.25rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>
+                  Importar desde CSV / Excel
+                </h4>
+
+                {!clubPlan.features.csvImport ? (
+                  <div style={{
+                    background: 'rgba(82, 51, 168, 0.06)',
+                    border: '1px dashed rgba(82, 51, 168, 0.25)',
+                    borderRadius: '10px',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '1rem',
+                  }}>
+                    <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>🔒</span>
+                    <div>
+                      <p style={{ fontWeight: 600, marginBottom: '0.35rem' }}>
+                        {!clubPlan.active && clubPlan.plan !== 'starter'
+                          ? 'Tu suscripción ha expirado'
+                          : 'Función no incluida en tu plan actual'}
+                      </p>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                        {!clubPlan.active && clubPlan.plan !== 'starter'
+                          ? 'Renueva tu plan Academy o Network para volver a importar elementos en masa desde CSV o Excel.'
+                          : 'La importación masiva de elementos está disponible a partir del plan Academy. Contacta con Shelfie para actualizar tu plan y cargar tu catálogo de golpe.'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                      Columnas esperadas: <code>title</code>, <code>description</code>, <code>stock</code>, <code>imageUrl</code>, <code>isProOnly</code>
+                    </p>
+                    <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr auto' }}>
+                      <select
+                        value={csvCategoryId}
+                        onChange={e => setCsvCategoryId(e.target.value)}
+                        style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
+                      >
+                        <option value="">-- Categoría de destino --</option>
+                        {categories.filter((cat: any) => !cat.locked).map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                      </select>
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={e => setCsvFile(e.target.files?.[0] || null)}
+                        style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.875rem' }}
+                      />
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleCsvImport}
+                        disabled={!csvFile || !csvCategoryId || csvImporting}
+                        style={{ opacity: (!csvFile || !csvCategoryId || csvImporting) ? 0.5 : 1 }}
+                      >
+                        {csvImporting ? 'Importando...' : 'Importar'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
               <Plus className="text-accent" /> Añadir Nuevo Elemento
@@ -963,7 +1113,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   onChange={e => setNewItemCategoryId(e.target.value)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', appearance: 'none', WebkitAppearance: 'none', fontSize: '1rem', minHeight: '48px' }}
                 >
-                  {categories.map(cat => (
+                  {categories.filter((cat: any) => !cat.locked).map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
@@ -1478,9 +1628,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {activeTab === 'categories' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
-              {editingCatId ? 'Editar Categoría' : 'Añadir Nueva Categoría'}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <h3 style={{ fontSize: '1.5rem' }}>
+                {editingCatId ? 'Editar Categoría' : 'Añadir Nueva Categoría'}
+              </h3>
+              {clubPlan && !editingCatId && (
+                <span style={{
+                  fontSize: '0.8rem',
+                  color: categories.length >= clubPlan.features.maxCategories ? '#FF4F15' : 'var(--text-muted)',
+                  fontWeight: categories.length >= clubPlan.features.maxCategories ? 700 : 400,
+                }}>
+                  {categories.length} / {clubPlan.features.maxCategories} categoría{clubPlan.features.maxCategories === 1 ? '' : 's'} usadas
+                  {categories.length >= clubPlan.features.maxCategories && (
+                    <span style={{ color: 'var(--purple)', fontWeight: 600, marginLeft: '0.5rem' }}>
+                      · Límite del plan {clubPlan.features.label}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
 
             {!editingCatId && (
               <div style={{ marginBottom: '2rem', padding: '1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
@@ -1524,6 +1690,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </div>
             )}
 
+            {/* Category limit reached — block the form with in-app notice */}
+            {!editingCatId && clubPlan && categories.length >= clubPlan.features.maxCategories && (
+              <div style={{
+                background: 'rgba(82, 51, 168, 0.06)',
+                border: '1px dashed rgba(82, 51, 168, 0.25)',
+                borderRadius: '10px',
+                padding: '1.5rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                marginBottom: '1rem',
+              }}>
+                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>🔒</span>
+                <div>
+                  <p style={{ fontWeight: 600, marginBottom: '0.35rem' }}>
+                    Límite de categorías alcanzado
+                  </p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    Tu plan <strong style={{ color: 'var(--purple)' }}>{clubPlan.features.label}</strong> permite un máximo de{' '}
+                    <strong>{clubPlan.features.maxCategories}</strong> categoría{clubPlan.features.maxCategories === 1 ? '' : 's'}.
+                    {clubPlan.plan === 'starter' && ' Actualiza al plan Academy para tener hasta 4 categorías, o al plan Network para hasta 10.'}
+                    {clubPlan.plan === 'academy' && ' Actualiza al plan Network para tener hasta 10 categorías.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!detectedClubId) return alert('No se ha detectado un Club ID válido.');
@@ -1549,6 +1742,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 setCatCustomFields([]); setCatReservationMode('brickslab');
                 setEditingCatId(null);
                 fetchCategories();
+              } else {
+                const data = await res.json().catch(() => ({}));
+                if (data.limitReached) {
+                  fetchCategories();
+                } else {
+                  alert(data.error || 'Error al guardar la categoría');
+                }
               }
             }} style={{ display: 'grid', gap: '1rem' }}>
               <input required placeholder="Nombre (Ej: LEGO® Sets)" value={catName} onChange={e => setCatName(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
@@ -1613,11 +1813,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Categorías Existentes</h3>
             <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
               {categories.map(cat => (
-                <div key={cat.id} className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                <div key={cat.id} className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', position: 'relative', overflow: 'hidden' }}>
+                  {cat.locked && (
+                    <div style={{
+                      position: 'absolute', inset: 0, zIndex: 2,
+                      background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                      borderRadius: 'inherit',
+                    }}>
+                      <X size={28} style={{ color: '#908E86' }} />
+                      <span style={{ fontSize: '0.8rem', color: '#908E86', fontWeight: 600, textAlign: 'center', padding: '0 1rem' }}>
+                        Categoría bloqueada por plan
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#908E86', textAlign: 'center', padding: '0 1rem' }}>
+                        {cat._count?.items || 0} artículos conservados
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <h4 style={{ fontWeight: 600, fontSize: '1.1rem' }}>{cat.name}</h4>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button onClick={() => {
+                        if (cat.locked) return;
                         setEditingCatId(cat.id);
                         setCatName(cat.name);
                         setCatDescription(cat.description || '');
@@ -1626,13 +1843,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                         const config = cat.config || {};
                         setCatCustomFields(config.customFields || []);
                         setCatReservationMode(config.reservationMode || 'brickslab');
-                      }} className="text-accent" style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Pencil size={18} /></button>
+                      }} className="text-accent" style={{ background: 'none', border: 'none', cursor: cat.locked ? 'not-allowed' : 'pointer', opacity: cat.locked ? 0.3 : 1 }}><Pencil size={18} /></button>
                       <button onClick={async () => {
+                        if (cat.locked) return;
                         if (confirm(`¿Borrar categoría ${cat.name}? Los artículos se borrarán.`)) {
                           await fetch(`${API_URL}/api/admin/categories/${cat.id}`, { method: 'DELETE' });
                           fetchCategories();
                         }
-                      }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}><Trash2 size={18} /></button>
+                      }} style={{ background: 'none', border: 'none', cursor: cat.locked ? 'not-allowed' : 'pointer', color: '#EF4444', opacity: cat.locked ? 0.3 : 1 }}><Trash2 size={18} /></button>
                     </div>
                   </div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{cat.description || 'Sin descripción'}</p>
@@ -1858,9 +2076,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                     e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
                   }}
                 >
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>{c.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {c.id}</div>
-                  <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#A78BFA', fontWeight: 600 }}>Click para auditar →</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{c.name}</div>
+                    <span style={{
+                      background: c.plan === 'network' ? '#21B668' : c.plan === 'academy' ? '#5233A8' : '#908E86',
+                      color: 'white', padding: '0.15rem 0.6rem', borderRadius: '20px',
+                      fontSize: '0.7rem', fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem'
+                    }}>{c.plan || 'starter'}</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: '0.75rem' }}>ID: {c.id}</div>
+                  {/* Billing info */}
+                  {c.plan !== 'starter' && (
+                    <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', color: (() => {
+                      if (!c.planExpiresAt) return '#FF4F15';
+                      return new Date(c.planExpiresAt) > new Date() ? 'var(--text-muted)' : '#FF4F15';
+                    })() }}>
+                      {!c.planExpiresAt
+                        ? '⚠ Sin pago registrado'
+                        : new Date(c.planExpiresAt) > new Date()
+                          ? `Activo hasta ${new Date(c.planExpiresAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                          : `⚠ Expiró el ${new Date(c.planExpiresAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                      }
+                    </div>
+                  )}
+                  {/* Plan selector */}
+                  <select
+                    value={c.plan || 'starter'}
+                    onClick={e => e.stopPropagation()}
+                    onChange={async (e) => {
+                      e.stopPropagation();
+                      const newPlan = e.target.value;
+                      try {
+                        const res = await fetch(`${API_URL}/api/admin/clubs/${c.id}/plan`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ plan: newPlan }),
+                        });
+                        if (res.ok) fetchAllClubs();
+                        else alert('Error al cambiar el plan');
+                      } catch (err) { console.error(err); }
+                    }}
+                    style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.8rem', marginBottom: '0.5rem', cursor: 'pointer' }}
+                  >
+                    <option value="starter">Starter (gratuito)</option>
+                    <option value="academy">Academy</option>
+                    <option value="network">Network</option>
+                  </select>
+                  {/* Record payment — only for paid plans */}
+                  {c.plan !== 'starter' && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const res = await fetch(`${API_URL}/api/admin/clubs/${c.id}/payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({}),
+                          });
+                          if (res.ok) {
+                            fetchAllClubs();
+                          } else alert('Error al registrar el pago');
+                        } catch (err) { console.error(err); }
+                      }}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem', marginBottom: '0.5rem' }}
+                    >
+                      ✓ Registrar pago hoy
+                    </button>
+                  )}
+                  <div style={{ fontSize: '0.8rem', color: '#A78BFA', fontWeight: 600 }}>Click para auditar →</div>
                 </div>
               ))}
             </div>

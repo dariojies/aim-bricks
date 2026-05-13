@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { CatalogItem } from '../data/mockData';
 import { ItemCard } from './ItemCard';
-import { Search, Box } from 'lucide-react';
+import { Search, Box, Lock } from 'lucide-react';
 
 interface Props {
   items: CatalogItem[];
-  categories: { id: string, name: string }[];
+  categories: { id: string, name: string, locked?: boolean }[];
   onReserveClick: (item: CatalogItem) => void;
   onProAlert: (item: CatalogItem) => void;
   clubId?: string;
@@ -88,9 +88,14 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
             <button
               key={cat.id}
               className={`btn ${filterId === cat.id ? 'btn-primary' : 'btn-outline'}`}
-              style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem', borderRadius: '12px' }}
+              style={{
+                padding: '0.6rem 1.25rem', fontSize: '0.9rem', borderRadius: '12px',
+                opacity: cat.locked ? 0.55 : 1,
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+              }}
               onClick={() => setFilterId(cat.id)}
             >
+              {cat.locked && <Lock size={13} />}
               {cat.name}
             </button>
           ))}
