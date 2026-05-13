@@ -25,19 +25,11 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
   };
 
   return (
-    <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isLocked ? 0.65 : isAvailable ? 1 : 0.8, transition: 'all 0.3s ease', position: 'relative' }}>
+    <div className={`glass-panel`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: isAvailable || isLocked ? 1 : 0.8, transition: 'all 0.3s ease', position: 'relative' }}>
       {isLocked && (
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 2,
-          background: 'rgba(0,0,0,0.45)',
-          backdropFilter: 'blur(2px)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-          borderRadius: 'inherit',
-        }}>
-          <Lock size={32} style={{ color: '#908E86' }} />
-          <span style={{ fontSize: '0.8rem', color: '#908E86', fontWeight: 600, textAlign: 'center', padding: '0 1rem' }}>
-            Categoría no disponible en el plan actual
-          </span>
+        <div className="plan-lock-overlay">
+          <Lock size={32} className="lock-icon" />
+          <span className="lock-title">Categoría no disponible en el plan actual</span>
         </div>
       )}
       <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />

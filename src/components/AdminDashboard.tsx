@@ -1815,19 +1815,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               {categories.map(cat => (
                 <div key={cat.id} className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', position: 'relative', overflow: 'hidden' }}>
                   {cat.locked && (
-                    <div style={{
-                      position: 'absolute', inset: 0, zIndex: 2,
-                      background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                      borderRadius: 'inherit',
-                    }}>
-                      <X size={28} style={{ color: '#908E86' }} />
-                      <span style={{ fontSize: '0.8rem', color: '#908E86', fontWeight: 600, textAlign: 'center', padding: '0 1rem' }}>
-                        Categoría bloqueada por plan
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: '#908E86', textAlign: 'center', padding: '0 1rem' }}>
-                        {cat._count?.items || 0} artículos conservados
-                      </span>
+                    <div className="plan-lock-overlay">
+                      <X size={28} className="lock-icon" />
+                      <span className="lock-title">Categoría bloqueada por plan</span>
+                      <span className="lock-sub">{cat._count?.items || 0} artículos conservados</span>
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
