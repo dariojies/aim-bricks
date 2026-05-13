@@ -546,7 +546,6 @@ app.post('/api/auth/register', async (req, res) => {
         name: name.trim(),
         email: email.toLowerCase().trim(),
         password: hashedPassword,
-        club_id: club.id,
         role: 'student',
       }
     });
