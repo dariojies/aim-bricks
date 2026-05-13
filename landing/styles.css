@@ -905,6 +905,54 @@ html[data-theme="dark"] .showcase .mock .row .status.ok { color: var(--teal-2); 
 html[data-theme="dark"] .showcase .mock .row .status.warn { background: #3A2A11; color: #F5B935; }
 html[data-theme="dark"] .showcase .mock .row .status.late { background: #3A1C1C; color: #FF8B8B; }
 
+/* Mock table (Reservas en curso) */
+.showcase .mock.mock-table-wrap { gap: 0; padding: 18px 0 0; overflow: hidden; }
+.showcase .mock.mock-table-wrap .mock-head { padding: 0 18px 14px; border-bottom: 1px solid var(--line); }
+.showcase .mock .mock-thead {
+  display: grid;
+  grid-template-columns: 1.7fr 1.6fr 1fr 0.65fr 1.1fr 1.7fr;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--line);
+}
+.showcase .mock .mock-row {
+  display: grid;
+  grid-template-columns: 1.7fr 1.6fr 1fr 0.65fr 1.1fr 1.7fr;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--line-2);
+  transition: background .15s;
+}
+.showcase .mock .mock-row:last-child { border-bottom: none; }
+.showcase .mock .mock-row:hover { background: var(--bg-2); }
+.showcase .mock .mock-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.showcase .mock .uname { font-size: 11px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.showcase .mock .uemail { font-size: 10px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.showcase .mock .mock-article { font-size: 11px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.showcase .mock .mock-date { font-size: 11px; color: var(--ink-2); }
+.showcase .mock .mock-type {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 7px; border-radius: 6px; width: fit-content;
+}
+.showcase .mock .mock-type.brickslab { background: rgba(33,182,104,.12); color: #0C6648; }
+.showcase .mock .mock-type.biblioteca { background: rgba(82,51,168,.1); color: var(--purple); }
+html[data-theme="dark"] .showcase .mock .mock-type.brickslab { background: rgba(33,182,104,.18); color: var(--teal-2); }
+html[data-theme="dark"] .showcase .mock .mock-type.biblioteca { background: rgba(82,51,168,.2); color: #A78BFA; }
+.showcase .mock .mock-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+.showcase .mock .mock-btn {
+  font-size: 10px; font-weight: 700;
+  padding: 5px 9px; border-radius: 8px; border: none; cursor: default; white-space: nowrap;
+}
+.showcase .mock .mock-btn.primary { background: var(--purple); color: white; }
+.showcase .mock .mock-btn.warn { background: transparent; border: 1.5px solid #F5B935; color: #8A5A0E; }
+html[data-theme="dark"] .showcase .mock .mock-btn.warn { color: #F5B935; }
+
 .bullet-list {
   list-style: none;
   margin: 24px 0 0;
