@@ -948,6 +948,14 @@ html[data-theme="dark"] .showcase .mock .row .status.late { background: #3A1C1C;
 .showcase .mock .mock-row:last-child { border-bottom: none; }
 .showcase .mock .mock-row:hover { background: var(--bg-2); }
 .showcase .mock .mock-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.showcase .mock .mock-user .avatar {
+  width: 30px; height: 30px; flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple) 0%, var(--teal) 100%);
+  color: white;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+}
 .showcase .mock .uname { font-size: 11px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .showcase .mock .mock-article-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .showcase .mock .mock-article { font-size: 11px; font-weight: 500; color: var(--ink); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
