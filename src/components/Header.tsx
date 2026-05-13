@@ -70,8 +70,8 @@ export const Header: React.FC<Props> = ({
 
         {/* Right: All Buttons in ONE line */}
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
-          {/* Hide these for ALL admin roles (admin, owner, superadmin) in ALL views */}
-          {!['admin', 'owner', 'superadmin'].includes(userRole || '') && (
+          {/* Hide these for ALL admin roles (profesor, owner, superadmin) in ALL views */}
+          {!['profesor', 'owner', 'superadmin'].includes(userRole || '') && (
             <>
               <button 
                 style={{ ...btnStyle, borderColor: 'rgba(245, 158, 11, 0.3)', color: '#F59E0B' }} 
@@ -98,7 +98,7 @@ export const Header: React.FC<Props> = ({
 
           {isLoggedIn ? (
             <>
-              {(userRole === 'owner' || userRole === 'admin' || userRole === 'superadmin') && (
+              {(userRole === 'owner' || userRole === 'profesor' || userRole === 'superadmin') && (
                 <button 
                   style={currentView === 'admin' 
                     ? { ...activeBtnStyle, borderColor: '#8B5CF6', color: '#8B5CF6', background: 'rgba(139, 92, 246, 0.1)' } 
