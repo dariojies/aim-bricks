@@ -1,628 +1,796 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="light">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Shelfie · Préstamos que inspiran</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/landing/styles.css" />
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shelfie · Aim Brickslab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/landing/styles.css" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+    integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+    integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+    crossorigin="anonymous"></script>
 </head>
+
 <body>
 
-<script>
-// Redirect already-logged-in users straight to the app
-(function () {
-  try {
-    if (localStorage.getItem('aim_bricks_user')) {
-      window.location.replace('/app');
-    }
-  } catch (e) {}
-})();
-</script>
+  <script>
+    // Redirect already-logged-in users straight to the app
+    (function () {
+      try {
+        if (localStorage.getItem('aim_bricks_user')) {
+          window.location.replace('/app');
+        }
+      } catch (e) { }
+    })();
+  </script>
 
-<!-- ====================================================== Top promo banner -->
-<div class="top-banner">
-  <span>🚀 Reserva sets de LEGO® con Aim Brickslab — disponible para centros piloto</span>
-  <span class="pill">Saber más</span>
-</div>
+  <!-- ====================================================== Top promo banner -->
+  <div class="top-banner">
+    <span>🚀 Shelfie ya gestiona los catálogos de préstamo de las academias Aim Education — ¿y el tuyo?</span>
+    <span class="pill">Saber más</span>
+  </div>
 
-<!-- ====================================================== Header -->
-<header class="site">
-  <div class="container nav">
-    <div class="left">
-      <div class="logo-tile" aria-hidden="true">
-        <div class="inset">
-          <div class="cell">
-            <div class="book b1"></div>
-            <div class="book b2"></div>
-            <div class="book b3"></div>
+  <!-- ====================================================== Header -->
+  <header class="site">
+    <div class="container nav">
+      <div class="left">
+        <div class="logo-tile" aria-hidden="true">
+          <div class="inset">
+            <div class="cell">
+              <div class="book b1"></div>
+              <div class="book b2"></div>
+              <div class="book b3"></div>
+            </div>
+            <div class="cell">
+              <div class="box"></div>
+            </div>
+            <div class="cell">
+              <div class="pawn"></div>
+            </div>
+            <div class="cell">
+              <div class="bricks" style="--scale:.5">
+                <div class="brick k1" style="height:6px"></div>
+                <div class="brick k2" style="height:5px"></div>
+                <div class="brick k3" style="height:7px"></div>
+              </div>
+            </div>
           </div>
-          <div class="cell"><div class="box"></div></div>
-          <div class="cell"><div class="pawn"></div></div>
-          <div class="cell">
-            <div class="bricks" style="--scale:.5">
-              <div class="brick k1" style="height:6px"></div>
-              <div class="brick k2" style="height:5px"></div>
-              <div class="brick k3" style="height:7px"></div>
+        </div>
+        <span class="wordmark">shelfie<span class="sparkle"><svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z" />
+            </svg></span></span>
+      </div>
+      <nav class="links">
+        <a href="#producto">Plataforma</a>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#centros">Para academias</a>
+        <a href="#precios">Planes</a>
+        <a href="#recursos">Preguntas</a>
+      </nav>
+      <div class="right">
+        <a href="/app?login=1" class="signin">Iniciar sesión</a>
+        <button class="theme-switch" id="themeToggle" aria-label="Cambiar tema">
+          <span class="ts-icon ts-sun" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+            </svg>
+          </span>
+          <span class="ts-icon ts-moon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </span>
+        </button>
+        <a href="#demo" class="btn btn-primary">Solicitar demo</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ====================================================== Hero -->
+  <section class="hero" id="producto">
+    <div class="ornament ornament-1"></div>
+    <svg class="ornament ornament-dots" viewBox="0 0 110 80" fill="none">
+      <g fill="currentColor" style="color:var(--purple); opacity:.4">
+        <circle cx="4" cy="4" r="2" />
+        <circle cx="18" cy="4" r="2" />
+        <circle cx="32" cy="4" r="2" />
+        <circle cx="46" cy="4" r="2" />
+        <circle cx="60" cy="4" r="2" />
+        <circle cx="74" cy="4" r="2" />
+        <circle cx="88" cy="4" r="2" />
+        <circle cx="102" cy="4" r="2" />
+        <circle cx="4" cy="18" r="2" />
+        <circle cx="18" cy="18" r="2" />
+        <circle cx="32" cy="18" r="2" />
+        <circle cx="46" cy="18" r="2" />
+        <circle cx="60" cy="18" r="2" />
+        <circle cx="74" cy="18" r="2" />
+        <circle cx="88" cy="18" r="2" />
+        <circle cx="102" cy="18" r="2" />
+        <circle cx="4" cy="32" r="2" />
+        <circle cx="18" cy="32" r="2" />
+        <circle cx="32" cy="32" r="2" />
+        <circle cx="46" cy="32" r="2" />
+        <circle cx="60" cy="32" r="2" />
+        <circle cx="74" cy="32" r="2" />
+        <circle cx="88" cy="32" r="2" />
+        <circle cx="102" cy="32" r="2" />
+        <circle cx="4" cy="46" r="2" />
+        <circle cx="18" cy="46" r="2" />
+        <circle cx="32" cy="46" r="2" />
+        <circle cx="46" cy="46" r="2" />
+        <circle cx="60" cy="46" r="2" />
+        <circle cx="74" cy="46" r="2" />
+        <circle cx="88" cy="46" r="2" />
+        <circle cx="102" cy="46" r="2" />
+      </g>
+    </svg>
+
+    <div class="container hero-grid">
+      <div>
+        <span class="pill-badge">Para academias, clubes y centros de actividades</span>
+        <h1>
+          Tu club tiene recursos.<br />
+          <span class="row2">Shelfie los gestiona.</span>
+        </h1>
+        <p class="subhead">
+          Shelfie es la plataforma que convierte el catálogo de sets, libros y materiales de tu academia en un sistema
+          de reservas online. Tus alumnos reservan solos, tú controlas el stock y el equipo deja de gestionar préstamos
+          por WhatsApp.
+        </p>
+
+        <div class="feature-icons">
+          <div class="fi">
+            <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple)"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg></div>
+            <span class="lbl">Catálogo digital propio</span>
+          </div>
+          <div class="fi">
+            <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--teal)"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" />
+                <path d="M9 16l2 2 4-4" />
+              </svg></div>
+            <span class="lbl">Reservas online sin fricciones</span>
+          </div>
+          <div class="fi">
+            <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg></div>
+            <span class="lbl">Ranking que fideliza alumnos</span>
+          </div>
+          <div class="fi">
+            <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--teal)"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg></div>
+            <span class="lbl">Panel de administración completo</span>
+          </div>
+        </div>
+
+        <div class="ctas">
+          <a href="#demo" class="btn btn-primary btn-lg">
+            Solicitar demo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a href="#funcionalidades" class="btn btn-ghost btn-lg">Ver funcionalidades</a>
+        </div>
+      </div>
+
+      <div class="tablet-scene">
+        <div class="shelf">
+          <div class="cell-shelf">
+            <div class="books">
+              <div class="book b1"></div>
+              <div class="book b2"></div>
+              <div class="book b3"></div>
+              <div class="book b4"></div>
+            </div>
+          </div>
+          <div class="cell-shelf">
+            <div class="crate"></div>
+          </div>
+          <div class="cell-shelf">
+            <div class="pawn"></div>
+          </div>
+          <div class="cell-shelf">
+            <div class="bricks">
+              <div class="brick k1"></div>
+              <div class="brick k2"></div>
+              <div class="brick k3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="plant">
+          <div class="leaf l4"></div>
+          <div class="leaf l5"></div>
+          <div class="leaf l1"></div>
+          <div class="leaf l3"></div>
+          <div class="leaf l2"></div>
+          <div class="pot"></div>
+        </div>
+        <div class="tablet">
+          <div class="keyboard"></div>
+          <div class="screen">
+            <div class="topbar">
+              <span class="wordmark" style="font-size:14px">shelfie<span class="sparkle"
+                  style="width:5px;height:5px;margin-top:1px"><svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z" />
+                  </svg></span></span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  style="color:var(--ink-2)">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                </svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  style="color:var(--ink-2)">
+                  <path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round" />
+                </svg>
+              </div>
+            </div>
+            <div class="search">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              Buscar recursos...
+            </div>
+            <div class="sec-title">Categorías</div>
+            <div class="cats">
+              <div class="cat c1"><span class="ico">🧱</span>Brickslabs</div>
+              <div class="cat c2"><span class="ico">📚</span>Biblioteca</div>
+              <div class="cat c3"><span class="ico">👑</span>Premium</div>
+            </div>
+            <div class="sec-row">
+              <span class="sec-title">Sets destacados</span>
+              <span class="more">Ver todos</span>
+            </div>
+            <div class="pops">
+              <div class="pop">
+                <div class="cover">🧱</div>
+                <div class="title">City Police Station</div>
+                <div class="sub">Brickslab</div>
+              </div>
+              <div class="pop">
+                <div class="cover">🚀</div>
+                <div class="title">Space Rover</div>
+                <div class="sub">Brickslab</div>
+              </div>
+              <div class="pop">
+                <div class="cover">📖</div>
+                <div class="title">Hábitos Atómicos</div>
+                <div class="sub">Libro</div>
+              </div>
+              <div class="pop">
+                <div class="cover">👑</div>
+                <div class="title">Technic Bugatti</div>
+                <div class="sub">Premium</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <span class="wordmark">shelfie<span class="sparkle"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg></span></span>
     </div>
-    <nav class="links">
-      <a href="#producto">Producto</a>
-      <a href="#funcionalidades">Funcionalidades</a>
-      <a href="#centros">Para centros</a>
-      <a href="#precios">Precios</a>
-      <a href="#recursos">Recursos</a>
-    </nav>
-    <div class="right">
-      <a href="/app?login=1" class="signin">Iniciar sesión</a>
-      <button class="theme-switch" id="themeToggle" aria-label="Cambiar tema">
-        <span class="ts-icon ts-sun" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-          </svg>
-        </span>
-        <span class="ts-icon ts-moon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </span>
-      </button>
-      <a href="#demo" class="btn btn-primary">Solicitar demo</a>
-    </div>
-  </div>
-</header>
 
-<!-- ====================================================== Hero -->
-<section class="hero" id="producto">
-  <div class="ornament ornament-1"></div>
-  <svg class="ornament ornament-dots" viewBox="0 0 110 80" fill="none">
-    <g fill="currentColor" style="color:var(--purple); opacity:.4">
-      <circle cx="4" cy="4" r="2"/><circle cx="18" cy="4" r="2"/><circle cx="32" cy="4" r="2"/><circle cx="46" cy="4" r="2"/><circle cx="60" cy="4" r="2"/><circle cx="74" cy="4" r="2"/><circle cx="88" cy="4" r="2"/><circle cx="102" cy="4" r="2"/>
-      <circle cx="4" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="32" cy="18" r="2"/><circle cx="46" cy="18" r="2"/><circle cx="60" cy="18" r="2"/><circle cx="74" cy="18" r="2"/><circle cx="88" cy="18" r="2"/><circle cx="102" cy="18" r="2"/>
-      <circle cx="4" cy="32" r="2"/><circle cx="18" cy="32" r="2"/><circle cx="32" cy="32" r="2"/><circle cx="46" cy="32" r="2"/><circle cx="60" cy="32" r="2"/><circle cx="74" cy="32" r="2"/><circle cx="88" cy="32" r="2"/><circle cx="102" cy="32" r="2"/>
-      <circle cx="4" cy="46" r="2"/><circle cx="18" cy="46" r="2"/><circle cx="32" cy="46" r="2"/><circle cx="46" cy="46" r="2"/><circle cx="60" cy="46" r="2"/><circle cx="74" cy="46" r="2"/><circle cx="88" cy="46" r="2"/><circle cx="102" cy="46" r="2"/>
-    </g>
-  </svg>
-
-  <div class="container hero-grid">
-    <div>
-      <span class="pill-badge">Plataforma para clubes y academias</span>
-      <h1>
-        Tu club o academia.<br/>
-        <span class="row2">Sus libros y juegos.</span>
-      </h1>
-      <p class="subhead">
-        Shelfie es la plataforma que clubes y academias usan para prestar libros, juegos de mesa y sets de actividades a sus socios. Vosotros cobráis las cuotas, nosotros nos ocupamos del préstamo.
-      </p>
-
-      <div class="feature-icons">
-        <div class="fi">
-          <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
-          <span class="lbl">Catálogo organizado</span>
+    <div class="container" style="position:relative">
+      <div class="benefits-strip">
+        <div class="b">
+          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B9A4F2" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg></div>
+          Tus alumnos reservan solos, sin llamadas
         </div>
-        <div class="fi">
-          <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg></div>
-          <span class="lbl">Reservas fáciles</span>
+        <div class="b">
+          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5FE3D2" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg></div>
+          Stock y piezas siempre bajo control
         </div>
-        <div class="fi">
-          <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.4-2.6"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.4 2.6"/><path d="M21 3v6h-6M3 21v-6h6"/></svg></div>
-          <span class="lbl">Préstamos sin complicaciones</span>
+        <div class="b">
+          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FCD179" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg></div>
+          Ranking que mantiene a los alumnos activos
         </div>
-        <div class="fi">
-          <div class="icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
-          <span class="lbl">Recordatorios y notificaciones</span>
+        <div class="b">
+          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5FE3D2" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+            </svg></div>
+          Tu equipo admin lo gestiona todo desde un panel
         </div>
       </div>
+    </div>
+  </section>
 
-      <div class="ctas">
-        <a href="#demo" class="btn btn-primary btn-lg">
-          Solicitar demo
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </a>
-        <a href="#funcionalidades" class="btn btn-ghost btn-lg">Ver funcionalidades</a>
+  <!-- ====================================================== Features -->
+  <section class="block" id="funcionalidades">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Funcionalidades</span>
+          <h2 class="section-title">Todo lo que necesita tu academia para prestar, <span class="accent">en un solo
+              sitio.</span></h2>
+        </div>
+        <p class="section-lede">Desde que un alumno descubre un set hasta que lo devuelve: Shelfie gestiona cada paso
+          del ciclo de préstamo para que tu equipo no tenga que hacerlo manualmente.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card feature-card-lg">
+          <div class="icon-tile">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+          </div>
+          <h3>Un catálogo digital para todo lo que presta tu academia.</h3>
+          <p>Sets de LEGO®, libros, juegos, materiales — da igual lo que tengas. Tus alumnos lo ven, filtran por
+            categoría y reservan en segundos desde el móvil o el ordenador.</p>
+          <span class="meta">Brickslabs · Biblioteca · Categorías personalizadas · Stock en tiempo real →</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon-tile teal">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+          </div>
+          <h3>Reservas online, entrega presencial</h3>
+          <p>El alumno reserva desde casa. Tu equipo lo ve en el panel, confirma con un clic y le entrega el set cuando
+            llega. Sin papel, sin confusión.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon-tile orange">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.4-2.6" />
+              <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.4 2.6" />
+              <path d="M21 3v6h-6M3 21v-6h6" />
+            </svg>
+          </div>
+          <h3>Panel de administración</h3>
+          <p>Gestiona el catálogo, las reservas activas, los usuarios y los permisos desde un panel centralizado. Sin
+            hojas de cálculo.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon-tile yellow">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+            </svg>
+          </div>
+          <h3>Ranking que fideliza</h3>
+          <p>Clasificación mensual, anual y de todos los tiempos. Los alumnos compiten por el podio de tu club, lo que
+            los mantiene activos y con ganas de volver.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon-tile blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+          </div>
+          <h3>Premium: una fuente de ingresos extra</h3>
+          <p>Ofrece a tus alumnos la opción de llevarse sets a casa con una membresía Premium. Ellos construyen cuando
+            quieren, tú generas ingresos adicionales.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="icon-tile green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <h3>Reporte de piezas</h3>
+          <p>¿Faltaba alguna pieza al desmontar? Los alumnos lo reportan desde su historial y el equipo de la academia
+            lo gestiona directamente.</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="tablet-scene">
-      <div class="shelf">
-        <div class="cell-shelf">
-          <div class="books">
-            <div class="book b1"></div>
-            <div class="book b2"></div>
-            <div class="book b3"></div>
-            <div class="book b4"></div>
+  <!-- ====================================================== Para centros showcase -->
+  <section class="block tight" id="centros">
+    <div class="container">
+      <div class="showcase">
+        <div>
+          <span class="eyebrow">Para academias y clubes</span>
+          <h2 class="section-title">Diseñado para el equipo que gestiona tu academia.</h2>
+          <p class="section-lede">Cada miembro de tu equipo tiene el rol que necesita. El propietario lo controla todo,
+            los administradores gestionan el día a día, y los alumnos solo ven su catálogo y sus reservas.</p>
+          <ul class="bullet-list">
+            <li><span class="dot">✓</span> Roles diferenciados: propietario, administrador y alumno.</li>
+            <li><span class="dot">✓</span> Multi-club: perfecta para cadenas de academias o redes de centros.</li>
+            <li><span class="dot">✓</span> Control de stock en tiempo real — siempre sabes qué hay disponible y qué no.
+            </li>
+            <li><span class="dot">✓</span> Historial completo de préstamos por alumno, con reporte de piezas faltantes.
+            </li>
+          </ul>
+        </div>
+        <div class="mock">
+          <div class="mock-head">
+            <strong>Reservas activas · Aim Education</strong>
+            <span class="chip">4 hoy</span>
+          </div>
+          <div class="row">
+            <div class="avatar">MA</div>
+            <div>
+              <div class="name">🧱 LEGO® City Police Station</div>
+              <div class="meta">Marco A. · reservado hoy</div>
+            </div>
+            <span class="status warn">Pendiente recogida</span>
+          </div>
+          <div class="row">
+            <div class="avatar" style="background:linear-gradient(135deg,#F5B935,#EF7E3B)">JL</div>
+            <div>
+              <div class="name">🧱 LEGO® Technic Bugatti Chiron</div>
+              <div class="meta">Julia L. · recogido ayer</div>
+            </div>
+            <span class="status ok">En préstamo</span>
+          </div>
+          <div class="row">
+            <div class="avatar" style="background:linear-gradient(135deg,#34A4D9,#6B7CE0)">RC</div>
+            <div>
+              <div class="name">📖 Hábitos Atómicos</div>
+              <div class="meta">Rafa C. · devuelto esta semana</div>
+            </div>
+            <span class="status ok">Completado</span>
+          </div>
+          <div class="row">
+            <div class="avatar" style="background:linear-gradient(135deg,#4A8A6F,#6FB593)">PB</div>
+            <div>
+              <div class="name">🧱 LEGO® Castillo Medieval</div>
+              <div class="meta">Paula B. · reservado para el jueves</div>
+            </div>
+            <span class="status warn">Pendiente recogida</span>
           </div>
         </div>
-        <div class="cell-shelf"><div class="crate"></div></div>
-        <div class="cell-shelf"><div class="pawn"></div></div>
-        <div class="cell-shelf"><div class="bricks">
-          <div class="brick k1"></div><div class="brick k2"></div><div class="brick k3"></div>
-        </div></div>
       </div>
-      <div class="plant">
-        <div class="leaf l4"></div>
-        <div class="leaf l5"></div>
-        <div class="leaf l1"></div>
-        <div class="leaf l3"></div>
-        <div class="leaf l2"></div>
-        <div class="pot"></div>
+    </div>
+  </section>
+
+  <!-- ====================================================== Steps -->
+  <section class="block tight">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Cómo funciona</span>
+          <h2 class="section-title">Tu academia en Shelfie, <span class="accent">lista en una tarde.</span></h2>
+        </div>
       </div>
-      <div class="tablet">
-        <div class="keyboard"></div>
-        <div class="screen">
-          <div class="topbar">
-            <span class="wordmark" style="font-size:14px">shelfie<span class="sparkle" style="width:5px;height:5px;margin-top:1px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg></span></span>
-            <div style="display:flex;gap:6px;align-items:center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ink-2)"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--ink-2)"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
+      <div class="steps">
+        <div class="step">
+          <div class="num">01</div>
+          <h4>Crea tu academia</h4>
+          <p>Te damos acceso y configuramos Shelfie con el nombre y las categorías de tu club. Sin tecnicismos.</p>
+        </div>
+        <div class="step">
+          <div class="num">02</div>
+          <h4>Sube tu catálogo</h4>
+          <p>Añade los sets, libros o materiales que tienes disponibles. Título, imagen, stock y categoría es todo lo
+            que necesitas.</p>
+        </div>
+        <div class="step">
+          <div class="num">03</div>
+          <h4>Invita a tus alumnos</h4>
+          <p>Crea las cuentas de tus alumnos y empieza a recibir reservas. Ellos lo ven todo desde el móvil o el
+            ordenador.</p>
+        </div>
+        <div class="step">
+          <div class="num">04</div>
+          <h4>Tú a lo importante</h4>
+          <p>Shelfie gestiona las reservas, el stock y el ranking. Tu equipo solo tiene que entregar y recoger.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== Stats -->
+  <section class="block tight">
+    <div class="container">
+      <div class="stats-band">
+        <h3>Academias que ya gestionan sus préstamos con Shelfie.</h3>
+        <div class="stat">
+          <div class="v">Sets</div>
+          <div class="l">LEGO® y libros en catálogo</div>
+        </div>
+        <div class="stat">
+          <div class="v">Multi-club</div>
+          <div class="l">Una plataforma, varios centros</div>
+        </div>
+        <div class="stat">
+          <div class="v">Premium</div>
+          <div class="l">Ingresos extra para tu academia</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== Testimonial -->
+  <section class="block tight">
+    <div class="container">
+      <div class="testi">
+        <div>
+          <span class="eyebrow">Lo que dicen las academias</span>
+          <p class="quote">Teníamos decenas de sets de LEGO® sin gestionar bien — siempre faltaba alguna pieza y nadie
+            sabía quién tenía qué. Con Shelfie los alumnos reservan solos y nuestro equipo solo tiene que entregar y
+            recoger. Ha sido un cambio brutal.</p>
+          <div class="quote-attr">
+            <div class="av">CM</div>
+            <div class="meta">
+              <strong>Carlos M.</strong>
+              Director · Aim Education
             </div>
           </div>
-          <div class="search">
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-            Buscar recursos...
-          </div>
-          <div class="sec-title">Categorías</div>
-          <div class="cats">
-            <div class="cat c1"><span class="ico">📖</span>Libros</div>
-            <div class="cat c2"><span class="ico">🎲</span>Juegos</div>
-            <div class="cat c3"><span class="ico">🎨</span>Materiales</div>
-          </div>
-          <div class="sec-row">
-            <span class="sec-title">Recursos populares</span>
-            <span class="more">Ver todos</span>
-          </div>
-          <div class="pops">
-            <div class="pop">
-              <div class="cover">📘</div>
-              <div class="title">El principito</div>
-              <div class="sub">Libro</div>
-            </div>
-            <div class="pop">
-              <div class="cover">🎲</div>
-              <div class="title">Katamino</div>
-              <div class="sub">Juego</div>
-            </div>
-            <div class="pop">
-              <div class="cover">🤖</div>
-              <div class="title">Robótica educativa</div>
-              <div class="sub">Kit</div>
-            </div>
-            <div class="pop">
-              <div class="cover">🌲</div>
-              <div class="title">Aventuras naturaleza</div>
-              <div class="sub">Juego</div>
-            </div>
-          </div>
+        </div>
+        <div class="logos-wall">
+          <div class="logo-chip">Aim Education</div>
+          <div class="logo-chip">Aim Madrid</div>
+          <div class="logo-chip">Aim Barcelona</div>
+          <div class="logo-chip">Aim Valencia</div>
+          <div class="logo-chip">Aim Sevilla</div>
+          <div class="logo-chip">Aim Murcia</div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="container" style="position:relative">
-    <div class="benefits-strip">
-      <div class="b">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B9A4F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        Mejora la experiencia de alumnos y familias
-      </div>
-      <div class="b">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5FE3D2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
-        Seguro, accesible y fácil de usar
-      </div>
-      <div class="b">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FCD179" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
-        Todo bajo control, en tiempo real
-      </div>
-      <div class="b">
-        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5FE3D2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
-        Recordatorios y notificaciones automáticas
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ====================================================== Features -->
-<section class="block" id="funcionalidades">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <span class="eyebrow">Funcionalidades</span>
-        <h2 class="section-title">Todo lo que necesita tu club o academia, <span class="accent">en un solo sitio.</span></h2>
-      </div>
-      <p class="section-lede">Desde la catalogación inicial hasta el recordatorio de devolución: Shelfie cubre cada paso del ciclo de préstamo a socios, sin fricción para vosotros ni para ellos.</p>
-    </div>
-
-    <div class="features-grid">
-      <div class="feature-card feature-card-lg">
-        <div class="icon-tile">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <!-- ====================================================== Pricing -->
+  <section class="block" id="precios">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Planes para academias y clubes</span>
+          <h2 class="section-title">Empieza gratis. Escala <span class="accent">cuando crezcas.</span></h2>
         </div>
-        <h3>Catálogo unificado para libros, juegos de mesa y sets.</h3>
-        <p>Importa tu inventario desde Excel o ISBN, etiqueta por edad, idioma o categoría, y deja que tus socios busquen y reserven al instante.</p>
-        <span class="meta">Importación CSV · ISBN · Filtros avanzados →</span>
+        <p class="section-lede">Sin coste por alumno, sin permanencia. Pagas por tu academia y tus alumnos acceden sin
+          límite.</p>
       </div>
 
-      <div class="feature-card">
-        <div class="icon-tile teal">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <div class="pricing">
+        <div class="price-card">
+          <div class="name">Academia pequeña</div>
+          <div class="price">Gratis</div>
+          <p class="desc">Para empezar a digitalizar tus préstamos sin compromiso.</p>
+          <ul>
+            <li><span class="dot">✓</span> Catálogo con hasta 50 recursos</li>
+            <li><span class="dot">✓</span> Alumnos ilimitados</li>
+            <li><span class="dot">✓</span> Reservas y panel de administración</li>
+            <li><span class="dot">✓</span> Ranking del club</li>
+          </ul>
+          <a href="#demo" class="btn btn-outline" style="margin-top:auto">Empezar gratis</a>
         </div>
-        <h3>Reservas con calendario</h3>
-        <p>Los usuarios reservan recursos en pocos clics y reciben confirmación automática.</p>
-      </div>
 
-      <div class="feature-card">
-        <div class="icon-tile orange">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.4-2.6"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.4 2.6"/><path d="M21 3v6h-6M3 21v-6h6"/></svg>
+        <div class="price-card featured">
+          <span class="ribbon" style="font-weight: 700">Más elegido</span>
+          <div class="name">Academia</div>
+          <div class="price">Consúltanos</div>
+          <p class="desc">Para academias y clubes con catálogo activo y alumnos cada semana.</p>
+          <ul>
+            <li><span class="dot">✓</span> Recursos ilimitados en catálogo</li>
+            <li><span class="dot">✓</span> Membresías Premium para tus alumnos</li>
+            <li><span class="dot">✓</span> Múltiples administradores y roles</li>
+            <li><span class="dot">✓</span> Control de piezas y reporte de incidencias</li>
+            <li><span class="dot">✓</span> Soporte prioritario</li>
+          </ul>
+          <a href="#demo" class="btn btn-primary" style="margin-top:auto;background:var(--navy);color:white">Solicitar
+            demo</a>
         </div>
-        <h3>Préstamos en 30s</h3>
-        <p>Registra una salida con código QR, escanea el carnet y listo.</p>
-      </div>
 
-      <div class="feature-card">
-        <div class="icon-tile yellow">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-        </div>
-        <h3>Recordatorios</h3>
-        <p>Mensajes automáticos por email para devoluciones próximas o atrasadas.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="icon-tile blue">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        </div>
-        <h3>Estadísticas de uso</h3>
-        <p>Sabe qué recursos vuelan, cuáles se quedan en estantería y cuándo reordenar.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="icon-tile green">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h3>Cuotas y socios</h3>
-        <p>Gestiona altas, bajas y estado de cuotas. Solo los socios al día pueden reservar.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ====================================================== Para centros showcase -->
-<section class="block tight" id="centros">
-  <div class="container">
-    <div class="showcase">
-      <div>
-        <span class="eyebrow">Para clubes y academias</span>
-        <h2 class="section-title">Diseñado para clubes, academias, ludotecas y AMPAs.</h2>
-        <p class="section-lede">Cobráis cuotas a vuestros socios y les ofrecéis acceso a vuestro catálogo. Shelfie se encarga del préstamo, la reserva y los recordatorios para que vosotros os centréis en la comunidad.</p>
-        <ul class="bullet-list">
-          <li><span class="dot">✓</span> Roles diferenciados para junta, monitores, socios adultos y socios infantiles.</li>
-          <li><span class="dot">✓</span> Multi-sede con catálogos compartidos o separados — perfecto para federaciones de clubes.</li>
-          <li><span class="dot">✓</span> Carnets digitales con QR para préstamos en jornadas, ferias y eventos.</li>
-          <li><span class="dot">✓</span> Soporte humano en castellano y catalán en menos de 24h.</li>
-        </ul>
-      </div>
-      <div class="mock">
-        <div class="mock-head">
-          <strong>Préstamos activos · 3ºB</strong>
-          <span class="chip">12 esta semana</span>
-        </div>
-        <div class="row">
-          <div class="avatar">MA</div>
-          <div>
-            <div class="name">Manuelita el libro de la película</div>
-            <div class="meta">Marta A. · vence en 4 días</div>
-          </div>
-          <span class="status ok">A tiempo</span>
-        </div>
-        <div class="row">
-          <div class="avatar" style="background:linear-gradient(135deg,#F5B935,#EF7E3B)">JL</div>
-          <div>
-            <div class="name">Katamino Family</div>
-            <div class="meta">Joan L. · vence mañana</div>
-          </div>
-          <span class="status warn">Aviso</span>
-        </div>
-        <div class="row">
-          <div class="avatar" style="background:linear-gradient(135deg,#34A4D9,#6B7CE0)">RC</div>
-          <div>
-            <div class="name">El gran libro de los pequeños curiosos</div>
-            <div class="meta">Rocío C. · 3 días de retraso</div>
-          </div>
-          <span class="status late">Atrasado</span>
-        </div>
-        <div class="row">
-          <div class="avatar" style="background:linear-gradient(135deg,#4A8A6F,#6FB593)">PB</div>
-          <div>
-            <div class="name">Aventuras en la naturaleza</div>
-            <div class="meta">Pau B. · vence en 9 días</div>
-          </div>
-          <span class="status ok">A tiempo</span>
+        <div class="price-card">
+          <div class="name">Red de academias</div>
+          <div class="price">A medida</div>
+          <p class="desc">Para cadenas o grupos con varios centros que comparten plataforma.</p>
+          <ul>
+            <li><span class="dot">✓</span> Multi-club con catálogos independientes</li>
+            <li><span class="dot">✓</span> Panel unificado para todos los centros</li>
+            <li><span class="dot">✓</span> Onboarding asistido</li>
+            <li><span class="dot">✓</span> Gestor de cuenta dedicado</li>
+          </ul>
+          <a href="#demo" class="btn btn-outline" style="margin-top:auto">Hablar con el equipo</a>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ====================================================== Steps -->
-<section class="block tight">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <span class="eyebrow">Cómo funciona</span>
-        <h2 class="section-title">Listo en una tarde, <span class="accent">sin manuales.</span></h2>
-      </div>
-    </div>
-    <div class="steps">
-      <div class="step">
-        <div class="num">01</div>
-        <h4>Sube tu catálogo</h4>
-        <p>Importa desde una hoja de cálculo o añade por ISBN. Shelfie completa portada y datos automáticamente.</p>
-      </div>
-      <div class="step">
-        <div class="num">02</div>
-        <h4>Invita a tu comunidad</h4>
-        <p>Genera un enlace para profes, alumnos y familias. Sin contraseñas complicadas.</p>
-      </div>
-      <div class="step">
-        <div class="num">03</div>
-        <h4>Empieza a prestar</h4>
-        <p>Escanea, presta y devuelve desde el móvil o la tablet. Las reservas se gestionan solas.</p>
-      </div>
-      <div class="step">
-        <div class="num">04</div>
-        <h4>Mide el impacto</h4>
-        <p>Informes mensuales claros para reuniones, memorias y solicitudes de presupuesto.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ====================================================== Stats -->
-<section class="block tight">
-  <div class="container">
-    <div class="stats-band">
-      <h3>Centros que ya prestan con Shelfie cada semana.</h3>
-      <div class="stat"><div class="v">+240</div><div class="l">Centros activos</div></div>
-      <div class="stat"><div class="v">86k</div><div class="l">Recursos catalogados</div></div>
-      <div class="stat"><div class="v">12k/mes</div><div class="l">Préstamos gestionados</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ====================================================== Testimonial -->
-<section class="block tight">
-  <div class="container">
-    <div class="testi">
-      <div>
-        <span class="eyebrow">Lo que dicen los centros</span>
-        <p class="quote">Pasamos de un Excel ingobernable a tener todo el préstamo de la biblioteca a punto en quince días. Las familias por fin saben qué tienen reservado.</p>
-        <div class="quote-attr">
-          <div class="av">EM</div>
-          <div class="meta">
-            <strong>Elena Marín</strong>
-            Coordinadora · CEIP Bosc d'en Vilaró
-          </div>
+  <!-- ====================================================== FAQ -->
+  <section class="block tight" id="recursos">
+    <div class="container">
+      <div class="section-head"
+        style="justify-content:center;text-align:center;flex-direction:column;align-items:center">
+        <div>
+          <span class="eyebrow">Preguntas frecuentes</span>
+          <h2 class="section-title" style="text-align:center">Resolvemos las dudas <span class="accent">más
+              habituales.</span></h2>
         </div>
       </div>
-      <div class="logos-wall">
-        <div class="logo-chip">CEIP MIRASOL</div>
-        <div class="logo-chip">Escola Bosc</div>
-        <div class="logo-chip">AMPA Sant Jordi</div>
-        <div class="logo-chip">Col·legi Verge</div>
-        <div class="logo-chip">IES La Marina</div>
-        <div class="logo-chip">Ludoteca Pas a Pas</div>
+      <div class="faq-list">
+        <details class="faq-item" open>
+          <summary>¿Con qué tipo de recursos funciona Shelfie?
+            <span class="toggle">+</span>
+          </summary>
+          <div class="answer">Con cualquier cosa que tu academia preste: sets de LEGO®, libros, juegos de mesa, kits de
+            robótica, material didáctico... Tú defines las categorías y el catálogo.</div>
+        </details>
+        <details class="faq-item">
+          <summary>¿Necesito instalar algo en mi academia?
+            <span class="toggle">+</span>
+          </summary>
+          <div class="answer">No. Shelfie funciona en el navegador desde cualquier dispositivo: el ordenador de
+            recepción, el móvil del monitor o la tablet del alumno. Solo necesitáis conexión.</div>
+        </details>
+        <details class="faq-item">
+          <summary>¿Cuánto tiempo lleva poner en marcha Shelfie?
+            <span class="toggle">+</span>
+          </summary>
+          <div class="answer">La mayoría de academias tienen el catálogo listo y los alumnos activos en una tarde.
+            Nosotros os acompañamos durante la configuración inicial.</div>
+        </details>
+        <details class="faq-item">
+          <summary>¿Puedo gestionar varias academias desde una sola cuenta?
+            <span class="toggle">+</span>
+          </summary>
+          <div class="answer">Sí. Shelfie soporta multi-club: cada academia tiene su propio catálogo y sus propios
+            alumnos, pero el propietario puede verlas todas desde un panel unificado.</div>
+        </details>
+        <details class="faq-item">
+          <summary>¿Qué es la membresía Premium para alumnos?
+            <span class="toggle">+</span>
+          </summary>
+          <div class="answer">Es una capa adicional que tú ofreces en tu academia: los alumnos Premium pueden llevarse
+            sets a casa y devolverlos en su próxima visita. Es una forma de añadir valor y generar ingresos extra.</div>
+        </details>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ====================================================== Pricing -->
-<section class="block" id="precios">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <span class="eyebrow">Precios para clubes y academias</span>
-        <h2 class="section-title">Pagas tú, prestan tus socios. <span class="accent">Sin permanencia.</span></h2>
-      </div>
-      <p class="section-lede">Empieza gratis si eres un club pequeño. Cuando crezcas, escala. Sin coste por socio, sin sorpresas en la factura.</p>
-    </div>
-
-    <div class="pricing">
-      <div class="price-card">
-        <div class="name">Club pequeño</div>
-        <div class="price">Gratis</div>
-        <p class="desc">Para clubes de barrio y academias que están empezando.</p>
-        <ul>
-          <li><span class="dot">✓</span> Hasta 50 socios y 200 recursos</li>
-          <li><span class="dot">✓</span> Un administrador</li>
-          <li><span class="dot">✓</span> Recordatorios por email</li>
-          <li><span class="dot">✓</span> Importación CSV</li>
-        </ul>
-        <a href="#demo" class="btn btn-outline" style="margin-top:auto">Empezar</a>
-      </div>
-
-      <div class="price-card featured">
-        <span class="ribbon" style="font-weight: 700">Más elegido</span>
-        <div class="name">Club o academia</div>
-        <div class="price">39€<small>/mes</small></div>
-        <p class="desc">Para clubes, academias y ludotecas con socios activos cada semana.</p>
-        <ul>
-          <li><span class="dot">✓</span> Socios y recursos ilimitados</li>
-          <li><span class="dot">✓</span> Roles y multi-sede</li>
-          <li><span class="dot">✓</span> Carnets QR + lector móvil</li>
-          <li><span class="dot">✓</span> Gestión de cuotas e impagos</li>
-          <li><span class="dot">✓</span> Soporte en 24h</li>
-        </ul>
-        <a href="#demo" class="btn btn-primary" style="margin-top:auto;background:var(--navy);color:white">Solicitar demo</a>
-      </div>
-
-      <div class="price-card">
-        <div class="name">Federación</div>
-        <div class="price">A medida</div>
-        <p class="desc">Para federaciones de clubes, redes de academias y administraciones.</p>
-        <ul>
-          <li><span class="dot">✓</span> SSO y autenticación corporativa</li>
-          <li><span class="dot">✓</span> API y exportaciones</li>
-          <li><span class="dot">✓</span> Onboarding asistido</li>
-          <li><span class="dot">✓</span> Gestor de cuenta dedicado</li>
-        </ul>
-        <a href="#demo" class="btn btn-outline" style="margin-top:auto">Hablar con ventas</a>
+  <!-- ====================================================== CTA -->
+  <section class="block tight" id="demo">
+    <div class="container">
+      <div class="cta-block">
+        <h2>¿Tu academia aún gestiona préstamos a mano?</h2>
+        <p>Reserva una demo de 20 minutos. Te mostramos Shelfie con el tipo de catálogo de tu club y te dejamos un
+          entorno listo para probar.</p>
+        <div class="ctas">
+          <a href="#demo" class="btn btn-primary btn-lg">
+            Solicitar demo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a href="#funcionalidades" class="btn btn-outline btn-lg">Ver funcionalidades</a>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ====================================================== FAQ -->
-<section class="block tight" id="recursos">
-  <div class="container">
-    <div class="section-head" style="justify-content:center;text-align:center;flex-direction:column;align-items:center">
-      <div>
-        <span class="eyebrow">Preguntas frecuentes</span>
-        <h2 class="section-title" style="text-align:center">Resolvemos las dudas <span class="accent">más habituales.</span></h2>
+  <!-- ====================================================== Footer -->
+  <footer class="site">
+    <div class="container">
+      <div class="foot-grid">
+        <div class="brand">
+          <span class="wordmark">shelfie<span class="sparkle"><svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z" />
+              </svg></span></span>
+          <p>Construye. Aprende. Comparte.</p>
+        </div>
+        <div>
+          <h5>Plataforma</h5>
+          <ul>
+            <li><a href="#funcionalidades">Funcionalidades</a></li>
+            <li><a href="#precios">Planes</a></li>
+            <li><a href="#centros">Para academias</a></li>
+            <li><a href="#demo">Solicitar demo</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Shelfie incluye</h5>
+          <ul>
+            <li><a href="#funcionalidades">Catálogo digital</a></li>
+            <li><a href="#funcionalidades">Reservas online</a></li>
+            <li><a href="#funcionalidades">Ranking del club</a></li>
+            <li><a href="#funcionalidades">Membresías Premium</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Aim Education</h5>
+          <ul>
+            <li><a href="#">Sobre Aim</a></li>
+            <li><a href="#">Academias</a></li>
+            <li><a href="#">Contacto</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Legal</h5>
+          <ul>
+            <li><a href="#">Privacidad</a></li>
+            <li><a href="#">Términos</a></li>
+            <li><a href="#">RGPD</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© 2026 Shelfie · Aim Education</span>
+        <span>Hecho por y para centros educativos.</span>
       </div>
     </div>
-    <div class="faq-list">
-      <details class="faq-item" open>
-        <summary>¿Necesitamos instalar algo en el centro?
-          <span class="toggle">+</span>
-        </summary>
-        <div class="answer">No. Shelfie funciona en el navegador y en cualquier dispositivo: ordenador del centro, móvil del docente o tablet de aula. Solo necesitáis conexión.</div>
-      </details>
-      <details class="faq-item">
-        <summary>¿Cómo migramos nuestro Excel actual?
-          <span class="toggle">+</span>
-        </summary>
-        <div class="answer">Subes el archivo, mapeamos las columnas contigo y validamos en una llamada de 30 minutos. La mayoría de centros migran su catálogo en menos de dos horas.</div>
-      </details>
-      <details class="faq-item">
-        <summary>¿Funciona también con juegos de mesa y kits?
-          <span class="toggle">+</span>
-        </summary>
-        <div class="answer">Sí. Cada recurso lleva su tipología (libro, juego, kit, material fungible) con campos personalizados para edad, número de jugadores, materiales incluidos, etc.</div>
-      </details>
-      <details class="faq-item">
-        <summary>¿Las familias pueden reservar desde casa?
-          <span class="toggle">+</span>
-        </summary>
-        <div class="answer">Sí. Reciben un enlace al portal del centro donde consultan disponibilidad y reservan. El profesorado aprueba o automatiza las solicitudes.</div>
-      </details>
-      <details class="faq-item">
-        <summary>¿Qué pasa con los datos de los alumnos?
-          <span class="toggle">+</span>
-        </summary>
-        <div class="answer">Todos los datos están alojados en servidores en la UE y cumplimos con RGPD y LOPDGDD. Firmamos contrato de encargo del tratamiento con cada centro.</div>
-      </details>
-    </div>
-  </div>
-</section>
+  </footer>
 
-<!-- ====================================================== CTA -->
-<section class="block tight" id="demo">
-  <div class="container">
-    <div class="cta-block">
-      <h2>Convierte el préstamo de tu club en algo serio.</h2>
-      <p>Reserva una demo de 20 minutos. Te mostramos Shelfie con el catálogo de tu club o academia y te dejamos un entorno listo para probar.</p>
-      <div class="ctas">
-        <a href="#" class="btn btn-primary btn-lg">
-          Solicitar demo
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </a>
-        <a href="#" class="btn btn-outline btn-lg">Ver tour autoguiado</a>
-      </div>
-    </div>
-  </div>
-</section>
+  <!-- Tweak defaults -->
+  <script>
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "theme": "light",
+      "accent": "#6E3FD9",
+      "highlight": "#1CB8A6",
+      "radius": 18
+    }/*EDITMODE-END*/;
+    window.TWEAK_DEFAULTS = TWEAK_DEFAULTS;
+  </script>
 
-<!-- ====================================================== Footer -->
-<footer class="site">
-  <div class="container">
-    <div class="foot-grid">
-      <div class="brand">
-        <span class="wordmark">shelfie<span class="sparkle"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg></span></span>
-        <p>Préstamos que inspiran, experiencias que se comparten.</p>
-      </div>
-      <div>
-        <h5>Producto</h5>
-        <ul>
-          <li><a href="#">Funcionalidades</a></li>
-          <li><a href="#">Precios</a></li>
-          <li><a href="#">Para centros</a></li>
-          <li><a href="#">Novedades</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5>Recursos</h5>
-        <ul>
-          <li><a href="#">Centro de ayuda</a></li>
-          <li><a href="#">Plantillas</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Webinars</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5>Compañía</h5>
-        <ul>
-          <li><a href="#">Sobre Shelfie</a></li>
-          <li><a href="#">Contacto</a></li>
-          <li><a href="#">Empleo</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5>Legal</h5>
-        <ul>
-          <li><a href="#">Privacidad</a></li>
-          <li><a href="#">Términos</a></li>
-          <li><a href="#">RGPD</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <span>© 2026 Shelfie · Hecho en Barcelona con 💜</span>
-      <span>v2.4 · Estado del servicio: operativo</span>
-    </div>
-  </div>
-</footer>
+  <script>
+    // Theme toggle (vanilla, before React mounts)
+    (function () {
+      const stored = localStorage.getItem('shelfie-theme');
+      if (stored) document.documentElement.setAttribute('data-theme', stored);
+      const btn = document.getElementById('themeToggle');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('shelfie-theme', next);
+          window.dispatchEvent(new CustomEvent('shelfie-theme-changed', { detail: next }));
+        });
+      }
+    })();
+  </script>
 
-<!-- Tweak defaults -->
-<script>
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "theme": "light",
-  "accent": "#6E3FD9",
-  "highlight": "#1CB8A6",
-  "radius": 18
-}/*EDITMODE-END*/;
-window.TWEAK_DEFAULTS = TWEAK_DEFAULTS;
-</script>
-
-<script>
-// Theme toggle (vanilla, before React mounts)
-(function(){
-  const stored = localStorage.getItem('shelfie-theme');
-  if (stored) document.documentElement.setAttribute('data-theme', stored);
-  const btn = document.getElementById('themeToggle');
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('shelfie-theme', next);
-      window.dispatchEvent(new CustomEvent('shelfie-theme-changed', { detail: next }));
-    });
-  }
-})();
-</script>
-
-<div id="tweaks-root"></div>
-<script type="text/babel" src="/landing/tweaks-panel.jsx"></script>
-<script type="text/babel" src="/landing/tweaks.jsx"></script>
+  <div id="tweaks-root"></div>
+  <script type="text/babel" src="/landing/tweaks-panel.jsx"></script>
+  <script type="text/babel" src="/landing/tweaks.jsx"></script>
 
 </body>
+
 </html>
