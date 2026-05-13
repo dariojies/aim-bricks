@@ -139,15 +139,6 @@ async function migrateToDynamic() {
       });
     }
 
-    let demoClub = await prisma.bricks_clubs.findFirst({ where: { name: 'Club Demo' } });
-    if (!demoClub) {
-      await prisma.bricks_clubs.create({
-        data: {
-          id: '00000000-0000-0000-0000-000000000000',
-          name: 'Club Demo'
-        }
-      });
-    }
 
     // 2. Check if we have legacy data that hasn't been migrated yet
     const legacyBrickslabsCount = await prisma.bricks_brickslab.count();
