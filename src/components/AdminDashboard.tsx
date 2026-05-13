@@ -504,9 +504,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const handleDeleteMembership = async (id: string) => {
     if (!confirm('¿Seguro que quieres eliminar esta autorización?')) return;
     try {
-      const res = await fetch(`${API_URL}/api/admin/memberships/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchMemberships();
+      const params = user?.email ? `?requesterEmail=${encodeURIComponent(user.email)}` : '';
+      const res = await fetch(`${API_URL}/api/admin/memberships/${id}${params}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'No tienes permiso para realizar esta acción.');
+        return;
+      }
+      fetchMemberships();
     } catch (err) { console.error(err); }
+  };
+
+  const canDeleteMember = (targetRole: string) => {
+    if (user?.role === 'superadmin') return true;
+    if (userClubRole === 'owner') return targetRole !== 'owner';
+    if (userClubRole === 'profesor') return targetRole === 'member';
+    return false;
   };
 
   return (
@@ -1952,13 +1965,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                             {new Date(m.createdAt).toLocaleDateString()}
                           </td>
                           <td style={{ padding: '1rem', textAlign: 'right' }}>
-                            <button
-                              onClick={() => handleDeleteMembership(m.id)}
-                              className="text-error"
-                              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                            >
-                              <Trash2 size={18} />
-                            </button>
+                            {canDeleteMember(m.role) && (
+                              <button
+                                onClick={() => handleDeleteMembership(m.id)}
+                                className="text-error"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -2010,7 +2025,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 const res = await fetch(`${API_URL}/api/admin/memberships`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: ownerEmail, clubId: ownerClubId, role: 'owner' })
+                  body: JSON.stringify({ email: ownerEmail, clubId: ownerClubId, role: 'owner', requesterEmail: user.email })
                 });
                 if (res.ok) {
                   alert('Dueño asignado correctamente.');

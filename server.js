@@ -1979,6 +1979,34 @@ app.post('/api/admin/memberships', async (req, res) => {
 app.delete('/api/admin/memberships/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const { requesterEmail } = req.query;
+
+    const target = await prisma.bricks_club_memberships.findUnique({ where: { id }, select: { role: true, clubId: true } });
+    if (!target) return res.status(404).json({ error: 'Membresía no encontrada' });
+
+    if (requesterEmail) {
+      const requesterDevRole = (await prisma.users.findUnique({
+        where: { email: requesterEmail.toLowerCase() }, select: { dev_role: true }
+      }))?.dev_role;
+
+      if (requesterDevRole !== 'superadmin') {
+        // Owners cannot remove other owners — only superadmin can
+        if (target.role === 'owner') {
+          return res.status(403).json({ error: 'Solo el panel maestro puede eliminar a un dueño del club.' });
+        }
+
+        const requesterMembership = await prisma.bricks_club_memberships.findUnique({
+          where: { email_clubId: { email: requesterEmail.toLowerCase(), clubId: target.clubId } },
+          select: { role: true }
+        });
+
+        // Profesor can only remove members
+        if (requesterMembership?.role === 'profesor' && target.role !== 'member') {
+          return res.status(403).json({ error: 'Un profesor solo puede eliminar miembros.' });
+        }
+      }
+    }
+
     await prisma.bricks_club_memberships.delete({ where: { id } });
     res.json({ success: true });
   } catch (error) {
