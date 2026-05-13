@@ -164,7 +164,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       const res = await fetch(`${API_URL}/api/admin/clubs/${club.id}/stats`);
       if (res.ok) {
         const stats = await res.json();
-        setSelectedClubStats({ ...stats, clubName: club.name });
+        setSelectedClubStats({ ...stats, clubName: club.name, clubId: club.id });
       }
     } catch (e) { console.error(e); }
   };
@@ -2193,13 +2193,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 </div>
 
                 <div style={{ marginBottom: '2rem' }}>
-                  <h4 style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', textTransform: 'uppercase' }}>Dueños del Club</h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {selectedClubStats.owners.map((email: string) => (
-                      <div key={email} style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#A78BFA', padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.9rem', border: '1px solid rgba(167, 139, 250, 0.2)' }}>
-                        {email}
-                      </div>
-                    ))}
+                  <h4 style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', textTransform: 'uppercase' }}>Miembros del Club</h4>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                          <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Email</th>
+                          <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Rol</th>
+                          <th style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedClubStats.memberships?.filter((m: any) => m.role === 'owner' || m.role === 'profesor').map((m: any) => (
+                          <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text)' }}>{m.email}</td>
+                            <td style={{ padding: '0.6rem 0.75rem' }}>
+                              <select
+                                value={m.role}
+                                onChange={async (e) => {
+                                  const newRole = e.target.value;
+                                  const res = await fetch(`${API_URL}/api/admin/memberships`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ clubId: selectedClubStats.clubId, email: m.email, role: newRole, requesterEmail: user.email })
+                                  });
+                                  if (res.ok) {
+                                    setSelectedClubStats((prev: any) => ({
+                                      ...prev,
+                                      memberships: prev.memberships.map((x: any) => x.id === m.id ? { ...x, role: newRole } : x),
+                                      owners: newRole === 'owner'
+                                        ? [...prev.owners.filter((o: string) => o !== m.email), m.email]
+                                        : prev.owners.filter((o: string) => o !== m.email)
+                                    }));
+                                  }
+                                }}
+                                style={{ padding: '0.3rem 0.5rem', borderRadius: '6px', border: '1px solid var(--surface-border)', background: 'var(--surface)', color: m.role === 'owner' ? '#A78BFA' : m.role === 'profesor' ? '#21B668' : 'var(--text)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                              >
+                                <option value="member">Miembro</option>
+                                <option value="profesor">Profesor</option>
+                                <option value="owner">Dueño</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm(`¿Eliminar a ${m.email} del club?`)) return;
+                                  const res = await fetch(`${API_URL}/api/admin/memberships/${m.id}?requesterEmail=${encodeURIComponent(user.email)}`, { method: 'DELETE' });
+                                  if (res.ok) {
+                                    setSelectedClubStats((prev: any) => ({
+                                      ...prev,
+                                      memberships: prev.memberships.filter((x: any) => x.id !== m.id),
+                                      owners: prev.owners.filter((o: string) => o !== m.email),
+                                      totalMembers: prev.totalMembers - 1
+                                    }));
+                                  }
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: '0.2rem' }}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 

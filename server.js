@@ -1147,6 +1147,7 @@ app.get('/api/admin/clubs/:id/stats', async (req, res) => {
 
     const stats = {
       owners: memberships.filter(m => m.role === 'owner').map(m => m.email),
+      memberships: memberships.map(m => ({ id: m.id, email: m.email, role: m.role })),
       totalMembers: memberships.length,
       categories: categories.map(c => ({
         name: c.name,
