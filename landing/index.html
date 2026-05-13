@@ -96,7 +96,7 @@
             </svg>
           </span>
         </button>
-        <a href="#demo" class="btn btn-primary">Solicitar demo</a>
+        <button onclick="openRegisterModal()" class="btn btn-primary">Registrarse</button>
       </div>
     </div>
   </header>
@@ -610,7 +610,7 @@
             <li><span class="dot" style="color:#908E86">✗</span> <span style="color:#908E86">Importación CSV/Excel</span></li>
             <li><span class="dot" style="color:#908E86">✗</span> <span style="color:#908E86">Membresías Premium</span></li>
           </ul>
-          <a href="#demo" class="btn btn-outline" style="margin-top:auto">Empezar gratis</a>
+          <button onclick="openRegisterModal()" class="btn btn-outline" style="margin-top:auto;width:100%">Empezar gratis</button>
         </div>
 
         <div class="price-card featured">
@@ -843,6 +843,108 @@
 
     document.querySelectorAll('.fade-up').forEach(function (el) { io.observe(el); });
   })();
+  </script>
+
+  <!-- ====================================================== Register Modal -->
+  <div id="register-overlay" class="reg-overlay" onclick="if(event.target===this)closeRegisterModal()" aria-hidden="true">
+    <div class="reg-modal" role="dialog" aria-modal="true" aria-labelledby="reg-title">
+      <button class="reg-close" onclick="closeRegisterModal()" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="reg-header">
+        <span class="wordmark" style="font-size:1.25rem">shelfie<span class="sparkle"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg></span></span>
+        <h2 id="reg-title">Crea tu cuenta gratis</h2>
+        <p>Plan Starter — sin tarjeta de crédito</p>
+      </div>
+      <form id="register-form" onsubmit="handleRegister(event)" novalidate>
+        <div class="reg-field">
+          <label for="reg-name">Tu nombre</label>
+          <input id="reg-name" type="text" placeholder="Ana García" autocomplete="name" required />
+        </div>
+        <div class="reg-field">
+          <label for="reg-club">Nombre del club / academia</label>
+          <input id="reg-club" type="text" placeholder="Brickslab Madrid" autocomplete="organization" required />
+        </div>
+        <div class="reg-field">
+          <label for="reg-email">Correo electrónico</label>
+          <input id="reg-email" type="email" placeholder="ana@miclub.com" autocomplete="email" required />
+        </div>
+        <div class="reg-field">
+          <label for="reg-password">Contraseña <span style="font-weight:400;color:var(--ink-3)">(mín. 6 caracteres)</span></label>
+          <input id="reg-password" type="password" placeholder="••••••••" autocomplete="new-password" required />
+        </div>
+        <div id="reg-error" class="reg-error" style="display:none"></div>
+        <button type="submit" class="btn btn-primary reg-submit" id="reg-btn">
+          <span id="reg-btn-text">Crear cuenta</span>
+          <span id="reg-btn-loader" style="display:none" class="reg-loader"></span>
+        </button>
+        <p class="reg-legal">Al registrarte aceptas nuestros <a href="#">Términos de uso</a> y <a href="#">Política de privacidad</a>.</p>
+      </form>
+      <p class="reg-footer">¿Ya tienes cuenta? <a href="/app?login=1">Iniciar sesión</a></p>
+      <button class="reg-cancel-mobile" onclick="closeRegisterModal()">Cancelar</button>
+    </div>
+  </div>
+
+  <script>
+    function openRegisterModal() {
+      var el = document.getElementById('register-overlay');
+      el.classList.add('open');
+      el.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('reg-name').focus();
+    }
+    function closeRegisterModal() {
+      var el = document.getElementById('register-overlay');
+      el.classList.remove('open');
+      el.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      document.getElementById('reg-error').style.display = 'none';
+      document.getElementById('register-form').reset();
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeRegisterModal();
+    });
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      var name = document.getElementById('reg-name').value.trim();
+      var clubName = document.getElementById('reg-club').value.trim();
+      var email = document.getElementById('reg-email').value.trim();
+      var password = document.getElementById('reg-password').value;
+      var errorEl = document.getElementById('reg-error');
+      var btn = document.getElementById('reg-btn');
+      var btnText = document.getElementById('reg-btn-text');
+      var loader = document.getElementById('reg-btn-loader');
+
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btnText.style.display = 'none';
+      loader.style.display = 'inline-block';
+
+      try {
+        var res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, clubName, email, password })
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = data.error || 'Error al crear la cuenta.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.userId);
+        window.location.href = '/app';
+      } catch (err) {
+        errorEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        loader.style.display = 'none';
+      }
+    }
   </script>
 
   <div id="tweaks-root"></div>

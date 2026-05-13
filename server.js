@@ -520,6 +520,50 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, clubName, email, password } = req.body;
+    if (!name || !clubName || !email || !password) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    const existing = await prisma.users.findUnique({ where: { email: email.toLowerCase() }, select: { user_id: true } });
+    if (existing) {
+      return res.status(409).json({ error: 'Ya existe una cuenta con este correo electrónico.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const club = await prisma.bricks_clubs.create({
+      data: { name: clubName.trim(), plan: 'starter' }
+    });
+
+    const user = await prisma.users.create({
+      data: {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        password: hashedPassword,
+        club_id: club.id,
+        role: 'student',
+      }
+    });
+
+    await prisma.bricks_club_memberships.create({
+      data: { email: email.toLowerCase().trim(), clubId: club.id, role: 'admin' }
+    });
+
+    const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+
+    res.json({ token, userId: user.user_id, clubId: club.id });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Error al crear la cuenta. Inténtalo de nuevo.' });
+  }
+});
+
 app.post('/api/auth/me', async (req, res) => {
   try {
     const { userId } = req.body;
