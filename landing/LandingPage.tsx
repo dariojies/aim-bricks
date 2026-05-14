@@ -505,13 +505,13 @@ export function LandingPage() {
               <p className="quote">Teníamos decenas de sets de LEGO® sin gestionar bien — siempre faltaba alguna pieza y nadie sabía quién tenía qué. Con Shelfie los alumnos reservan solos y nuestro equipo solo tiene que entregar y recoger. Ha sido un cambio brutal.</p>
               <div className="quote-attr">
                 <div className="av">CM</div>
-                <div className="meta"><strong>Carlos M.</strong>Director · Aim Education</div>
+                <div className="meta"><strong>Darío Jiménez</strong>Director · Aim Education</div>
               </div>
             </div>
             <div className="logos-wall">
               <div className="logo-chip">Aim Education</div>
-              <div className="logo-chip">Aim Madrid</div>
-              <div className="logo-chip">Aim Barcelona</div>
+              <div className="logo-chip">Ye Ui by Aim</div>
+              <div className="logo-chip">Aim Castellón</div>
               <div className="logo-chip">Aim Valencia</div>
               <div className="logo-chip">Aim Sevilla</div>
               <div className="logo-chip">Aim Murcia</div>
@@ -567,7 +567,7 @@ export function LandingPage() {
               <div className="price">A medida</div>
               <p className="desc">Para cadenas o grupos con varios centros que comparten la plataforma.</p>
               <ul>
-                <li><span className="dot">✓</span> Hasta 10 categorías de catálogo</li>
+                <li><span className="dot">✓</span> Sin límite de categorías en catálogo</li>
                 <li><span className="dot">✓</span> Recursos ilimitados en catálogo</li>
                 <li><span className="dot">✓</span> Importación masiva desde CSV / Excel</li>
                 <li><span className="dot">✓</span> Multi-club con catálogos independientes</li>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="#2E2E2D"/>
+
+  <!-- Books / bars (purple, green, yellow, pink — Aim palette) -->
+  <rect x="76"  y="148" width="82" height="280" rx="16" fill="#5233A8"/>
+  <rect x="176" y="96"  width="82" height="332" rx="16" fill="#21B668"/>
+  <rect x="276" y="188" width="82" height="240" rx="16" fill="#FFD526"/>
+  <rect x="370" y="128" width="66" height="300" rx="16" fill="#FF99D3"/>
+
+  <!-- Shelf line -->
+  <rect x="56" y="448" width="400" height="22" rx="11" fill="rgba(255,255,255,0.22)"/>
+</svg>

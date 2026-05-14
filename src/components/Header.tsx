@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, LogIn, User, Heart, Trophy, Crown, Menu, X } from 'lucide-react';
+import { LogIn, User, Heart, Trophy, Crown, Menu, X } from 'lucide-react';
 
 interface Props {
   isLoggedIn: boolean;
@@ -56,9 +56,7 @@ export const Header: React.FC<Props> = ({
       <header className="glass-panel animate-slide-down app-header">
         {/* Logo */}
         <div className="app-header-logo" onClick={() => { closeMobile(); onTabChange('catalog'); }}>
-          <div style={{ background: 'var(--primary)', padding: '0.35rem', borderRadius: '8px' }}>
-            <Box color="#fff" size={18} />
-          </div>
+          <img src="/logo.svg" alt="Shelfie" style={{ width: '36px', height: '36px', display: 'block', flexShrink: 0 }} />
           <h1 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Shelfie</h1>
         </div>
 
