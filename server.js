@@ -2054,10 +2054,9 @@ app.get('/api/admin/clubs', async (req, res) => {
   }
 });
 
-// Landing page (served at root, before the React SPA)
-app.use('/landing', express.static(join(__dirname, 'landing')));
+// Landing page — served from Vite build output at root
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'landing', 'index.html'));
+  res.sendFile(join(__dirname, 'dist', 'landing', 'index.html'));
 });
 
 // React SPA — all other routes (e.g. /app, /app/*)
