@@ -1658,3 +1658,160 @@ html[data-theme="dark"] .reg-error { color: #FC8181; }
   .reg-overlay { padding: 1rem 0.75rem; align-items: flex-start; }
   .reg-cancel-mobile { display: block; }
 }
+
+/* ============================================================
+   Mobile hamburger + nav drawer
+   ============================================================ */
+
+/* Burger button — hidden on desktop, shown on mobile */
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: 1px solid rgba(0,0,0,0.13);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 7px 9px;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .nav-burger { border-color: rgba(255,255,255,0.15); }
+
+.nav-burger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+}
+
+/* Mobile nav overlay */
+.landing-mobile-nav {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.landing-mobile-nav.open { display: flex; }
+
+.landing-mobile-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(300px, 85vw);
+  background: var(--bg-2);
+  border-left: 1px solid var(--line);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  animation: slideInRightLanding 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRightLanding {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.landing-mobile-close {
+  align-self: flex-end;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ink-2);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.landing-mobile-panel nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0.25rem 0;
+}
+
+.landing-mobile-panel nav a {
+  display: block;
+  padding: 0.85rem 0.75rem;
+  border-radius: 8px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.12s;
+}
+
+.landing-mobile-panel nav a:hover,
+.landing-mobile-panel nav a:active { background: var(--bg-3); }
+
+/* Hide "Registrarse" text button and "Iniciar sesión" link on mobile — replaced by drawer */
+@media (max-width: 1024px) {
+  .nav-burger { display: flex; }
+  /* Show theme switch but hide text-only nav items */
+  .nav.links { display: none; } /* already done, just being explicit */
+  /* Hide the text "Iniciar sesión" link in .right on mobile since it's in the drawer */
+  .right .signin { display: none; }
+  /* Hide "Registrarse" button on mobile — it's in the drawer */
+  .right .btn.btn-primary { display: none; }
+}
+
+/* ============================================================
+   Mock table — mobile: collapse to 2 columns
+   ============================================================ */
+@media (max-width: 520px) {
+  .showcase .mock .mock-thead,
+  .showcase .mock .mock-row {
+    grid-template-columns: 1.4fr 1.2fr;
+  }
+
+  /* Hide Article and Action columns */
+  .showcase .mock .mock-thead span:nth-child(2),
+  .showcase .mock .mock-thead span:nth-child(4),
+  .showcase .mock .mock-row > .mock-article-cell,
+  .showcase .mock .mock-row > .mock-actions { display: none; }
+
+  /* Toolbar: stack vertically */
+  .showcase .mock .mock-toolbar { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .showcase .mock .mock-search { max-width: 100%; }
+}
+
+/* ============================================================
+   General mobile tweaks (landing page)
+   ============================================================ */
+@media (max-width: 480px) {
+  /* Tighter container */
+  .container { padding-left: 16px; padding-right: 16px; }
+
+  /* Hero heading size */
+  .hero h1 { font-size: clamp(28px, 8vw, 44px); }
+  .hero .subhead { font-size: 0.9rem; }
+
+  /* Feature icons: 2 columns stay, but shrink the text */
+  .feature-icons .lbl { font-size: 0.7rem; }
+
+  /* Top banner: hide sparkle pill on very small screens */
+  .top-banner { font-size: 0.8rem; padding: 8px 16px; }
+  .top-banner .pill { display: none; }
+
+  /* Reduce section title font */
+  .section-title { font-size: clamp(20px, 5.5vw, 28px); }
+
+  /* Pricing cards: reduce padding */
+  .price-card { padding: 24px 20px; }
+
+  /* Steps */
+  .step .num { font-size: 2.5rem; }
+}

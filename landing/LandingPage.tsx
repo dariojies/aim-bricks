@@ -11,6 +11,7 @@ const Sparkle = () => (
 
 export function LandingPage() {
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [regName, setRegName] = useState('');
   const [regClub, setRegClub] = useState('');
   const [regEmail, setRegEmail] = useState('');
@@ -137,7 +138,7 @@ export function LandingPage() {
           </nav>
           <div className="right">
             <a href="/app?login=1" className="signin">Iniciar sesión</a>
-            <button className="theme-switch" onClick={toggleTheme} aria-label="Cambiar tema">
+            <button className="theme-switch" onClick={toggleTheme} aria-label="Cambiar tema" style={{ flexShrink: 0 }}>
               <span className="ts-icon ts-sun" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="4" />
@@ -151,9 +152,30 @@ export function LandingPage() {
               </span>
             </button>
             <button onClick={openRegister} className="btn btn-primary">Registrarse</button>
+            <button className="nav-burger" onClick={() => setMobileNavOpen(true)} aria-label="Menú">
+              <span></span><span></span><span></span>
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile nav drawer */}
+      <div className={`landing-mobile-nav${mobileNavOpen ? ' open' : ''}`} onClick={() => setMobileNavOpen(false)}>
+        <div className="landing-mobile-panel" onClick={e => e.stopPropagation()}>
+          <button className="landing-mobile-close" onClick={() => setMobileNavOpen(false)} aria-label="Cerrar">✕</button>
+          <span className="wordmark" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>shelfie<Sparkle /></span>
+          <nav>
+            <a href="#producto" onClick={() => setMobileNavOpen(false)}>Plataforma</a>
+            <a href="#funcionalidades" onClick={() => setMobileNavOpen(false)}>Funcionalidades</a>
+            <a href="#centros" onClick={() => setMobileNavOpen(false)}>Para academias</a>
+            <a href="#precios" onClick={() => setMobileNavOpen(false)}>Planes</a>
+            <a href="#recursos" onClick={() => setMobileNavOpen(false)}>Preguntas</a>
+          </nav>
+          <div style={{ flexGrow: 1 }} />
+          <a href="/app?login=1" className="btn btn-outline" style={{ width: '100%', textAlign: 'center', justifyContent: 'center' }}>Iniciar sesión</a>
+          <button onClick={() => { setMobileNavOpen(false); openRegister(); }} className="btn btn-primary" style={{ width: '100%' }}>Registrarse</button>
+        </div>
+      </div>
 
       {/* Hero */}
       <section className="hero" id="producto">
