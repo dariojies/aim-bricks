@@ -1435,8 +1435,8 @@ app.post('/api/admin/items/:id/review', async (req, res) => {
 
     if (pieces && pieces.length > 0) {
       const description = pieces
-        .filter((p: any) => p.elementId && p.quantity > 0)
-        .map((p: any) => `${p.elementId}: ${p.quantity}`)
+        .filter(p => p.elementId && p.quantity > 0)
+        .map(p => `${p.elementId}: ${p.quantity}`)
         .join('\n');
 
       if (description) {
