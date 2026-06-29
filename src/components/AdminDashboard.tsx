@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -520,6 +520,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     if (userClubRole === 'owner') return targetRole !== 'owner';
     if (userClubRole === 'profesor') return targetRole === 'member';
     return false;
+  };
+
+  const handleExportPiecesCsv = () => {
+    const pending = reports.filter(r => r.status === 'Pending');
+    const totals: Record<string, number> = {};
+
+    pending.forEach(report => {
+      const lines = (report.description || '').split(/[\n,;]+/);
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        // Formats: "300321: 2", "300321 2", "300321x2", "300321 x 2"
+        const match = trimmed.match(/^(\d{4,8})\s*[:\sx]+\s*(\d+)$/i);
+        if (match) {
+          const id = match[1];
+          const qty = parseInt(match[2], 10);
+          totals[id] = (totals[id] || 0) + qty;
+        } else {
+          // Solo el ID sin cantidad → contar como 1
+          const solo = trimmed.match(/^(\d{4,8})$/);
+          if (solo) totals[solo[1]] = (totals[solo[1]] || 0) + 1;
+        }
+      });
+    });
+
+    const rows = Object.entries(totals);
+    if (rows.length === 0) {
+      alert('No se encontraron IDs de piezas en los reportes pendientes.\nUsa el formato: "elementId: cantidad" en las descripciones (ej: "300321: 2").');
+      return;
+    }
+
+    const csv = ['elementId,quantity', ...rows.map(([id, qty]) => `${id},${qty}`)].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `piezas_faltantes_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -1382,7 +1422,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
       {activeTab === 'pieces' && (
         <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Reportes de Piezas Faltantes</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.5rem', margin: 0 }}>Reportes de Piezas Faltantes</h3>
+            {reports.length > 0 && (
+              <button
+                className="btn btn-outline"
+                onClick={handleExportPiecesCsv}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
+              >
+                <Download size={16} /> Exportar CSV para LEGO
+              </button>
+            )}
+          </div>
           {reports.length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No hay reportes de piezas perdidas por el momento.</p>
           ) : (

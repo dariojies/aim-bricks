@@ -903,37 +903,6 @@ function App() {
         <MessageCircle size={28} color="white" />
       </button>
 
-      {/* Floating Theme Toggle (Ticket #82 - Styled like Support) */}
-      <button
-        className="btn"
-        onClick={toggleTheme}
-        style={{
-          position: 'fixed', bottom: '2rem', left: '1.5rem', zIndex: 90,
-          width: '60px', height: '60px', borderRadius: '50%', padding: 0,
-          boxShadow: '0 8px 32px rgba(82, 51, 168, 0.4)',
-          background: 'linear-gradient(135deg, #5233A8, #21B668)',
-          color: 'white',
-          border: '2px solid rgba(255, 255, 255, 0.2)',
-          cursor: 'pointer',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1) translateY(-5px)';
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(82, 51, 168, 0.6)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(82, 51, 168, 0.4)';
-        }}
-        aria-label="Cambiar tema"
-        title="Cambiar entre modo claro y oscuro"
-      >
-        {isDark ? <Sun size={28} color="white" /> : <Moon size={28} color="white" />}
-      </button>
-
       {/* Support Modal */}
       {showSupportModal && (
         <div style={{
