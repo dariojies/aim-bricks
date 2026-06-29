@@ -528,7 +528,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
     pending.forEach(report => {
       const lines = (report.description || '').split(/[\n,;]+/);
-      lines.forEach(line => {
+      lines.forEach((line: string) => {
         const trimmed = line.trim();
         // Formats: "300321: 2", "300321 2", "300321x2", "300321 x 2"
         const match = trimmed.match(/^(\d{4,8})\s*[:\sx]+\s*(\d+)$/i);
