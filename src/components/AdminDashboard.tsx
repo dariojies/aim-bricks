@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download, ClipboardCheck } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -96,6 +96,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const [isProOnly, setIsProOnly] = useState(false);
   const [editIsProOnly, setEditIsProOnly] = useState(false);
+
+  // Review modal state
+  const [reviewingItem, setReviewingItem] = useState<CatalogItem | null>(null);
+  const [reviewPieces, setReviewPieces] = useState<{ elementId: string; quantity: string }[]>([{ elementId: '', quantity: '1' }]);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [allowHomeBuild, setAllowHomeBuild] = useState(true);
   const [editAllowHomeBuild, setEditAllowHomeBuild] = useState(true);
 
@@ -520,6 +525,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     if (userClubRole === 'owner') return targetRole !== 'owner';
     if (userClubRole === 'profesor') return targetRole === 'member';
     return false;
+  };
+
+  const handleSubmitReview = async (onlyDate: boolean) => {
+    if (!reviewingItem) return;
+    setReviewSubmitting(true);
+    try {
+      const validPieces = onlyDate
+        ? []
+        : reviewPieces.filter(p => p.elementId.trim() && parseInt(p.quantity) > 0)
+            .map(p => ({ elementId: p.elementId.trim(), quantity: parseInt(p.quantity) }));
+
+      const res = await fetch(`${API_URL}/api/admin/items/${reviewingItem.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, pieces: validPieces })
+      });
+      if (res.ok) {
+        fetchCatalog();
+        fetchReports();
+        setReviewingItem(null);
+        setReviewPieces([{ elementId: '', quantity: '1' }]);
+      } else {
+        alert('Error al guardar la revisión.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error de conexión.');
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const handleExportPiecesCsv = () => {
@@ -1319,19 +1354,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                         </div>
                       )}
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.type} • Stock físico: {item.stock || 1} • {item.isAvailable ? 'Disponible' : 'Agotado'}</span>
+                      {item.lastReviewedAt && (
+                        <span style={{ fontSize: '0.7rem', color: '#21B668', display: 'block', marginTop: '0.15rem' }}>
+                          ✓ Revisado: {new Date(item.lastReviewedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      {!item.lastReviewedAt && item.type === 'Aim Brickslab' && (
+                        <span style={{ fontSize: '0.7rem', color: '#F59E0B', display: 'block', marginTop: '0.15rem' }}>
+                          Sin revisar
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', width: '100%', flexWrap: 'wrap' }}>
+                    {item.type === 'Aim Brickslab' && (
+                      <button
+                        className="btn btn-outline"
+                        style={{ flex: 1, minWidth: '80px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(33, 182, 104, 0.4)', color: '#21B668' }}
+                        onClick={() => {
+                          setReviewingItem(item);
+                          setReviewPieces([{ elementId: '', quantity: '1' }]);
+                        }}
+                      >
+                        <ClipboardCheck size={16} /> Revisar
+                      </button>
+                    )}
                     <button
                       className="btn btn-outline"
-                      style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+                      style={{ flex: 1, minWidth: '80px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
                       onClick={() => handleEditClick(item)}
                     >
                       <Pencil size={16} /> Editar
                     </button>
                     <button
                       className="btn btn-outline"
-                      style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }}
+                      style={{ flex: 1, minWidth: '80px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#F87171' }}
                       onClick={() => handleDeleteItem(item.id, item.type)}
                     >
                       <Trash2 size={16} /> Eliminar
@@ -2348,6 +2405,109 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de revisión de set */}
+      {reviewingItem && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem'
+        }}>
+          <div className="glass-panel animate-fade-in" style={{
+            width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto',
+            padding: '2rem', position: 'relative'
+          }}>
+            <button
+              onClick={() => setReviewingItem(null)}
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <img src={reviewingItem.imageUrl} alt={reviewingItem.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.2rem' }}>{reviewingItem.title}</h3>
+                {reviewingItem.legoReference && (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ref: {reviewingItem.legoReference}</span>
+                )}
+                <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  {reviewingItem.lastReviewedAt ? (
+                    <span style={{ color: '#21B668' }}>Última revisión: {new Date(reviewingItem.lastReviewedAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                  ) : (
+                    <span style={{ color: '#F59E0B' }}>Nunca revisado</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Piezas faltantes detectadas</label>
+                <button
+                  className="btn btn-outline"
+                  style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  onClick={() => setReviewPieces(prev => [...prev, { elementId: '', quantity: '1' }])}
+                >
+                  <Plus size={14} /> Añadir pieza
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {reviewPieces.map((piece, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      placeholder="Element ID (ej: 300321)"
+                      value={piece.elementId}
+                      onChange={e => setReviewPieces(prev => prev.map((p, idx) => idx === i ? { ...p, elementId: e.target.value } : p))}
+                      style={{ flex: 2, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.875rem' }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Cant."
+                      min="1"
+                      value={piece.quantity}
+                      onChange={e => setReviewPieces(prev => prev.map((p, idx) => idx === i ? { ...p, quantity: e.target.value } : p))}
+                      style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.875rem' }}
+                    />
+                    {reviewPieces.length > 1 && (
+                      <button
+                        onClick={() => setReviewPieces(prev => prev.filter((_, idx) => idx !== i))}
+                        style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', padding: '0.25rem' }}
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                Deja los campos vacíos si el set está completo.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                className="btn btn-outline"
+                style={{ flex: 1, minWidth: '160px' }}
+                disabled={reviewSubmitting}
+                onClick={() => handleSubmitReview(true)}
+              >
+                <CheckCircle size={16} style={{ marginRight: '0.4rem' }} />
+                Revisado sin piezas
+              </button>
+              <button
+                className="btn btn-primary"
+                style={{ flex: 1, minWidth: '160px' }}
+                disabled={reviewSubmitting || reviewPieces.every(p => !p.elementId.trim())}
+                onClick={() => handleSubmitReview(false)}
+              >
+                {reviewSubmitting ? 'Guardando...' : 'Guardar revisión con piezas'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

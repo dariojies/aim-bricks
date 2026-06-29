@@ -104,6 +104,9 @@ async function syncSchema() {
       );
     `);
 
+    // Ensure bricks_items review date column
+    await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_items" ADD COLUMN IF NOT EXISTS "lastReviewedAt" TIMESTAMP;`);
+
     // Ensure bricks_missing_pieces structure
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "itemId" UUID;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "bricks_missing_pieces" ADD COLUMN IF NOT EXISTS "userId" UUID;`);
@@ -915,7 +918,7 @@ app.get('/api/catalog', async (req, res) => {
     }
     if (!club) return res.json([]);
 
-    const [items, activeReservations, lockedIds] = await Promise.all([
+    const [items, activeReservations, lockedIds, reviewDates] = await Promise.all([
       prisma.bricks_items.findMany({
         where: { clubId: club.id },
         include: { category: true },
@@ -925,7 +928,10 @@ app.get('/api/catalog', async (req, res) => {
         where: { status: { in: ['Active', 'Reserved', 'Delivered'] } }
       }),
       getLockedCategoryIds(club.id),
+      prisma.$queryRawUnsafe(`SELECT id, "lastReviewedAt" FROM "bricks_items" WHERE "clubId" = '${club.id}'`)
+        .catch(() => []),
     ]);
+    const reviewMap = Object.fromEntries((reviewDates as any[]).map((r: any) => [r.id, r.lastReviewedAt]));
 
     // Map to include legacy-compatible fields and metadata
     const formatted = items.map(i => {
@@ -952,6 +958,7 @@ app.get('/api/catalog', async (req, res) => {
         legoReference: metadata.legoReference || null,
         author: metadata.author || null,
         isbn: metadata.isbn || null,
+        lastReviewedAt: reviewMap[i.id] || null,
         status: categoryLocked ? 'Bloqueado' : isActuallyAvailable ? 'Disponible' : 'Reservado'
       };
     });
@@ -1412,6 +1419,37 @@ app.delete('/api/reservations/:id', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error cancelando reserva.' });
+  }
+});
+
+// Admin review endpoint
+app.post('/api/admin/items/:id/review', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, pieces } = req.body;
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (!isUuid) return res.status(400).json({ error: 'ID inválido' });
+
+    await prisma.$executeRawUnsafe(`UPDATE "bricks_items" SET "lastReviewedAt" = NOW() WHERE id = '${id}'`);
+
+    if (pieces && pieces.length > 0) {
+      const description = pieces
+        .filter((p: any) => p.elementId && p.quantity > 0)
+        .map((p: any) => `${p.elementId}: ${p.quantity}`)
+        .join('\n');
+
+      if (description) {
+        await prisma.bricks_missing_pieces.create({
+          data: { userId, itemId: id, description, status: 'Pending' }
+        });
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error guardando revisión.' });
   }
 });
 

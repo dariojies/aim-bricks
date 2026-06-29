@@ -18,6 +18,7 @@ export interface CatalogItem {
   isProOnly?: boolean;
   categoryId?: string;
   metadata?: Record<string, any>;
+  lastReviewedAt?: string | null;
   categoryConfig?: {
     customFields?: Array<{ name: string, label: string, type: string }>;
     reservationMode?: 'brickslab' | 'library';
