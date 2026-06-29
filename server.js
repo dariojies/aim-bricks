@@ -931,7 +931,7 @@ app.get('/api/catalog', async (req, res) => {
       prisma.$queryRawUnsafe(`SELECT id, "lastReviewedAt" FROM "bricks_items" WHERE "clubId" = '${club.id}'`)
         .catch(() => []),
     ]);
-    const reviewMap = Object.fromEntries((reviewDates as any[]).map((r: any) => [r.id, r.lastReviewedAt]));
+    const reviewMap = Object.fromEntries(reviewDates.map(r => [r.id, r.lastReviewedAt]));
 
     // Map to include legacy-compatible fields and metadata
     const formatted = items.map(i => {
