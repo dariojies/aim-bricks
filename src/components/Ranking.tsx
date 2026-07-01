@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Award, Crown } from 'lucide-react';
+import { MagicText } from './MagicText';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
 
@@ -107,9 +108,9 @@ export const Ranking: React.FC = () => {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%', padding: '0 1rem' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 className="text-gradient" style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+        <h2 style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
           <Trophy size={40} className="text-accent" />
-          Ranking de Préstamos
+          <MagicText>Ranking de Préstamos</MagicText>
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '1rem' }}>
           Los alumnos más activos por categoría de préstamo.

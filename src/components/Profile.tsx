@@ -1,5 +1,6 @@
 import { Box, BookOpen, Clock } from 'lucide-react';
 import type { UserProfile } from '../data/mockData';
+import { MagicText } from './MagicText';
 
 interface Props {
   user: UserProfile;
@@ -16,7 +17,7 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 0' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h2 className="text-gradient hero-title">Mi Perfil</h2>
+        <h2 className="hero-title"><MagicText>Mi Perfil</MagicText></h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem' }}>
           ¡Hola, {user?.name || 'Usuario'}! Aquí tienes un resumen de tu actividad en Shelfie y Libros.
         </p>
