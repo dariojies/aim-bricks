@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download, ClipboardCheck } from 'lucide-react';
-import { MagicText } from './MagicText';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -601,8 +600,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '2.5rem', margin: 0 }}>
-          <MagicText>Panel de Administración</MagicText>
+        <h2 className="text-gradient" style={{ fontSize: '2.5rem', margin: 0 }}>
+          Panel de Administración
         </h2>
         {user?.memberships?.filter((m: any) => m.role === 'owner' || m.role === 'profesor').length > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>

@@ -138,66 +138,6 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-block;
 }
 
-/* ---- Magic animated text (estrellas + degradado en movimiento) ---- */
-@keyframes background-pan {
-  from { background-position: 0% center; }
-  to   { background-position: -200% center; }
-}
-
-@keyframes magic-scale {
-  from, to { transform: scale(0); }
-  50%      { transform: scale(1); }
-}
-
-@keyframes magic-rotate {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(180deg); }
-}
-
-.magic {
-  display: inline-block;
-  position: relative;
-}
-
-.magic-star {
-  --size: clamp(14px, 1.5vw, 22px);
-  animation: magic-scale 700ms ease forwards;
-  display: block;
-  height: var(--size);
-  left: var(--star-left);
-  position: absolute;
-  top: var(--star-top);
-  width: var(--size);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.magic-star > svg {
-  animation: magic-rotate 1000ms linear infinite;
-  display: block;
-  opacity: 0.85;
-}
-
-.magic-star > svg > path {
-  fill: var(--purple);
-}
-
-.magic-text {
-  animation: background-pan 3s linear infinite;
-  background: linear-gradient(
-    to right,
-    var(--purple),
-    var(--pink),
-    var(--yellow),
-    var(--teal),
-    var(--purple)
-  );
-  background-size: 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
 
 .text-accent { color: var(--accent); }
 

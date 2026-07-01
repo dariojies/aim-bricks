@@ -8,7 +8,6 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { SupportManager } from './components/SupportManager';
 import { Ranking } from './components/Ranking';
 import { type CatalogItem } from './data/mockData';
-import { MagicText } from './components/MagicText';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
 
@@ -479,8 +478,8 @@ function App() {
         {currentView === 'catalog' ? (
           <>
             <div style={{ marginBottom: '2.5rem' }}>
-              <h1 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-1px' }}>
-                <MagicText>Catálogo</MagicText>
+              <h1 className="text-gradient" style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-1px' }}>
+                Catálogo
               </h1>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>
                 Explora y reserva tus artículos favoritos del catálogo.
