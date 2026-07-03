@@ -97,6 +97,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [isProOnly, setIsProOnly] = useState(false);
   const [editIsProOnly, setEditIsProOnly] = useState(false);
 
+  // Pieces tab view
+  const [piecesView, setPiecesView] = useState<'bySet' | 'count'>('bySet');
+
   // Review modal state
   const [reviewingItem, setReviewingItem] = useState<CatalogItem | null>(null);
   const [reviewPieces, setReviewPieces] = useState<{ elementId: string; quantity: string }[]>([{ elementId: '', quantity: '1' }]);
@@ -1479,59 +1482,139 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
       {activeTab === 'pieces' && (
         <div className="glass-panel" style={{ padding: '2rem' }}>
+          {/* Header + toggle + export */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.5rem', margin: 0 }}>Reportes de Piezas Faltantes</h3>
-            {reports.length > 0 && (
-              <button
-                className="btn btn-outline"
-                onClick={handleExportPiecesCsv}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
-              >
-                <Download size={16} /> Exportar CSV para LEGO
-              </button>
-            )}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '10px', padding: '3px', gap: '3px' }}>
+                <button
+                  className={`btn ${piecesView === 'bySet' ? 'btn-primary' : ''}`}
+                  style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem', borderRadius: '7px', ...(piecesView !== 'bySet' ? { background: 'transparent', color: 'var(--text-muted)', boxShadow: 'none' } : {}) }}
+                  onClick={() => setPiecesView('bySet')}
+                >
+                  Por Set
+                </button>
+                <button
+                  className={`btn ${piecesView === 'count' ? 'btn-primary' : ''}`}
+                  style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem', borderRadius: '7px', ...(piecesView !== 'count' ? { background: 'transparent', color: 'var(--text-muted)', boxShadow: 'none' } : {}) }}
+                  onClick={() => setPiecesView('count')}
+                >
+                  Recuento Total
+                </button>
+              </div>
+              {reports.length > 0 && (
+                <button
+                  className="btn btn-outline"
+                  onClick={handleExportPiecesCsv}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', padding: '0.4rem 0.9rem' }}
+                >
+                  <Download size={14} /> CSV LEGO
+                </button>
+              )}
+            </div>
           </div>
+
           {reports.length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No hay reportes de piezas perdidas por el momento.</p>
+          ) : piecesView === 'bySet' ? (
+            /* ── Vista: Agrupado por set ── */
+            (() => {
+              const grouped: Record<string, any[]> = {};
+              reports.forEach((r: any) => {
+                if (!grouped[r.itemName]) grouped[r.itemName] = [];
+                grouped[r.itemName].push(r);
+              });
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {Object.entries(grouped).map(([setName, setReports]) => (
+                    <div key={setName} style={{ border: '1px solid var(--surface-border)', borderRadius: '12px', overflow: 'hidden' }}>
+                      <div style={{ background: 'rgba(82,51,168,0.08)', padding: '0.75rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4 style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{setName}</h4>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--surface-border)', padding: '0.15rem 0.6rem', borderRadius: '20px' }}>
+                          {setReports.filter((r: any) => r.status === 'Pending').length} pendiente{setReports.filter((r: any) => r.status === 'Pending').length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {setReports.map((report: any, idx: number) => (
+                          <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1rem', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.08)', borderTop: idx > 0 ? '1px solid var(--surface-border)' : 'none', gap: '1rem', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.userName}</span> · {new Date(report.reportedAt).toLocaleDateString()}
+                              </p>
+                              <p style={{ fontSize: '0.875rem', color: '#EF4444', fontStyle: 'italic', wordBreak: 'break-word' }}>
+                                "{report.description}"
+                              </p>
+                            </div>
+                            <div style={{ flexShrink: 0 }}>
+                              {report.status === 'Pending' ? (
+                                <button
+                                  className="btn btn-primary"
+                                  style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                                  onClick={async () => {
+                                    await fetch(`${API_URL}/api/admin/pieces/resolve`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ reportId: report.id })
+                                    });
+                                    fetchReports();
+                                  }}
+                                >
+                                  Marcar Resuelto
+                                </button>
+                              ) : (
+                                <span style={{ color: '#5233A8', fontSize: '0.8rem', fontWeight: 600 }}>✓ Cerrado</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {reports.map((report: any) => (
-                <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: report.status === 'Pending' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--surface-border)' }}>
-                  <div>
-                    <h4 style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '0.25rem' }}>{report.itemName}</h4>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                      <span style={{ color: 'var(--accent)' }}>{report.userName}</span> ({report.userEmail})
-                    </p>
-                    <p style={{ fontSize: '0.875rem', color: '#EF4444', fontStyle: 'italic' }}>
-                      Descripción: "{report.description}"
-                    </p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Reportado el: {new Date(report.reportedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    {report.status === 'Pending' ? (
-                      <button
-                        className="btn btn-primary"
-                        style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-                        onClick={async () => {
-                          await fetch(`${API_URL}/api/admin/pieces/resolve`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ reportId: report.id })
-                          });
-                          fetchReports();
-                        }}
-                      >
-                        Marcar Resuelto
-                      </button>
-                    ) : (
-                      <span style={{ color: '#5233A8', fontSize: '0.875rem', fontWeight: 600 }}>Cerrado</span>
-                    )}
+            /* ── Vista: Recuento total de piezas ── */
+            (() => {
+              const totals: Record<string, number> = {};
+              reports.filter((r: any) => r.status === 'Pending').forEach((report: any) => {
+                (report.description || '').split(/[\n,;]+/).forEach((line: string) => {
+                  const t = line.trim();
+                  const m = t.match(/^(\d{4,8})\s*[:\sx]+\s*(\d+)$/i);
+                  if (m) {
+                    totals[m[1]] = (totals[m[1]] || 0) + parseInt(m[2], 10);
+                  } else {
+                    const solo = t.match(/^(\d{4,8})$/);
+                    if (solo) totals[solo[1]] = (totals[solo[1]] || 0) + 1;
+                  }
+                });
+              });
+              const rows = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+              return rows.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <p style={{ marginBottom: '0.5rem' }}>No se encontraron IDs de piezas parseables en los reportes pendientes.</p>
+                  <p style={{ fontSize: '0.8rem' }}>Usa el formato <code>elementId: cantidad</code> en las descripciones (ej: <code>300321: 2</code>).</p>
+                </div>
+              ) : (
+                <div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                    {rows.length} referencia{rows.length !== 1 ? 's' : ''} distintas · solo reportes pendientes
+                  </p>
+                  <div style={{ border: '1px solid var(--surface-border)', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', background: 'rgba(82,51,168,0.08)', padding: '0.6rem 1rem', borderBottom: '1px solid var(--surface-border)' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Element ID</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Cantidad</span>
+                    </div>
+                    {rows.map(([id, qty], idx) => (
+                      <div key={id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '0.65rem 1rem', borderTop: idx > 0 ? '1px solid var(--surface-border)' : 'none', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.06)' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text)', fontWeight: 600 }}>{id}</span>
+                        <span style={{ fontWeight: 700, color: qty > 1 ? '#EF4444' : 'var(--text)', textAlign: 'right' }}>{qty}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()
           )}
         </div>
       )}
