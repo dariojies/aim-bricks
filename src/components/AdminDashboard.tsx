@@ -100,11 +100,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   // Pieces tab view
   const [piecesView, setPiecesView] = useState<'bySet' | 'count'>('bySet');
   const [expandedSets, setExpandedSets] = useState<Set<string>>(new Set());
+  const [expandedPieces, setExpandedPieces] = useState<Set<string>>(new Set());
 
   const toggleSet = (name: string) => {
     setExpandedSets(prev => {
       const next = new Set(prev);
       next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+  };
+
+  const togglePiece = (id: string) => {
+    setExpandedPieces(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
@@ -1611,22 +1620,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               );
             })()
           ) : (
-            /* ── Vista: Recuento total de piezas ── */
+            /* ── Vista: Recuento total de piezas (desplegable por set) ── */
             (() => {
-              const totals: Record<string, number> = {};
+              // Build: elementId → { total, bySet: { setName → qty } }
+              const pieceMap: Record<string, { total: number; bySet: Record<string, number> }> = {};
               reports.filter((r: any) => r.status === 'Pending').forEach((report: any) => {
                 (report.description || '').split(/[\n,;]+/).forEach((line: string) => {
                   const t = line.trim();
                   const m = t.match(/^(\d{4,8})\s*[:\sx]+\s*(\d+)$/i);
-                  if (m) {
-                    totals[m[1]] = (totals[m[1]] || 0) + parseInt(m[2], 10);
-                  } else {
-                    const solo = t.match(/^(\d{4,8})$/);
-                    if (solo) totals[solo[1]] = (totals[solo[1]] || 0) + 1;
-                  }
+                  const id = m ? m[1] : t.match(/^(\d{4,8})$/)?.[1];
+                  const qty = m ? parseInt(m[2], 10) : id ? 1 : 0;
+                  if (!id || qty === 0) return;
+                  if (!pieceMap[id]) pieceMap[id] = { total: 0, bySet: {} };
+                  pieceMap[id].total += qty;
+                  pieceMap[id].bySet[report.itemName] = (pieceMap[id].bySet[report.itemName] || 0) + qty;
                 });
               });
-              const rows = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+              const rows = Object.entries(pieceMap).sort((a, b) => b[1].total - a[1].total);
+
               return rows.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                   <p style={{ marginBottom: '0.5rem' }}>No se encontraron IDs de piezas parseables en los reportes pendientes.</p>
@@ -1637,17 +1648,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                     {rows.length} referencia{rows.length !== 1 ? 's' : ''} distintas · solo reportes pendientes
                   </p>
-                  <div style={{ border: '1px solid var(--surface-border)', borderRadius: '10px', overflow: 'hidden' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', background: 'rgba(82,51,168,0.08)', padding: '0.6rem 1rem', borderBottom: '1px solid var(--surface-border)' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Element ID</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Cantidad</span>
-                    </div>
-                    {rows.map(([id, qty], idx) => (
-                      <div key={id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '0.65rem 1rem', borderTop: idx > 0 ? '1px solid var(--surface-border)' : 'none', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.06)' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text)', fontWeight: 600 }}>{id}</span>
-                        <span style={{ fontWeight: 700, color: qty > 1 ? '#EF4444' : 'var(--text)', textAlign: 'right' }}>{qty}</span>
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {rows.map(([id, data]) => {
+                      const isOpen = expandedPieces.has(id);
+                      const sets = Object.entries(data.bySet);
+                      return (
+                        <div key={id} style={{ border: '1px solid var(--surface-border)', borderRadius: '10px', overflow: 'hidden' }}>
+                          <button
+                            onClick={() => togglePiece(id)}
+                            style={{ width: '100%', background: 'rgba(82,51,168,0.06)', border: 'none', cursor: 'pointer', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left' }}
+                          >
+                            <span style={{ fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text)', flex: 1 }}>{id}</span>
+                            <span style={{ fontWeight: 700, fontSize: '1rem', color: data.total > 1 ? '#EF4444' : 'var(--text)', minWidth: '2rem', textAlign: 'right' }}>{data.total}</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
+                              {sets.length} set{sets.length !== 1 ? 's' : ''}
+                            </span>
+                            {isOpen
+                              ? <ChevronUp size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                              : <ChevronDown size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                            }
+                          </button>
+                          {isOpen && (
+                            <div style={{ borderTop: '1px solid var(--surface-border)' }}>
+                              {sets.map(([setName, qty], idx) => (
+                                <div key={setName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem 0.5rem 1.5rem', borderTop: idx > 0 ? '1px solid var(--surface-border)' : 'none', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.04)' }}>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{setName}</span>
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>×{qty}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
