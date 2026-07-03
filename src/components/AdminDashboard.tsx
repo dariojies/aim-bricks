@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download, ClipboardCheck } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download, ClipboardCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
@@ -99,6 +99,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   // Pieces tab view
   const [piecesView, setPiecesView] = useState<'bySet' | 'count'>('bySet');
+  const [expandedSets, setExpandedSets] = useState<Set<string>>(new Set());
+
+  const toggleSet = (name: string) => {
+    setExpandedSets(prev => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+  };
 
   // Review modal state
   const [reviewingItem, setReviewingItem] = useState<CatalogItem | null>(null);
@@ -1517,7 +1526,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           {reports.length === 0 ? (
             <p style={{ color: 'var(--text-muted)' }}>No hay reportes de piezas perdidas por el momento.</p>
           ) : piecesView === 'bySet' ? (
-            /* ── Vista: Agrupado por set ── */
+            /* ── Vista: Agrupado por set (desplegable) ── */
             (() => {
               const grouped: Record<string, any[]> = {};
               reports.forEach((r: any) => {
@@ -1525,51 +1534,79 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 grouped[r.itemName].push(r);
               });
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {Object.entries(grouped).map(([setName, setReports]) => (
-                    <div key={setName} style={{ border: '1px solid var(--surface-border)', borderRadius: '12px', overflow: 'hidden' }}>
-                      <div style={{ background: 'rgba(82,51,168,0.08)', padding: '0.75rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4 style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{setName}</h4>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--surface-border)', padding: '0.15rem 0.6rem', borderRadius: '20px' }}>
-                          {setReports.filter((r: any) => r.status === 'Pending').length} pendiente{setReports.filter((r: any) => r.status === 'Pending').length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        {setReports.map((report: any, idx: number) => (
-                          <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1rem', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.08)', borderTop: idx > 0 ? '1px solid var(--surface-border)' : 'none', gap: '1rem', flexWrap: 'wrap' }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
-                                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.userName}</span> · {new Date(report.reportedAt).toLocaleDateString()}
-                              </p>
-                              <p style={{ fontSize: '0.875rem', color: '#EF4444', fontStyle: 'italic', wordBreak: 'break-word' }}>
-                                "{report.description}"
-                              </p>
-                            </div>
-                            <div style={{ flexShrink: 0 }}>
-                              {report.status === 'Pending' ? (
-                                <button
-                                  className="btn btn-primary"
-                                  style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
-                                  onClick={async () => {
-                                    await fetch(`${API_URL}/api/admin/pieces/resolve`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ reportId: report.id })
-                                    });
-                                    fetchReports();
-                                  }}
-                                >
-                                  Marcar Resuelto
-                                </button>
-                              ) : (
-                                <span style={{ color: '#5233A8', fontSize: '0.8rem', fontWeight: 600 }}>✓ Cerrado</span>
-                              )}
-                            </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {Object.entries(grouped).map(([setName, setReports]) => {
+                    const isOpen = expandedSets.has(setName);
+                    const pending = setReports.filter((r: any) => r.status === 'Pending').length;
+                    const itemImage = items.find(i => i.title === setName)?.imageUrl;
+                    return (
+                      <div key={setName} style={{ border: '1px solid var(--surface-border)', borderRadius: '12px', overflow: 'hidden' }}>
+                        {/* Cabecera clicable */}
+                        <button
+                          onClick={() => toggleSet(setName)}
+                          style={{ width: '100%', background: 'rgba(82,51,168,0.06)', border: 'none', cursor: 'pointer', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left' }}
+                        >
+                          {itemImage && (
+                            <img
+                              src={itemImage}
+                              alt={setName}
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                            />
+                          )}
+                          <span style={{ flex: 1, fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{setName}</span>
+                          <span style={{
+                            fontSize: '0.75rem', padding: '0.15rem 0.6rem', borderRadius: '20px', flexShrink: 0,
+                            background: pending > 0 ? 'rgba(239,68,68,0.15)' : 'var(--surface-border)',
+                            color: pending > 0 ? '#EF4444' : 'var(--text-muted)'
+                          }}>
+                            {pending} pendiente{pending !== 1 ? 's' : ''}
+                          </span>
+                          {isOpen
+                            ? <ChevronUp size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                            : <ChevronDown size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                          }
+                        </button>
+
+                        {/* Contenido desplegable */}
+                        {isOpen && (
+                          <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--surface-border)' }}>
+                            {setReports.map((report: any, idx: number) => (
+                              <div key={report.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1rem', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.05)', borderTop: idx > 0 ? '1px solid var(--surface-border)' : 'none', gap: '1rem', flexWrap: 'wrap' }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                                    <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.userName}</span> · {new Date(report.reportedAt).toLocaleDateString()}
+                                  </p>
+                                  <p style={{ fontSize: '0.875rem', color: '#EF4444', fontStyle: 'italic', wordBreak: 'break-word' }}>
+                                    "{report.description}"
+                                  </p>
+                                </div>
+                                <div style={{ flexShrink: 0 }}>
+                                  {report.status === 'Pending' ? (
+                                    <button
+                                      className="btn btn-primary"
+                                      style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                                      onClick={async () => {
+                                        await fetch(`${API_URL}/api/admin/pieces/resolve`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ reportId: report.id })
+                                        });
+                                        fetchReports();
+                                      }}
+                                    >
+                                      Marcar Resuelto
+                                    </button>
+                                  ) : (
+                                    <span style={{ color: '#5233A8', fontSize: '0.8rem', fontWeight: 600 }}>✓ Cerrado</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })()
