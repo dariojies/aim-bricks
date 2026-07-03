@@ -1624,7 +1624,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             (() => {
               // Build: elementId → { total, bySet: { setName → qty } }
               const pieceMap: Record<string, { total: number; bySet: Record<string, number> }> = {};
-              reports.filter((r: any) => r.status === 'Pending').forEach((report: any) => {
+              reports.forEach((report: any) => {
                 (report.description || '').split(/[\n,;]+/).forEach((line: string) => {
                   const t = line.trim();
                   const m = t.match(/^(\d{4,8})\s*[:\sx]+\s*(\d+)$/i);
@@ -1646,7 +1646,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               ) : (
                 <div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    {rows.length} referencia{rows.length !== 1 ? 's' : ''} distintas · solo reportes pendientes
+                    {rows.length} referencia{rows.length !== 1 ? 's' : ''} distintas · todos los reportes
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {rows.map(([id, data]) => {
