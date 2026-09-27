@@ -13,7 +13,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const prisma = new PrismaClient();
+// La base (Essential-0, 20 conexiones) la comparten aim-education (8), aim-tul (5)
+// y esta app (3). Sin tope, Prisma abre tantas como procesadores ve el servidor
+// (x2 + 1), que en Heroku pueden pasar de 15. PRISMA_CONNECTION_LIMIT lo ajusta.
+function urlConTope(url) {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has('connection_limit')) u.searchParams.set('connection_limit', process.env.PRISMA_CONNECTION_LIMIT || '3');
+    return u.toString();
+  } catch { return url; }
+}
+const prisma = new PrismaClient({ datasourceUrl: urlConTope(process.env.DATABASE_URL) });
 const PORT = process.env.PORT || 3000;
 
 // Auto-sync schema and migrate data safely
