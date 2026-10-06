@@ -689,7 +689,17 @@ function App() {
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }}
                 required
               />
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              {/* La cuenta es la misma que en la web de Aim Education, que es la que
+                  tiene la recuperación por correo: la contraseña nueva vale aquí. */}
+              <a
+                href={`https://www.aimeducation.es/auth?mode=olvido${loginEmail.includes('@') ? `&email=${encodeURIComponent(loginEmail.trim())}` : ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ alignSelf: 'flex-end', fontSize: '0.85rem', color: 'var(--accent)', textDecoration: 'none' }}
+              >
+                ¿Has olvidado tu contraseña?
+              </a>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowLoginModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Entrar</button>
               </div>
