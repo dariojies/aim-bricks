@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -415,6 +416,197 @@ syncSchema();
 app.use(cors());
 app.use(express.json());
 
+// ── Sesión y permisos ─────────────────────────────────────────────────────────
+// El servidor no se fía de lo que manda la pantalla (userId, requesterEmail):
+// quién es cada uno sale del token de su sesión, firmado con JWT_SECRET. La tabla
+// users es compartida con otras apps (aim-education): una cuenta de aquí es la
+// misma que allí, así que cambiar contraseñas, roles o tickets exige una sesión
+// válida y permiso sobre ese club.
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(48).toString('hex');
+if (!process.env.JWT_SECRET) console.warn('[auth] Falta JWT_SECRET: las sesiones se pierden en cada reinicio. Ponlo en Heroku (Config Vars).');
+const firmarSesion = (userId) => jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '30d' });
+// Los superadmin: los de la lista del panel (AdminDashboard) y los marcados en la base.
+const SUPER_ADMINS = new Set(['d3859034-059e-4e90-ad8d-2a0a7f95c1f2', '631c7f2a-4949-442b-890b-24a990aca939', '465858fb-4d71-4c0c-b0df-7ea7ac35bb75']);
+const ROLES_ADMIN = ['owner', 'profesor', 'admin'];
+const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function leerSesion(req) {
+  if (req.usuario !== undefined) return req.usuario;
+  req.usuario = null;
+  const m = /^Bearer\s+(.+)$/i.exec(req.headers.authorization || '');
+  if (!m) return null;
+  let datos;
+  try { datos = jwt.verify(m[1], JWT_SECRET); } catch { return null; }
+  if (!ES_UUID.test(String(datos?.id || ''))) return null;
+  const u = await prisma.users.findUnique({ where: { user_id: String(datos.id) }, select: { user_id: true, email: true, dev_role: true } });
+  if (!u) return null;
+  const email = (u.email || '').toLowerCase();
+  const ms = email ? await prisma.bricks_club_memberships.findMany({ where: { email }, select: { clubId: true, role: true } }) : [];
+  req.usuario = { id: u.user_id, email, superadmin: u.dev_role === 'superadmin' || SUPER_ADMINS.has(u.user_id), roles: new Map(ms.map(x => [x.clubId, x.role])) };
+  return req.usuario;
+}
+const adminDe = (u, clubId) => !!u && (u.superadmin || (!!clubId && ROLES_ADMIN.includes(u.roles.get(String(clubId)))));
+const adminDeAlguno = (u) => !!u && (u.superadmin || [...u.roles.values()].some(r => ROLES_ADMIN.includes(r)));
+const conSesion = async (req, res, next) => {
+  try {
+    if (!(await leerSesion(req))) return res.status(401).json({ error: 'Tu sesión ha caducado. Vuelve a entrar.' });
+    next();
+  } catch (e) { next(e); }
+};
+const soloSuperadmin = async (req, res, next) => {
+  try {
+    const u = await leerSesion(req);
+    if (!u) return res.status(401).json({ error: 'Tu sesión ha caducado. Vuelve a entrar.' });
+    if (!u.superadmin) return res.status(403).json({ error: 'Solo para el panel maestro.' });
+    next();
+  } catch (e) { next(e); }
+};
+// De qué club es cada cosa (para comprobar que quien la toca lleva ese club).
+const clubDeItem = async (id) => (ES_UUID.test(String(id || '')) ? (await prisma.bricks_items.findUnique({ where: { id: String(id) }, select: { clubId: true } }))?.clubId : null);
+const clubDeCategoria = async (id) => (ES_UUID.test(String(id || '')) ? (await prisma.bricks_categories.findUnique({ where: { id: String(id) }, select: { clubId: true } }))?.clubId : null);
+const clubDePoll = async (id) => (id ? (await prisma.bricks_poll.findUnique({ where: { id: String(id) }, select: { clubId: true } }))?.clubId : null);
+async function clubDeReserva(id) {
+  if (!id) return null;
+  const r = await prisma.bricks_reservation.findUnique({ where: { id: String(id) }, select: { itemId: true, brickslabId: true, libraryBookId: true } });
+  if (!r) return null;
+  if (r.itemId) return clubDeItem(r.itemId);
+  if (r.brickslabId) return (await prisma.bricks_brickslab.findUnique({ where: { id: r.brickslabId }, select: { club_id: true } }))?.club_id;
+  if (r.libraryBookId) return (await prisma.bricks_librarybook.findUnique({ where: { id: r.libraryBookId }, select: { club_id: true } }))?.club_id;
+  return null;
+}
+async function clubDePieza(id) {
+  if (!id) return null;
+  const p = await prisma.bricks_missing_pieces.findUnique({ where: { id: String(id) }, select: { itemId: true, brickslabId: true } });
+  if (!p) return null;
+  if (p.itemId) return clubDeItem(p.itemId);
+  return p.brickslabId ? (await prisma.bricks_brickslab.findUnique({ where: { id: p.brickslabId }, select: { club_id: true } }))?.club_id : null;
+}
+// Exige llevar el club de lo que se toca. `undefined` = no aplica (sigue).
+const delClub = (sacar) => async (req, res, next) => {
+  try {
+    const clubId = await sacar(req);
+    if (clubId === undefined) return next();
+    if (!clubId) return res.status(404).json({ error: 'No encontrado.' });
+    if (!adminDe(req.usuario, clubId)) return res.status(403).json({ error: 'No tienes permiso en ese club.' });
+    next();
+  } catch (e) { next(e); }
+};
+
+// Todo el panel: con sesión y siendo dueño o profesor de algún club; y si la
+// petición dice de qué club es, de ESE club.
+app.use('/api/admin', conSesion, (req, res, next) => {
+  const u = req.usuario;
+  if (!adminDeAlguno(u)) return res.status(403).json({ error: 'No tienes permiso.' });
+  const clubId = req.query?.clubId || req.body?.clubId;
+  if (clubId && !adminDe(u, String(clubId))) return res.status(403).json({ error: 'No tienes permiso en ese club.' });
+  next();
+});
+// Lo que se toca por su id: tiene que ser de un club que lleve.
+const porId = (sacar) => delClub(req => (ES_UUID.test(String(req.params.id || '')) ? sacar(req.params.id) : undefined));
+app.all('/api/admin/items/:id', porId(clubDeItem));
+app.all('/api/admin/items/:id/review', porId(clubDeItem));
+app.all('/api/admin/categories/:id', porId(clubDeCategoria));
+app.all('/api/admin/polls/:id', delClub(req => (req.params.id === 'active' ? undefined : clubDePoll(req.params.id))));
+app.all('/api/admin/polls/:id/status', delClub(req => clubDePoll(req.params.id)));
+app.post('/api/admin/deliver', delClub(req => clubDeReserva(req.body?.reservationId)));
+app.post('/api/admin/return', delClub(req => clubDeReserva(req.body?.reservationId)));
+app.post('/api/admin/pieces/resolve', delClub(req => clubDePieza(req.body?.reportId)));
+app.post('/api/admin/users/permissions', delClub(req => clubDeCategoria(req.body?.categoryId)));
+// Los clubes, sus planes y pagos: solo el panel maestro.
+app.get('/api/admin/clubs/all', soloSuperadmin);
+app.post('/api/admin/clubs', soloSuperadmin);
+app.all('/api/admin/clubs/:id/plan', soloSuperadmin);
+app.all('/api/admin/clubs/:id/payment', soloSuperadmin);
+app.all('/api/admin/clubs/:id/stats', soloSuperadmin);
+app.get('/api/admin/superadmins', soloSuperadmin);
+// Los tickets de soporte (la tabla es de todas las apps): solo el panel maestro.
+app.get('/api/support', soloSuperadmin);
+app.put('/api/support/:id', soloSuperadmin);
+// Quién manda el ticket sale de su sesión (si la tiene), no de la pantalla.
+app.post('/api/support', async (req, res, next) => {
+  try { const u = await leerSesion(req); req.body = { ...(req.body || {}), userId: u?.id || null }; next(); } catch (e) { next(e); }
+});
+
+// Membresías: dar rol de profesor o dueño, solo el dueño del club (o el panel
+// maestro); a un dueño no lo cambia ni lo quita un profesor.
+app.post('/api/admin/memberships', async (req, res, next) => {
+  try {
+    const u = req.usuario, { clubId, email } = req.body || {};
+    if (!clubId || !email) return res.status(400).json({ error: 'Faltan datos' });
+    const rol = req.body.role || 'member';
+    const esDueno = u.superadmin || u.roles.get(String(clubId)) === 'owner';
+    if (['profesor', 'owner'].includes(rol) && !esDueno) return res.status(403).json({ error: 'No tienes permiso para asignar ese rol.' });
+    const ya = await prisma.bricks_club_memberships.findUnique({ where: { email_clubId: { email: String(email).toLowerCase(), clubId: String(clubId) } }, select: { role: true } });
+    if (ya && ['owner', 'profesor'].includes(ya.role) && !esDueno) return res.status(403).json({ error: 'Solo el dueño del club puede cambiar a un profesor o a un dueño.' });
+    req.body.requesterEmail = u.email;
+    next();
+  } catch (e) { next(e); }
+});
+app.delete('/api/admin/memberships/:id', async (req, res, next) => {
+  try {
+    const u = req.usuario;
+    const t = await prisma.bricks_club_memberships.findUnique({ where: { id: String(req.params.id) }, select: { role: true, clubId: true } });
+    if (!t) return res.status(404).json({ error: 'Membresía no encontrada' });
+    if (!adminDe(u, t.clubId)) return res.status(403).json({ error: 'No tienes permiso en ese club.' });
+    if (!u.superadmin) {
+      if (t.role === 'owner') return res.status(403).json({ error: 'Solo el panel maestro puede eliminar a un dueño del club.' });
+      if (u.roles.get(t.clubId) !== 'owner' && t.role !== 'member') return res.status(403).json({ error: 'Un profesor solo puede eliminar miembros.' });
+    }
+    next();
+  } catch (e) { next(e); }
+});
+
+// Poner una contraseña a otra persona: solo a gente de un club que lleves, y
+// nunca a personal (son cuentas compartidas con otras apps) ni a un superadmin.
+app.post('/api/admin/users/password', async (req, res, next) => {
+  try {
+    const u = req.usuario, { userId, newPassword } = req.body || {};
+    if (!ES_UUID.test(String(userId || ''))) return res.status(400).json({ error: 'Faltan datos requeridos (ID de usuario o contraseña)' });
+    if (String(newPassword || '').length < 6) return res.status(400).json({ error: 'La contraseña tiene que tener al menos 6 caracteres.' });
+    if (u.superadmin) return next();
+    const t = await prisma.users.findUnique({ where: { user_id: String(userId) }, select: { email: true, dev_role: true, role: true, club_id: true } });
+    if (!t) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const rango = await prisma.$queryRaw`SELECT 1 FROM aim_rangos WHERE user_id = ${String(userId)}::uuid LIMIT 1`.catch(() => []);
+    const personal = t.dev_role === 'superadmin' || SUPER_ADMINS.has(String(userId)) || rango.length > 0
+      || ['instructor', 'club_owner', 'superadmin', 'admin', 'owner'].includes(String(t.role || '').toLowerCase());
+    if (personal) return res.status(403).json({ error: 'La contraseña de esa cuenta solo la puede cambiar el panel maestro.' });
+    const ms = t.email ? await prisma.bricks_club_memberships.findMany({ where: { email: t.email.toLowerCase() }, select: { clubId: true, role: true } }) : [];
+    const mios = ms.filter(m => adminDe(u, m.clubId)).map(m => m.clubId);
+    const ajenoAdmin = ms.some(m => ROLES_ADMIN.includes(m.role) && !adminDe(u, m.clubId));
+    if (!mios.length || ajenoAdmin || (t.club_id && !mios.includes(t.club_id))) {
+      return res.status(403).json({ error: 'Solo puedes cambiar la contraseña a gente de tu club.' });
+    }
+    next();
+  } catch (e) { next(e); }
+});
+
+// Reservar, anular, votar y avisar de piezas: cada uno por sí mismo; por otro,
+// solo quien lleva ese club.
+app.post('/api/reservations', conSesion, async (req, res, next) => {
+  try {
+    const u = req.usuario, b = req.body || {};
+    if (b.userId && b.userId !== u.id && !adminDe(u, await clubDeItem(b.itemId))) return res.status(403).json({ error: 'Solo puedes reservar para ti.' });
+    req.body = { ...b, userId: b.userId || u.id };
+    next();
+  } catch (e) { next(e); }
+});
+app.delete('/api/reservations/:id', conSesion, async (req, res, next) => {
+  try {
+    const r = await prisma.bricks_reservation.findUnique({ where: { id: String(req.params.id) }, select: { userId: true } });
+    if (r && r.userId !== req.usuario.id && !adminDe(req.usuario, await clubDeReserva(req.params.id))) return res.status(403).json({ error: 'Esa reserva no es tuya.' });
+    next();
+  } catch (e) { next(e); }
+});
+app.post('/api/polls/vote', conSesion, (req, res, next) => { req.body = { ...(req.body || {}), userId: req.usuario.id }; next(); });
+app.post('/api/pieces/report', conSesion, async (req, res, next) => {
+  try {
+    const u = req.usuario, b = req.body || {};
+    const otro = b.userId && b.userId !== u.id;
+    req.body = { ...b, userId: otro && adminDe(u, await clubDeItem(b.itemId)) ? b.userId : u.id };
+    next();
+  } catch (e) { next(e); }
+});
+
 // Helper to map DB item to Frontend CatalogItem
 const mapItem = (item, category) => ({
   id: item.id,
@@ -486,7 +678,7 @@ app.post('/api/auth/login', async (req, res) => {
       activeDevRole = primaryMembership.role;
     }
 
-    const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+    const token = firmarSesion(user.user_id);
 
     const categories = activeClubId ? await prisma.bricks_categories.findMany({
       where: { clubId: activeClubId }
@@ -572,7 +764,7 @@ app.post('/api/auth/register', async (req, res) => {
       data: { email: email.toLowerCase().trim(), clubId: club.id, role: 'owner' }
     });
 
-    const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+    const token = firmarSesion(user.user_id);
 
     res.json({ token, userId: user.user_id, clubId: club.id });
   } catch (error) {
@@ -581,10 +773,10 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/me', async (req, res) => {
+app.post('/api/auth/me', conSesion, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: 'Falta userId' });
+    // Siempre el de la sesión: antes devolvía el perfil de cualquier userId.
+    const userId = req.usuario.id;
 
     const user = await prisma.users.findUnique({
       where: { user_id: userId },
@@ -696,10 +888,14 @@ app.post('/api/auth/me', async (req, res) => {
   }
 });
 
-app.post('/api/auth/force-password-change', async (req, res) => {
+app.post('/api/auth/force-password-change', conSesion, async (req, res) => {
   try {
-    const { userId, newPassword } = req.body;
-    if (!userId || !newPassword) return res.status(400).json({ error: 'Faltan datos.' });
+    // La suya y solo cuando se la han reseteado (antes cambiaba la de cualquiera).
+    const userId = req.usuario.id;
+    const { newPassword } = req.body || {};
+    if (String(newPassword || '').length < 6) return res.status(400).json({ error: 'La contraseña tiene que tener al menos 6 caracteres.' });
+    const yo = await prisma.users.findUnique({ where: { user_id: userId }, select: { requires_password_change: true } });
+    if (!yo?.requires_password_change) return res.status(403).json({ error: 'No tienes ningún cambio de contraseña pendiente.' });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 

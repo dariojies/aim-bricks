@@ -475,7 +475,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         setSelectedUserForPassword('');
         alert('Contraseña actualizada correctamente para el usuario seleccionado.');
       } else {
-        alert('Hubo un error al actualizar la contraseña.');
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Hubo un error al actualizar la contraseña.');
       }
     } catch (e) {
       console.error(e);

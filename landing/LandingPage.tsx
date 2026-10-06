@@ -91,8 +91,9 @@ export function LandingPage() {
       });
       const data = await res.json();
       if (!res.ok) { setRegError(data.error || 'Error al crear la cuenta.'); return; }
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
+      // La sesión de la app: el token y quién es (el resto lo carga la app).
+      localStorage.setItem('aim_bricks_token', data.token);
+      localStorage.setItem('aim_bricks_user', JSON.stringify({ id: data.userId, clubId: data.clubId }));
       window.location.href = '/app';
     } catch {
       setRegError('Error de conexión. Inténtalo de nuevo.');

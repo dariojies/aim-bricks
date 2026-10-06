@@ -236,8 +236,8 @@ function App() {
       alert('Las contraseñas no coinciden.');
       return;
     }
-    if (forcePasswordNew1.length < 4) {
-      alert('La contraseña es demasiado corta.');
+    if (forcePasswordNew1.length < 6) {
+      alert('La contraseña tiene que tener al menos 6 caracteres.');
       return;
     }
     try {
@@ -254,7 +254,8 @@ function App() {
         setForcePasswordNew2('');
         alert('Contraseña actualizada correctamente. ¡Bienvenido de nuevo!');
       } else {
-        alert('Error al actualizar la contraseña.');
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Error al actualizar la contraseña.');
       }
     } catch (err) {
       console.error(err);
