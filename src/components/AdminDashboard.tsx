@@ -99,6 +99,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   // Pieces tab view
   const [piecesView, setPiecesView] = useState<'bySet' | 'count'>('bySet');
+  // #165: ver los reportes abiertos, los ya repuestos o todos.
+  const [piecesStatus, setPiecesStatus] = useState<'todos' | 'abiertos' | 'repuestos'>('todos');
+  // #167: el inventario se ve primero; añadir e importar, al pulsar su botón.
+  const [catalogPanel, setCatalogPanel] = useState<null | 'alta' | 'importar'>(null);
+  // #171: filtrar el inventario por categoría.
+  const [catalogCat, setCatalogCat] = useState<string>('todas');
   const [expandedSets, setExpandedSets] = useState<Set<string>>(new Set());
   const [expandedPieces, setExpandedPieces] = useState<Set<string>>(new Set());
 
@@ -146,7 +152,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     // Determine which club the user is admin/owner of
     if (user?.memberships && user.memberships.length > 0) {
       const adminMembership = user.memberships.find((m: any) => m.role === 'owner' || m.role === 'profesor') || user.memberships[0];
-      const initialClubId = localStorage.getItem('detectedClubId') || adminMembership.clubId;
+      // #90: el catálogo con el que trabaja, si lo administra.
+      const elegido = user.memberships.find((m: any) => m.clubId === user.clubId && ['owner', 'profesor', 'admin'].includes(m.role));
+      const initialClubId = elegido?.clubId || localStorage.getItem('detectedClubId') || adminMembership.clubId;
       setDetectedClubId(initialClubId);
     }
   }, [user]);
@@ -578,6 +586,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       setReviewSubmitting(false);
     }
   };
+
+  // Los reportes que se ven según el filtro de estado (#165).
+  const reportesVistos = reports.filter((r: any) => piecesStatus === 'todos' || (piecesStatus === 'abiertos' ? r.status === 'Pending' : r.status !== 'Pending'));
 
   const handleExportPiecesCsv = () => {
     const pending = reports.filter(r => r.status === 'Pending');
@@ -1120,8 +1131,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {activeTab === 'catalog' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-          {/* Plan badge + CSV import panel */}
-          {clubPlan && (
+          {/* Plan badge + CSV import panel (#167: al pulsar «Importar») */}
+          {clubPlan && catalogPanel === 'importar' && (
             <div className="glass-panel animate-fade-in" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Plan badge row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1214,9 +1225,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             </div>
           )}
 
+          {catalogPanel === 'alta' && (
           <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Plus className="text-accent" /> Añadir Nuevo Elemento
+              <button type="button" className="btn btn-outline" style={{ marginLeft: 'auto', padding: '0.35rem 0.9rem', fontSize: '0.8rem' }} onClick={() => setCatalogPanel(null)}>Cerrar</button>
             </h3>
             <form onSubmit={handleAddItem} className="responsive-dashboard-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
               <div style={{ gridColumn: '1 / -1' }}>
@@ -1325,11 +1338,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </div>
             </form>
           </div>
+          )}
 
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 Inventario Actual
+                {/* #171: por categoría */}
+                <select
+                  value={catalogCat}
+                  onChange={e => setCatalogCat(e.target.value)}
+                  aria-label="Filtrar por categoría"
+                  style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.875rem' }}
+                >
+                  <option value="todas">Todas las categorías</option>
+                  {categories.map((cat: any) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                </select>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '0 0.75rem' }}>
                   <Search size={16} className="text-muted" />
                   <input
@@ -1349,12 +1373,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   />
                 </div>
               </div>
-              <span style={{ fontSize: '0.875rem', background: 'var(--surface-border)', padding: '0.25rem 0.75rem', borderRadius: '8px' }}>
-                {items.length} artículos
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.875rem', background: 'var(--surface-border)', padding: '0.25rem 0.75rem', borderRadius: '8px' }}>
+                  {items.filter((item: any) => catalogCat === 'todas' || item.categoryId === catalogCat).length} artículos
+                </span>
+                {/* #167: añadir e importar, detrás de su botón */}
+                <button type="button" className={`btn ${catalogPanel === 'importar' ? 'btn-primary' : 'btn-outline'}`} style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}
+                  onClick={() => { setCatalogPanel(catalogPanel === 'importar' ? null : 'importar'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  Importar CSV
+                </button>
+                <button type="button" className={`btn ${catalogPanel === 'alta' ? 'btn-primary' : 'btn-primary'}`} style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  onClick={() => { setCatalogPanel(catalogPanel === 'alta' ? null : 'alta'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  <Plus size={16} /> Añadir
+                </button>
+              </div>
             </h3>
             <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-              {items.filter(item =>
+              {items.filter((item: any) => catalogCat === 'todas' || item.categoryId === catalogCat).filter(item =>
                 item.title.toLowerCase().includes(catalogSearchTerm.toLowerCase()) ||
                 (item.legoReference && item.legoReference.toLowerCase().includes(catalogSearchTerm.toLowerCase())) ||
                 (item.author && item.author.toLowerCase().includes(catalogSearchTerm.toLowerCase())) ||
@@ -1521,6 +1556,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                   Recuento Total
                 </button>
               </div>
+              <div style={{ display: 'flex', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '10px', padding: '3px', gap: '3px' }}>
+                {([['todos', 'Todos'], ['abiertos', 'Abiertos'], ['repuestos', 'Repuestos']] as const).map(([k, l]) => (
+                  <button key={k}
+                    className={`btn ${piecesStatus === k ? 'btn-primary' : ''}`}
+                    style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem', borderRadius: '7px', ...(piecesStatus !== k ? { background: 'transparent', color: 'var(--text-muted)', boxShadow: 'none' } : {}) }}
+                    onClick={() => setPiecesStatus(k)}
+                  >
+                    {l} ({reports.filter((r: any) => k === 'todos' || (k === 'abiertos' ? r.status === 'Pending' : r.status !== 'Pending')).length})
+                  </button>
+                ))}
+              </div>
               {reports.length > 0 && (
                 <button
                   className="btn btn-outline"
@@ -1533,13 +1579,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             </div>
           </div>
 
-          {reports.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No hay reportes de piezas perdidas por el momento.</p>
+          {reportesVistos.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>{reports.length ? 'No hay reportes con este filtro.' : 'No hay reportes de piezas perdidas por el momento.'}</p>
           ) : piecesView === 'bySet' ? (
             /* ── Vista: Agrupado por set (desplegable) ── */
             (() => {
               const grouped: Record<string, any[]> = {};
-              reports.forEach((r: any) => {
+              reportesVistos.forEach((r: any) => {
                 if (!grouped[r.itemName]) grouped[r.itemName] = [];
                 grouped[r.itemName].push(r);
               });
@@ -1625,7 +1671,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             (() => {
               // Build: elementId → { total, bySet: { setName → qty } }
               const pieceMap: Record<string, { total: number; bySet: Record<string, number> }> = {};
-              reports.forEach((report: any) => {
+              reportesVistos.forEach((report: any) => {
                 (report.description || '').split(/[\n,;]+/).forEach((line: string) => {
                   const t = line.trim();
                   const m = t.match(/^(\d{4,8})\s*[:\sx]+\s*(\d+)$/i);

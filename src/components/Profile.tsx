@@ -1,13 +1,61 @@
-import { Box, BookOpen, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Box, BookOpen, Clock, Star, Library, Plus } from 'lucide-react';
 import type { UserProfile } from '../data/mockData';
 
 interface Props {
   user: UserProfile;
   onCancelReservation?: (id: string) => void;
   onReportPieces?: (brickslabId: string, description: string) => void;
+  // #87: valorar lo leído o montado.
+  onRate?: (itemId: string, estrellas: number, comentario: string) => Promise<boolean>;
+  // #90: cambiar de catálogo y crear el propio.
+  onSwitchClub?: (clubId: string) => void;
+  onCreatePersonal?: () => void;
 }
 
-export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPieces }) => {
+// Valorar algo del historial (#87): las estrellas que puso o el botón para ponerlas.
+const Valorar: React.FC<{ itemId?: string | null; actual?: { estrellas: number; comentario: string }; onRate?: Props['onRate'] }> = ({ itemId, actual, onRate }) => {
+  const [abierto, setAbierto] = useState(false);
+  const [estrellas, setEstrellas] = useState(actual?.estrellas || 0);
+  const [sobre, setSobre] = useState(0);
+  const [comentario, setComentario] = useState(actual?.comentario || '');
+  const [guardando, setGuardando] = useState(false);
+  if (!itemId || !onRate) return null;
+  const pintar = (v: number, size: number, editable: boolean) => (
+    <span style={{ display: 'inline-flex', gap: editable ? '0.2rem' : '0.1rem' }} onMouseLeave={() => setSobre(0)}>
+      {[1, 2, 3, 4, 5].map(n => editable ? (
+        <button key={n} type="button" aria-label={`${n} estrellas`} onMouseEnter={() => setSobre(n)} onClick={() => setEstrellas(n)}
+          style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer', display: 'grid' }}>
+          <Star size={size} color="#F5B301" fill={(sobre || v) >= n ? '#F5B301' : 'none'} />
+        </button>
+      ) : <Star key={n} size={size} color="#F5B301" fill={v >= n ? '#F5B301' : 'none'} />)}
+    </span>
+  );
+  if (!abierto) {
+    return actual
+      ? <button type="button" onClick={() => setAbierto(true)} title="Cambiar la valoración" style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer', marginTop: '0.4rem', display: 'block' }}>{pintar(actual.estrellas, 14, false)}</button>
+      : <button type="button" className="btn btn-outline" onClick={() => setAbierto(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.5rem', padding: '0.2rem 0.55rem', fontSize: '0.75rem', borderColor: '#F5B301', color: '#F5B301' }}><Star size={12} /> Valorar</button>;
+  }
+  return (
+    <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.4rem' }}>
+      {pintar(estrellas, 22, true)}
+      <textarea value={comentario} onChange={e => setComentario(e.target.value)} rows={2} maxLength={600} placeholder="¿Qué te ha parecido? (opcional)"
+        style={{ width: '100%', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.8rem', resize: 'vertical' }} />
+      <div style={{ display: 'flex', gap: '0.4rem' }}>
+        <button type="button" className="btn btn-outline" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setAbierto(false)}>Cancelar</button>
+        <button type="button" className="btn btn-primary" disabled={!estrellas || guardando} style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: !estrellas ? 0.5 : 1 }}
+          onClick={async () => { setGuardando(true); const ok = await onRate(itemId, estrellas, comentario); setGuardando(false); if (ok) setAbierto(false); }}>
+          {guardando ? 'Guardando…' : 'Guardar'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPieces, onRate, onSwitchClub, onCreatePersonal }) => {
+  const memberships = user?.memberships || [];
+  const tienePropio = memberships.some(m => m.role === 'owner');
+  const ROL: Record<string, string> = { owner: 'Dueño', profesor: 'Profesor', admin: 'Profesor', member: 'Miembro', student: 'Alumno', instructor: 'Profesor' };
   // Ensure we have safe defaults for arrays to prevent crashes with old data formats
   const readBooks = user?.readBooks || [];
   const builtBrickslabs = user?.builtBrickslabs || [];
@@ -23,6 +71,36 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+        {/* #90: los catálogos de los que eres y el tuyo propio */}
+        {(memberships.length > 0 || onCreatePersonal) && (
+          <section className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Library size={24} /> Mis catálogos
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>Elige con cuál trabajas. Puedes ser de un club o de un cole y tener además tu propio catálogo privado, gratis.</p>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {memberships.map(m => {
+                const activo = m.clubId === user.clubId;
+                return (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1rem', borderRadius: '12px', background: 'rgba(0,0,0,0.2)', border: `1px solid ${activo ? 'var(--primary)' : 'transparent'}`, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '180px' }}>
+                      <b>{m.clubName || 'Club'}</b>
+                      <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ROL[m.role] || m.role}</span>
+                    </div>
+                    {activo
+                      ? <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>Trabajando con este</span>
+                      : onSwitchClub && <button type="button" className="btn btn-outline" style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem' }} onClick={() => onSwitchClub(m.clubId)}>Usar este</button>}
+                  </div>
+                );
+              })}
+            </div>
+            {!tienePropio && onCreatePersonal && (
+              <button type="button" className="btn btn-primary" style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={onCreatePersonal}>
+                <Plus size={16} /> Crear mi catálogo personal (gratis)
+              </button>
+            )}
+          </section>
+        )}
         <section className="glass-panel" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
             <BookOpen size={24} /> Libros Leídos ({readBooks.length})
@@ -35,6 +113,7 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
                   <div>
                     <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{book.title}</h4>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>¡Completado!</span>
+                    <Valorar itemId={book.itemId} actual={book.itemId ? user.valoraciones?.[book.itemId] : undefined} onRate={onRate} />
                   </div>
                 </div>
               ))}
@@ -56,6 +135,7 @@ export const Profile: React.FC<Props> = ({ user, onCancelReservation, onReportPi
                   <div style={{ flex: 1 }}>
                     <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{set.title}</h4>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>¡Misión cumplida!</span>
+                    <Valorar itemId={set.itemId} actual={set.itemId ? user.valoraciones?.[set.itemId] : undefined} onRate={onRate} />
                     {onReportPieces && (
                       <button 
                         className="btn btn-outline" 

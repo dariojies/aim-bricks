@@ -17,6 +17,11 @@ window.fetch = async (entrada: RequestInfo | URL, init: RequestInit = {}) => {
     if (!cabeceras.has('Authorization')) cabeceras.set('Authorization', `Bearer ${token}`)
     init = { ...init, headers: cabeceras }
   }
+  // El catálogo con el que se trabaja (#90): va en cada consulta de la sesión.
+  const club = localStorage.getItem('aim_bricks_club')
+  if (club && /\/api\/auth\/me/.test(url) && typeof init.body === 'string') {
+    try { init = { ...init, body: JSON.stringify({ ...JSON.parse(init.body), clubId: club }) } } catch { /* sin cambios */ }
+  }
   const res = await fetchOriginal(entrada, init)
   if (res.status === 401 && deLaApi && !/\/api\/auth\/(login|register)/.test(url) && localStorage.getItem('aim_bricks_user') && !avisado) {
     avisado = true

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CatalogItem } from '../data/mockData';
 import { ItemCard } from './ItemCard';
-import { Search, Box, Lock } from 'lucide-react';
+import { Search, Box, Lock, Sparkles } from 'lucide-react';
 
 interface Props {
   items: CatalogItem[];
@@ -10,11 +10,16 @@ interface Props {
   onProAlert: (item: CatalogItem) => void;
   clubId?: string;
   initialFilterId?: string;
+  // #87: lo que le puede gustar a quien ha entrado (ids de artículos).
+  recomendaciones?: string[];
 }
 
-export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert, clubId, initialFilterId }) => {
+export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, onProAlert, clubId, initialFilterId, recomendaciones = [] }) => {
   const [filterId, setFilterId] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
+  // #87: primero lo disponible (como siempre) o lo mejor valorado.
+  const [orden, setOrden] = useState<'disponible' | 'valorados'>('disponible');
+  const recomendados = recomendaciones.map(id => items.find(i => i.id === id)).filter(Boolean).slice(0, 4) as CatalogItem[];
 
   // Handle initial filtering from URL (Ticket #83)
   useEffect(() => {
@@ -31,6 +36,7 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
     
     return matchesFilter && matchesSearch;
   }).sort((a, b) => {
+    if (orden === 'valorados') return (b.media || 0) - (a.media || 0) || (b.valoraciones || 0) - (a.valoraciones || 0);
     const aAvailable = a.status === 'Disponible';
     const bAvailable = b.status === 'Disponible';
     if (aAvailable === bAvailable) return 0;
@@ -77,6 +83,11 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <select value={orden} onChange={e => setOrden(e.target.value as 'disponible' | 'valorados')} aria-label="Ordenar"
+            style={{ padding: '0.6rem 0.9rem', borderRadius: '12px', border: '1px solid var(--surface-border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.9rem' }}>
+            <option value="disponible">Primero lo disponible</option>
+            <option value="valorados">Lo mejor valorado</option>
+          </select>
           <button
             className={`btn ${filterId === 'Todos' ? 'btn-primary' : 'btn-outline'}`}
             style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem', borderRadius: '12px' }}
@@ -102,6 +113,15 @@ export const Catalog: React.FC<Props> = ({ items, categories, onReserveClick, on
         </div>
       </div>
 
+      {recomendados.length > 0 && filterId === 'Todos' && !searchQuery.trim() && (
+        <div style={{ marginBottom: '3rem' }}>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Sparkles size={22} color="#F5B301" /> Te puede gustar</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Por lo que has valorado y lo que gustó a quien tiene gustos parecidos. Cuanto más valores, mejor acierta.</p>
+          <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem' }}>
+            {recomendados.map(item => <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} clubId={clubId} />)}
+          </div>
+        </div>
+      )}
       <div className="responsive-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2.5rem' }}>
         {filteredItems.map(item => (
           <ItemCard key={item.id} item={item} onSelect={onReserveClick} onProAlert={() => onProAlert(item)} clubId={clubId} />

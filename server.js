@@ -31,6 +31,20 @@ const PORT = process.env.PORT || 3000;
 // Auto-sync schema and migrate data safely
 async function syncSchema() {
   try {
+    // Valoraciones (#87): de 1 a 5 estrellas y un comentario, una por persona y
+    // artículo. La comparte la web de Aim Education.
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS bricks_valoraciones (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "userId" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        "itemId" UUID NOT NULL REFERENCES bricks_items(id) ON DELETE CASCADE,
+        estrellas SMALLINT NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+        comentario TEXT,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE ("userId", "itemId")
+      );
+    `).catch(e => console.warn('[valoraciones]', e.message));
     // 0. Ensure bricks_clubs exists (Simplified)
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "bricks_clubs" (
@@ -816,7 +830,9 @@ app.post('/api/auth/me', conSesion, async (req, res) => {
     let activeDevRole = user.dev_role || 'student';
 
     if (memberships.length > 0) {
-      const primaryMembership = memberships.find(m => m.role === 'owner' || m.role === 'profesor') || memberships[0];
+      // #90: si ha elegido con qué catálogo trabajar (y es suyo), ese.
+      const elegido = memberships.find(m => m.clubId === req.body?.clubId);
+      const primaryMembership = elegido || memberships.find(m => m.role === 'owner' || m.role === 'profesor') || memberships[0];
       activeClubId = primaryMembership.clubId;
       activeDevRole = primaryMembership.role;
     }
@@ -854,21 +870,28 @@ app.post('/api/auth/me', conSesion, async (req, res) => {
         isBrickslab: !!(r.brickslabId || (r.item && r.item.category.name === 'Aim Brickslab')),
         brickslabId: r.brickslabId || (r.item?.category.name === 'Aim Brickslab' ? r.itemId : null)
       })),
+      // Lo leído y lo montado: por el tipo de la categoría (también en los
+      // catálogos propios, #90, que tienen otros nombres) y con su artículo para
+      // poder valorarlo (#87).
       readBooks: user.history
-        .filter(h => h.libraryBookId || (h.item && h.item.category.name === 'Biblioteca'))
+        .filter(h => h.libraryBookId || (h.item && (h.item.category.config?.reservationMode === 'library' || h.item.category.name === 'Biblioteca')))
         .map(h => ({
           id: h.id,
+          itemId: h.itemId || null,
           title: h.libraryBook?.title || h.item?.title || 'Libro',
           imageUrl: h.libraryBook?.imageUrl || h.item?.imageUrl || ''
         })),
       builtBrickslabs: user.history
-        .filter(h => h.brickslabId || (h.item && h.item.category.name === 'Aim Brickslab'))
+        .filter(h => h.brickslabId || (h.item && h.item.category.config?.reservationMode !== 'library' && h.item.category.name !== 'Biblioteca'))
         .map(h => ({
           id: h.id,
+          itemId: h.itemId || null,
           title: h.brickslab?.title || h.item?.title || 'Brickslab',
           imageUrl: h.brickslab?.imageUrl || h.item?.imageUrl || '',
           brickslabId: h.brickslabId || (h.item?.category.name === 'Aim Brickslab' ? h.itemId : null)
         })),
+      valoraciones: await misValoraciones(user.user_id),
+      recomendaciones: activeClubId ? await recomendaciones(user.user_id, activeClubId) : [],
       permissions: dynamicPermissions.reduce((acc, p) => {
         acc[p.categoryId] = { standard: p.isStandard, pro: p.isPro };
         return acc;
@@ -1170,10 +1193,102 @@ app.get('/api/catalog', async (req, res) => {
       };
     });
 
-    res.json(formatted);
+    // La valoración media de cada artículo (#87).
+    const notas = await prisma.$queryRaw`
+      SELECT v."itemId", ROUND(AVG(v.estrellas)::numeric, 1)::float AS media, COUNT(*)::int AS n
+      FROM bricks_valoraciones v JOIN bricks_items i ON i.id = v."itemId"
+      WHERE i."clubId" = ${club.id}::uuid GROUP BY v."itemId"`.catch(() => []);
+    const porItem = Object.fromEntries(notas.map(x => [x.itemId, x]));
+    res.json(formatted.map(i => ({ ...i, media: porItem[i.id]?.media ?? null, valoraciones: porItem[i.id]?.n || 0 })));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al cargar el catálogo' });
+  }
+});
+
+// ── Valoraciones (#87) ───────────────────────────────────────────────────────
+// Se valora lo que se ha montado o leído (lo devuelto). Con ellas: la media,
+// «te puede gustar» (lo que puntuaron alto quienes puntuaron alto lo mismo que
+// tú; sin IA) y «a quien le gustó esto, también le gustó».
+async function misValoraciones(userId) {
+  const r = await prisma.$queryRaw`SELECT "itemId", estrellas, comentario FROM bricks_valoraciones WHERE "userId" = ${userId}::uuid`.catch(() => []);
+  return Object.fromEntries(r.map(x => [x.itemId, { estrellas: x.estrellas, comentario: x.comentario || '' }]));
+}
+async function recomendaciones(userId, clubId) {
+  try {
+    const r = await prisma.$queryRaw`
+      WITH gustos AS (SELECT "itemId" FROM bricks_valoraciones WHERE "userId" = ${userId}::uuid AND estrellas >= 4),
+           hechos AS (SELECT "itemId" FROM bricks_userhistory WHERE "userId" = ${userId}::uuid AND "itemId" IS NOT NULL
+                      UNION SELECT "itemId" FROM bricks_reservation WHERE "userId" = ${userId}::uuid AND "itemId" IS NOT NULL),
+           afines AS (SELECT DISTINCT v."userId" FROM bricks_valoraciones v JOIN gustos g ON g."itemId" = v."itemId"
+                      WHERE v.estrellas >= 4 AND v."userId" <> ${userId}::uuid)
+      SELECT v."itemId" AS id FROM bricks_valoraciones v JOIN afines a ON a."userId" = v."userId"
+      JOIN bricks_items i ON i.id = v."itemId" AND i."clubId" = ${clubId}::uuid AND i."isAvailable"
+      WHERE v.estrellas >= 4 AND v."itemId" NOT IN (SELECT "itemId" FROM hechos)
+      GROUP BY v."itemId" ORDER BY COUNT(*) DESC, AVG(v.estrellas) DESC LIMIT 8`;
+    if (r.length) return r.map(x => x.id);
+    const t = await prisma.$queryRaw`
+      SELECT v."itemId" AS id FROM bricks_valoraciones v
+      JOIN bricks_items i ON i.id = v."itemId" AND i."clubId" = ${clubId}::uuid AND i."isAvailable"
+      WHERE v."itemId" NOT IN (SELECT "itemId" FROM bricks_userhistory WHERE "userId" = ${userId}::uuid AND "itemId" IS NOT NULL
+                               UNION SELECT "itemId" FROM bricks_reservation WHERE "userId" = ${userId}::uuid AND "itemId" IS NOT NULL)
+      GROUP BY v."itemId" HAVING AVG(v.estrellas) >= 4 ORDER BY AVG(v.estrellas) DESC, COUNT(*) DESC LIMIT 8`;
+    return t.map(x => x.id);
+  } catch { return []; }
+}
+app.post('/api/ratings', conSesion, async (req, res) => {
+  try {
+    const { itemId } = req.body || {};
+    const estrellas = Math.round(Number(req.body?.estrellas));
+    const comentario = String(req.body?.comentario || '').trim().slice(0, 600) || null;
+    if (!ES_UUID.test(String(itemId || ''))) return res.status(400).json({ error: 'Ese artículo no existe.' });
+    if (!(estrellas >= 1 && estrellas <= 5)) return res.status(400).json({ error: 'Elige de 1 a 5 estrellas.' });
+    const lo = await prisma.bricks_userhistory.findFirst({ where: { userId: req.usuario.id, itemId: String(itemId) }, select: { id: true } });
+    if (!lo) return res.status(403).json({ error: 'Se valora lo que has montado o leído (cuando lo has devuelto).' });
+    await prisma.$executeRaw`
+      INSERT INTO bricks_valoraciones ("userId", "itemId", estrellas, comentario) VALUES (${req.usuario.id}::uuid, ${String(itemId)}::uuid, ${estrellas}, ${comentario})
+      ON CONFLICT ("userId", "itemId") DO UPDATE SET estrellas = EXCLUDED.estrellas, comentario = EXCLUDED.comentario, "updatedAt" = NOW()`;
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'No se ha podido guardar la valoración.' });
+  }
+});
+app.get('/api/items/:id/parecidos', async (req, res) => {
+  try {
+    const id = String(req.params.id);
+    if (!ES_UUID.test(id)) return res.json({ ids: [] });
+    const r = await prisma.$queryRaw`
+      SELECT v."itemId" AS id FROM bricks_valoraciones v
+      JOIN bricks_items i ON i.id = v."itemId" AND i."isAvailable"
+      WHERE v.estrellas >= 4 AND v."itemId" <> ${id}::uuid
+        AND i."clubId" = (SELECT "clubId" FROM bricks_items WHERE id = ${id}::uuid)
+        AND v."userId" IN (SELECT "userId" FROM bricks_valoraciones WHERE "itemId" = ${id}::uuid AND estrellas >= 4)
+      GROUP BY v."itemId" ORDER BY COUNT(*) DESC, AVG(v.estrellas) DESC LIMIT 4`;
+    res.json({ ids: r.map(x => x.id) });
+  } catch { res.json({ ids: [] }); }
+});
+
+// ── Catálogo personal (#90) ──────────────────────────────────────────────────
+// Quien es de un club (una red, un cole…) puede tener además su propio catálogo
+// privado y gratuito, y elegir con cuál trabaja. Uno por persona.
+app.post('/api/clubs/personal', conSesion, async (req, res) => {
+  try {
+    const u = req.usuario;
+    if (!u.email) return res.status(400).json({ error: 'Tu cuenta no tiene correo.' });
+    const propios = [...u.roles.entries()].filter(([, r]) => r === 'owner').map(([id]) => id);
+    if (propios.length) {
+      const yaTiene = await prisma.bricks_clubs.findFirst({ where: { id: { in: propios }, plan: 'starter' }, select: { id: true } });
+      if (yaTiene) return res.status(409).json({ error: 'Ya tienes tu catálogo propio.', clubId: yaTiene.id });
+    }
+    const yo = await prisma.users.findUnique({ where: { user_id: u.id }, select: { name: true } });
+    const nombre = String(req.body?.nombre || '').trim().slice(0, 80) || `Catálogo de ${yo?.name || 'mi casa'}`;
+    const club = await prisma.bricks_clubs.create({ data: { name: nombre, plan: 'starter' } });
+    await prisma.bricks_club_memberships.create({ data: { email: u.email, clubId: club.id, role: 'owner' } });
+    res.status(201).json({ success: true, clubId: club.id, nombre });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'No se ha podido crear tu catálogo.' });
   }
 });
 

@@ -1,5 +1,5 @@
 import type { CatalogItem } from '../data/mockData';
-import { Box, BookOpen, CheckCircle, Lock } from 'lucide-react';
+import { Box, BookOpen, CheckCircle, Lock, Star } from 'lucide-react';
 
 interface Props {
   item: CatalogItem;
@@ -102,6 +102,14 @@ export const ItemCard: React.FC<Props> = ({ item, onSelect, onProAlert, clubId }
             {item.status}
           </span>
         </div>
+        {/* La valoración media (#87) */}
+        {(item.valoraciones || 0) > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', marginBottom: '0.75rem' }} title={`${item.valoraciones} valoraciones`}>
+            {[1, 2, 3, 4, 5].map(n => <Star key={n} size={14} color="#F5B301" fill={(item.media || 0) >= n - 0.25 ? '#F5B301' : 'none'} />)}
+            <b>{String(item.media).replace('.', ',')}</b>
+            <span style={{ color: 'var(--text-muted)' }}>({item.valoraciones})</span>
+          </div>
+        )}
         <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1.5rem', flex: 1 }}>
           {item.description}
         </p>

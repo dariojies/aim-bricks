@@ -19,6 +19,10 @@ export interface CatalogItem {
   categoryId?: string;
   metadata?: Record<string, any>;
   lastReviewedAt?: string | null;
+  // Valoraciones (#87): la media y cuántas tiene. En el historial, su artículo.
+  media?: number | null;
+  valoraciones?: number;
+  itemId?: string | null;
   categoryConfig?: {
     customFields?: Array<{ name: string, label: string, type: string }>;
     reservationMode?: 'brickslab' | 'library';
@@ -69,6 +73,13 @@ export interface UserProfile {
   builtBrickslabs: CatalogItem[];
   currentReservations: { id: string, status: string, text: string, isBrickslab?: boolean, brickslabId?: string }[];
   permissions?: Record<string, { standard: boolean; pro: boolean }>;
+  // #87: lo que ha valorado y lo que le puede gustar (ids de artículos).
+  valoraciones?: Record<string, { estrellas: number; comentario: string }>;
+  recomendaciones?: string[];
+  // #90: los catálogos de los que es y con cuál trabaja.
+  clubId?: string | null;
+  clubName?: string | null;
+  memberships?: { id: string; clubId: string; role: string; clubName: string | null }[];
 }
 
 export const mockUser: UserProfile = {

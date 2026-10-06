@@ -346,6 +346,35 @@ function App() {
     }
   };
 
+  // #87: valorar lo leído o montado.
+  const handleRate = async (itemId: string, estrellas: number, comentario: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/ratings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId, estrellas, comentario }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || 'No se ha podido guardar la valoración.'); return false; }
+      await syncUserSession();
+      loadCatalog();
+      return true;
+    } catch { alert('Error de conexión.'); return false; }
+  };
+  // #90: cambiar de catálogo (se recuerda en este navegador) y crear el propio.
+  const handleSwitchClub = (clubId: string) => {
+    localStorage.setItem('aim_bricks_club', clubId);
+    localStorage.removeItem('detectedClubId');
+    window.location.replace('/app');
+  };
+  const handleCreatePersonal = async () => {
+    const nombre = prompt('¿Cómo se llama tu catálogo?', `Catálogo de ${(user?.name || '').split(' ')[0] || 'mi casa'}`);
+    if (nombre === null) return;
+    try {
+      const res = await fetch(`${API_URL}/api/clubs/personal`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok && !data.clubId) { alert(data.error || 'No se ha podido crear tu catálogo.'); return; }
+      alert(res.ok ? 'Tu catálogo está creado. Empieza por crear una categoría en Admin y añade lo que tengas.' : data.error);
+      handleSwitchClub(data.clubId);
+    } catch { alert('Error de conexión.'); }
+  };
+
   const handleReportPieces = async (brickslabId: string, description: string) => {
     try {
       const res = await fetch(`${API_URL}/api/pieces/report`, {
@@ -543,6 +572,7 @@ function App() {
               onReserveClick={handleReserveClick}
               clubId={user?.clubId}
               initialFilterId={initialFilterId}
+              recomendaciones={user?.recomendaciones || []}
               onProAlert={(item) => {
                 const perm = user?.permissions?.[item.categoryId || ''];
                 if (perm?.pro) {
@@ -554,7 +584,8 @@ function App() {
             />
           </>
         ) : currentView === 'profile' && user ? (
-          <Profile user={user} onCancelReservation={handleCancelReservation} onReportPieces={handleReportPieces} />
+          <Profile user={user} onCancelReservation={handleCancelReservation} onReportPieces={handleReportPieces}
+            onRate={handleRate} onSwitchClub={handleSwitchClub} onCreatePersonal={handleCreatePersonal} />
         ) : currentView === 'admin' && (user?.role === 'owner' || user?.role === 'profesor' || user?.role === 'superadmin') ? (
           <AdminDashboard user={user} />
         ) : currentView === 'ranking' ? (
