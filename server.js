@@ -2428,4 +2428,9 @@ app.get('/*path', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  // Que el deploy salga en «Cambios» de Aim Education.
+  import('./deploy-aim.mjs').then(({ apuntarDeploy }) => apuntarDeploy({
+    app: 'Brickslab', raiz: __dirname,
+    consulta: (sql, params) => prisma.$executeRawUnsafe(sql, ...params),
+  })).catch(() => {});
 });

@@ -37,3 +37,6 @@ scratch/
 
 # One-off migration scripts in root
 add_clubId_poll.js
+
+# Marca de deploy (la escribe la compilación)
+deploy-marca.json
