@@ -1,9 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download, ClipboardCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, CheckCircle, Plus, Pencil, Search, X, Trophy, Download, ClipboardCheck, ChevronDown, ChevronUp, Camera } from 'lucide-react';
 import type { CatalogItem } from '../data/mockData';
 
 const API_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
 const SUPER_ADMINS = ['d3859034-059e-4e90-ad8d-2a0a7f95c1f2', '631c7f2a-4949-442b-890b-24a990aca939', '465858fb-4d71-4c0c-b0df-7ea7ac35bb75'];
+
+// Una foto desde el dispositivo (como en la galería de la web): se reduce aquí a
+// JPG de 1600 px como mucho (si ya era pequeña y pesa menos así, va tal cual), se
+// sube y se devuelve su dirección, que va donde el enlace.
+async function subirFoto(file: File, clubId: string): Promise<string> {
+  if (!/^image\//.test(file.type)) throw new Error(`«${file.name}» no es una foto.`);
+  const url = URL.createObjectURL(file);
+  let blob: Blob | null = null;
+  try {
+    const img = await new Promise<HTMLImageElement>((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error(`No se puede leer «${file.name}».`)); i.src = url; });
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    const g = c.getContext('2d');
+    if (!g) throw new Error('Este navegador no puede preparar la foto.');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    blob = await new Promise<Blob | null>(r => c.toBlob(r, 'image/jpeg', 0.85));
+    if (k === 1 && /^image\/(jpeg|png|webp)$/.test(file.type) && (!blob || file.size < blob.size)) blob = file;
+  } finally { URL.revokeObjectURL(url); }
+  if (!blob) throw new Error(`No se ha podido preparar «${file.name}».`);
+  const r = await fetch(`${API_URL}/api/admin/images?clubId=${encodeURIComponent(clubId)}`, { method: 'POST', headers: { 'Content-Type': blob.type || 'image/jpeg' }, body: blob });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || `Error ${r.status}`);
+  return d.url;
+}
+function BotonFoto({ clubId, onUrl, compacto = false }: { clubId: string; onUrl: (url: string) => void; compacto?: boolean }) {
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState('');
+  return (
+    <span style={{ display: 'inline-flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <label className="btn btn-outline" style={{ cursor: subiendo ? 'wait' : 'pointer', whiteSpace: 'nowrap', margin: 0, opacity: clubId ? 1 : 0.5, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }} title="Subir una foto desde este dispositivo" aria-label={compacto ? 'Subir una foto desde este dispositivo' : undefined}>
+        <input type="file" accept="image/*" hidden disabled={subiendo || !clubId} onChange={async (e) => {
+          const f = e.target.files?.[0]; e.target.value = '';
+          if (!f) return;
+          setSubiendo(true); setError('');
+          try { onUrl(await subirFoto(f, clubId)); } catch (err) { setError((err as Error).message); } finally { setSubiendo(false); }
+        }} />
+        {subiendo ? 'Subiendo…' : <><Camera size={16} />{!compacto && ' Desde el dispositivo'}</>}
+      </label>
+      {error && <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 700 }}>{error}</span>}
+    </span>
+  );
+}
 
 interface AdminReservation {
   id: string;
@@ -1330,8 +1372,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 <textarea required value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', minHeight: '100px' }} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>URL de la Imagen (opcional)</label>
-                <input value={newItemImage} onChange={e => setNewItemImage(e.target.value)} type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Imagen (opcional): una foto del dispositivo o su URL</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input value={newItemImage} onChange={e => setNewItemImage(e.target.value)} type="text" placeholder="https://…" style={{ flex: '1 1 220px', minWidth: 0, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                  <BotonFoto clubId={detectedClubId} onUrl={setNewItemImage} />
+                </div>
+                {newItemImage && /^https?:\/\//.test(newItemImage) && <img src={newItemImage} alt="" style={{ marginTop: '0.5rem', maxHeight: '120px', maxWidth: '100%', objectFit: 'contain', borderRadius: '8px', background: '#fff' }} />}
               </div>
               <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Dar de alta en el inventario</button>
@@ -1506,8 +1552,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
                 <input required type="number" min="1" step="1" value={editStock} onChange={e => setEditStock(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>URL de la Imagen</label>
-                <input required value={editImage} onChange={e => setEditImage(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Imagen: una foto del dispositivo o su URL</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input required value={editImage} onChange={e => setEditImage(e.target.value)} style={{ flex: '1 1 220px', minWidth: 0, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                  <BotonFoto clubId={detectedClubId} onUrl={setEditImage} />
+                </div>
+                {editImage && /^https?:\/\//.test(editImage) && <img src={editImage} alt="" style={{ marginTop: '0.5rem', maxHeight: '120px', maxWidth: '100%', objectFit: 'contain', borderRadius: '8px', background: '#fff' }} />}
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Descripción</label>
@@ -1737,7 +1787,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       )}
 
       {activeTab === 'polls' && (
-        <div style={{ display: 'grid', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '2rem' }}>
           {activePolls.length > 0 && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
               <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: '#5233A8' }}>Votaciones Activas</h3>
@@ -1907,9 +1957,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               setEditingPollId(null);
               fetchActivePolls();
             }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-                <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                <input required placeholder="Título" value={pollTitle} onChange={e => setPollTitle(e.target.value)} style={{ flex: '2 1 240px', minWidth: 0, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 200px', minWidth: 0 }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '4px' }}>Fecha fin (opcional, por defecto 1 del mes siguiente + 1)</label>
                   <input type="datetime-local" value={pollExpiresAt} onChange={e => setPollExpiresAt(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '0.85rem' }} />
                 </div>
@@ -1919,17 +1969,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <h4 style={{ marginTop: '1rem', color: 'var(--accent)' }}>Opciones a Votar</h4>
               {pollOptions.map((opt, i) => {
                 return (
-                  <div key={i} style={{ display: 'flex', gap: '1rem' }}>
+                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <input required placeholder={`Nombre Opción ${i + 1}`} value={opt.title} onChange={e => {
                       const newOpts = [...pollOptions];
                       newOpts[i].title = e.target.value;
                       setPollOptions(newOpts);
-                    }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                    }} style={{ flex: 1, minWidth: 0, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
                     <input required placeholder={`URL Imagen ${i + 1}`} value={opt.imageUrl} onChange={e => {
                       const newOpts = [...pollOptions];
                       newOpts[i].imageUrl = e.target.value;
                       setPollOptions(newOpts);
-                    }} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                    }} style={{ flex: 1, minWidth: 0, padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
+                    <BotonFoto compacto clubId={detectedClubId} onUrl={url => setPollOptions(ops => ops.map((o, j) => (j === i ? { ...o, imageUrl: url } : o)))} />
                   </div>
                 );
               })}

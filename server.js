@@ -45,6 +45,19 @@ async function syncSchema() {
         UNIQUE ("userId", "itemId")
       );
     `).catch(e => console.warn('[valoraciones]', e.message));
+    // Fotos subidas desde el dispositivo (sets, libros, opciones de votación). La
+    // comparte la web de Aim Education, que la crea igual; cada app sirve las suyas.
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "bricks_imagenes" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "clubId" UUID,
+        "mime" VARCHAR(40) NOT NULL,
+        "bytes" INTEGER NOT NULL,
+        "datos" BYTEA NOT NULL,
+        "subidoPor" UUID,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `).catch(e => console.warn('[imágenes]', e.message));
     // 0. Ensure bricks_clubs exists (Simplified)
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "bricks_clubs" (
@@ -514,6 +527,35 @@ app.use('/api/admin', conSesion, (req, res, next) => {
   const clubId = req.query?.clubId || req.body?.clubId;
   if (clubId && !adminDe(u, String(clubId))) return res.status(403).json({ error: 'No tienes permiso en ese club.' });
   next();
+});
+// Una foto desde el dispositivo (ya reducida en el navegador), para un club que
+// lleve: se guarda y se devuelve su dirección, que es la que va en imageUrl.
+const MIME_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
+app.post('/api/admin/images', express.raw({ type: () => true, limit: '4mb' }), async (req, res, next) => {
+  try {
+    const clubId = String(req.query.clubId || '');
+    if (!ES_UUID.test(clubId) || !adminDe(req.usuario, clubId)) return res.status(403).json({ error: 'No tienes permiso en ese club.' });
+    const mime = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const datos = Buffer.isBuffer(req.body) ? req.body : null;
+    if (!datos?.length) return res.status(400).json({ error: 'No ha llegado la foto.' });
+    if (!MIME_IMAGEN.includes(mime)) return res.status(400).json({ error: 'La foto tiene que ser JPG, PNG o WebP.' });
+    if (datos.length > 3 * 1024 * 1024) return res.status(400).json({ error: 'La foto pasa de 3 MB.' });
+    const r = await prisma.$queryRaw`INSERT INTO "bricks_imagenes" ("clubId", "mime", "bytes", "datos", "subidoPor")
+      VALUES (${clubId}::uuid, ${mime}, ${datos.length}::int, ${datos}, ${req.usuario.id}::uuid) RETURNING "id"::text AS id`;
+    // En Heroku llega por https aunque al proceso le llegue por http.
+    const proto = String(req.headers['x-forwarded-proto'] || req.protocol).split(',')[0];
+    res.status(201).json({ url: `${proto}://${req.get('host')}/api/images/${r[0].id}` });
+  } catch (e) { next(e); }
+});
+// Las fotos: no cambian nunca (una nueva es otra dirección).
+app.get('/api/images/:id', async (req, res, next) => {
+  try {
+    if (!ES_UUID.test(req.params.id)) return res.status(404).end();
+    const f = (await prisma.$queryRaw`SELECT "mime", "datos" FROM "bricks_imagenes" WHERE "id" = ${req.params.id}::uuid`)[0];
+    if (!f) return res.status(404).end();
+    res.set({ 'Content-Type': f.mime, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' });
+    res.send(Buffer.from(f.datos));
+  } catch (e) { next(e); }
 });
 // Lo que se toca por su id: tiene que ser de un club que lleve.
 const porId = (sacar) => delClub(req => (ES_UUID.test(String(req.params.id || '')) ? sacar(req.params.id) : undefined));
