@@ -22,6 +22,9 @@ function urlConTope(url) {
   try {
     const u = new URL(url);
     if (!u.searchParams.has('connection_limit')) u.searchParams.set('connection_limit', process.env.PRISMA_CONNECTION_LIMIT || '3');
+    // Con su nombre en la base (la comparten las apps de AIM): la vigilancia de
+    // Aim Education dice de quién es cada conexión en vez de «(sin nombre)».
+    if (!u.searchParams.has('application_name')) u.searchParams.set('application_name', process.env.DYNO ? `brickslab ${process.env.DYNO}` : 'brickslab (local)');
     return u.toString();
   } catch { return url; }
 }
