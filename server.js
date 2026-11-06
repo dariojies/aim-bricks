@@ -460,6 +460,29 @@ const SUPER_ADMINS = new Set(['d3859034-059e-4e90-ad8d-2a0a7f95c1f2', '631c7f2a-
 const ROLES_ADMIN = ['owner', 'profesor', 'admin'];
 const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// El Equipo IT de Aim Education (rango en aim_rangos, lo da la web) tiene allí
+// lo mismo que el dueño del club; aquí también: es dueño del club de su cuenta
+// (users.club_id), aunque en bricks_club_memberships salga como miembro. No se
+// escribe nada: si en la web le quitan el rango, aquí deja de serlo solo.
+async function clubesDeIT(userId) {
+  if (!ES_UUID.test(String(userId || ''))) return [];
+  const r = await prisma.$queryRaw`SELECT u.club_id::text AS club FROM aim_rangos ar JOIN users u ON u.user_id = ar.user_id
+    WHERE ar.user_id = ${String(userId)}::uuid AND ar.rango = 'equipo_it' AND u.club_id IS NOT NULL`.catch(() => []);
+  return r.map(x => x.club);
+}
+// Las membresías que ve la pantalla, con el Equipo IT ya como dueño de su club.
+async function conEquipoIT(userId, memberships) {
+  const it = await clubesDeIT(userId);
+  if (!it.length) return memberships;
+  const out = memberships.map(m => (it.includes(m.clubId) ? { ...m, role: 'owner' } : m));
+  const faltan = it.filter(c => !out.some(m => m.clubId === c));
+  if (faltan.length) {
+    const clubs = await prisma.bricks_clubs.findMany({ where: { id: { in: faltan } }, select: { id: true, name: true } });
+    clubs.forEach(c => out.push({ id: null, clubId: c.id, role: 'owner', clubName: c.name }));
+  }
+  return out;
+}
+
 async function leerSesion(req) {
   if (req.usuario !== undefined) return req.usuario;
   req.usuario = null;
@@ -472,7 +495,9 @@ async function leerSesion(req) {
   if (!u) return null;
   const email = (u.email || '').toLowerCase();
   const ms = email ? await prisma.bricks_club_memberships.findMany({ where: { email }, select: { clubId: true, role: true } }) : [];
-  req.usuario = { id: u.user_id, email, superadmin: u.dev_role === 'superadmin' || SUPER_ADMINS.has(u.user_id), roles: new Map(ms.map(x => [x.clubId, x.role])) };
+  const roles = new Map(ms.map(x => [x.clubId, x.role]));
+  for (const club of await clubesDeIT(u.user_id)) roles.set(club, 'owner');
+  req.usuario = { id: u.user_id, email, superadmin: u.dev_role === 'superadmin' || SUPER_ADMINS.has(u.user_id), roles };
   return req.usuario;
 }
 const adminDe = (u, clubId) => !!u && (u.superadmin || (!!clubId && ROLES_ADMIN.includes(u.roles.get(String(clubId)))));
@@ -726,6 +751,7 @@ app.post('/api/auth/login', async (req, res) => {
         clubName: clubsInfo.find(c => c.id === m.clubId)?.name || null
       }));
     }
+    memberships = await conEquipoIT(user.user_id, memberships);
 
     // Determine the active club for session initialization entirely from memberships
     let activeClubId = null;
@@ -869,6 +895,7 @@ app.post('/api/auth/me', conSesion, async (req, res) => {
         clubName: clubsInfo.find(c => c.id === m.clubId)?.name || null
       }));
     }
+    memberships = await conEquipoIT(user.user_id, memberships);
 
     // Determine the active club for session initialization entirely from memberships
     let activeClubId = null;
